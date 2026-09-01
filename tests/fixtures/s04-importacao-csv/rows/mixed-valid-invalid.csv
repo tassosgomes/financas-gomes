@@ -1,0 +1,4 @@
+occurred_on,description,amount_cents
+2026-08-29,Linha válida A,100
+2026-08-30,Linha inválida,12.50
+2026-08-30,Linha válida B,-50

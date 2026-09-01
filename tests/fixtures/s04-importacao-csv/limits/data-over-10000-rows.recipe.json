@@ -1,0 +1,7 @@
+{
+  "kind": "repeat-data-row",
+  "header": "occurred_on,description,amount_cents",
+  "row": "2026-08-29,Linha de limite sintética,1",
+  "dataRows": 10001,
+  "newline": "\\n"
+}

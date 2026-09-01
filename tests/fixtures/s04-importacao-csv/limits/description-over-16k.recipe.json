@@ -1,0 +1,10 @@
+{
+  "kind": "repeat-field",
+  "header": "occurred_on,description,amount_cents",
+  "rowTemplate": "2026-08-29,{field},100",
+  "field": "description",
+  "fill": "x",
+  "fieldCodePoints": 16385,
+  "newline": "\\n",
+  "expectedBytesBeforeNormalization": 16438
+}

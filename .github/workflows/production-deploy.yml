@@ -1,0 +1,182 @@
+name: Production deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Digite DEPLOY-PRODUCTION para autorizar esta execução"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+# A produção é serializada para que uma migration não concorra com outro
+# deploy ou seja executada duas vezes em paralelo.
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  authorize:
+    name: Validate deployment confirmation
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require explicit production confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRMATION" != "DEPLOY-PRODUCTION" ]; then
+            echo "::error::Type DEPLOY-PRODUCTION to authorize the production workflow."
+            exit 1
+          fi
+
+  migrate:
+    name: Apply production migrations
+    needs: authorize
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+    env:
+      # Keep the migration target in the protected GitHub environment. It is
+      # intentionally independent from the URL consumed by the Vercel app.
+      DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+      MIGRATION_DATABASE_URL: ${{ secrets.MIGRATION_DATABASE_URL }}
+    steps:
+      - name: Checkout selected release
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify migration target is configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${MIGRATION_DATABASE_URL:-}" ]; then
+            echo "::error::Configure MIGRATION_DATABASE_URL in the protected production environment."
+            exit 1
+          fi
+
+      - name: Validate migration files
+        run: npm run db:check:files
+
+      - name: Apply forward-only migrations
+        run: npm run db:migrate:deploy
+
+      - name: Confirm migration status
+        run: |
+          npm run db:migrate:status
+          npm run db:check
+
+  deploy:
+    name: Deploy application and probe production
+    needs: [authorize, migrate]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      PRODUCTION_URL: ${{ vars.PRODUCTION_URL }}
+    steps:
+      - name: Checkout selected release
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify deployment target is configured
+        shell: bash
+        run: |
+          set -euo pipefail
+          for required in VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN PRODUCTION_URL; do
+            if [ -z "${!required:-}" ]; then
+              echo "::error::Configure ${required} in the protected production environment."
+              exit 1
+            fi
+          done
+
+          case "${PRODUCTION_URL%/}" in
+            https://*) ;;
+            *)
+              echo "::error::PRODUCTION_URL must use the https scheme."
+              exit 1
+              ;;
+          esac
+
+      - name: Pull Vercel production configuration
+        run: |
+          npx --yes vercel@latest pull \
+            --yes \
+            --environment=production \
+            --project="$VERCEL_PROJECT_ID" \
+            --token="$VERCEL_TOKEN" \
+            --scope="$VERCEL_ORG_ID"
+
+      - name: Build the selected release with Vercel
+        run: npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+
+      - name: Publish the prebuilt release
+        run: npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+
+      - name: Validate public health and readiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          production_url="${PRODUCTION_URL%/}"
+          health_response="$(curl --fail --show-error --silent --location \
+            --retry 3 --retry-delay 2 --max-time 20 \
+            "$production_url/api/health")"
+          readiness_response="$(curl --fail --show-error --silent --location \
+            --retry 3 --retry-delay 2 --max-time 20 \
+            "$production_url/api/readiness")"
+
+          node - "$health_response" "$readiness_response" <<'NODE'
+          const [health, readiness] = process.argv.slice(2).map((value) => {
+            try {
+              return JSON.parse(value);
+            } catch {
+              throw new Error("probe response is not valid JSON");
+            }
+          });
+
+          const hasStatus = (report, name) =>
+            report?.checks?.some(
+              (check) => check?.name === name && check?.status === "ok",
+            );
+
+          if (health?.status !== "ok" || !hasStatus(health, "process")) {
+            throw new Error("health probe is not healthy");
+          }
+
+          if (
+            readiness?.status !== "ok" ||
+            !hasStatus(readiness, "database") ||
+            !hasStatus(readiness, "schema")
+          ) {
+            throw new Error("readiness probe is not healthy");
+          }
+
+          const rendered = JSON.stringify({ health, readiness });
+          if (/DATABASE_URL|postgres(?:ql)?:\/\/|authorization|cookie|secret|token/i.test(rendered)) {
+            throw new Error("probe response contains a sensitive marker");
+          }
+          NODE

@@ -1,0 +1,32 @@
+import { EmptyState } from "@/components/ui/async-state";
+import { PageHeader } from "@/components/ui/page-header";
+
+export interface S02RouteScaffoldProps {
+  eyebrow: string;
+  title: string;
+  description: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  testId: string;
+}
+
+/**
+ * Route-level placeholder used while T05/T06 and T08/T09 are being wired.
+ * It keeps the authenticated route and shared states stable for the real
+ * collection components that will replace the empty state.
+ */
+export function S02RouteScaffold({
+  eyebrow,
+  title,
+  description,
+  emptyTitle,
+  emptyDescription,
+  testId,
+}: S02RouteScaffoldProps) {
+  return (
+    <section className="space-y-6" data-testid={testId}>
+      <PageHeader eyebrow={eyebrow} title={title} description={description} />
+      <EmptyState title={emptyTitle} description={emptyDescription} />
+    </section>
+  );
+}

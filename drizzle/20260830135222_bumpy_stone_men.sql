@@ -1,0 +1,2 @@
+ALTER TABLE "transaction_imports" DROP CONSTRAINT "transaction_imports_valid_rows_check";--> statement-breakpoint
+ALTER TABLE "transaction_imports" ADD CONSTRAINT "transaction_imports_valid_rows_check" CHECK ("transaction_imports"."valid_rows" between 1 and 10000);

@@ -1,0 +1,410 @@
+{
+  "fixtureVersion": "s04-csv-v1-fixtures-2026-08-30",
+  "formatVersion": "s04-csv-v1",
+  "normativeContract": "../../../docs/adr/005-s04-importacao-csv-contract.md",
+  "userGuide": "../../../docs/S04-importacao-csv-fixtures.md",
+  "testMatrix": "../../../docs/S04-importacao-csv-matriz-testes.md",
+  "syntheticData": true,
+  "fixtures": [
+    {
+      "id": "valid-minimal",
+      "path": "valid/minimal.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "signedAmountCents": ["125000", "-1875"]
+      }
+    },
+    {
+      "id": "valid-quoted-fields",
+      "path": "valid/quoted-fields.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "descriptions": ["Bônus, sintético", "Café de teste"],
+        "externalIds": ["origem \"demo\"", "linha-002"]
+      }
+    },
+    {
+      "id": "valid-with-external-id",
+      "path": "valid/with-external-id.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "externalIds": ["synthetic-001", null]
+      }
+    },
+    {
+      "id": "valid-single-bom-crlf",
+      "path": "valid/single-bom-crlf.hex",
+      "kind": "hex",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "sourceHasBom": true,
+        "newline": "CRLF"
+      }
+    },
+    {
+      "id": "valid-normalization",
+      "path": "valid/normalization.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "descriptions": ["Cafe teste", "Descricao compactada"]
+      }
+    },
+    {
+      "id": "valid-duplicate-rows",
+      "path": "valid/duplicate-rows.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 3,
+        "valid": 3,
+        "invalid": 0,
+        "codes": [],
+        "preserveMultiplicity": true
+      }
+    },
+    {
+      "id": "valid-fingerprint-order-a",
+      "path": "valid/fingerprint-order-a.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "fingerprintGroup": "same-normalized-multiset"
+      }
+    },
+    {
+      "id": "valid-fingerprint-order-b",
+      "path": "valid/fingerprint-order-b.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "fingerprintGroup": "same-normalized-multiset"
+      }
+    },
+    {
+      "id": "valid-mixed-valid-invalid",
+      "path": "rows/mixed-valid-invalid.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 3,
+        "valid": 2,
+        "invalid": 1,
+        "codes": ["CSV_INVALID_AMOUNT"],
+        "errorRows": [4]
+      }
+    },
+    {
+      "id": "valid-duplicate-dataset-first",
+      "path": "valid/duplicate-dataset-first.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "datasetScenario": "confirm-then-replay"
+      }
+    },
+    {
+      "id": "valid-duplicate-dataset-retry",
+      "path": "valid/duplicate-dataset-retry.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 2,
+        "invalid": 0,
+        "codes": [],
+        "datasetScenario": "same-bytes-as-valid-duplicate-dataset-first"
+      }
+    },
+    {
+      "id": "invalid-header",
+      "path": "structural/invalid-header.csv",
+      "kind": "csv",
+      "expected": { "result": "file-error", "codes": ["CSV_INVALID_HEADER"] }
+    },
+    {
+      "id": "unknown-column",
+      "path": "structural/unknown-column.csv",
+      "kind": "csv",
+      "expected": { "result": "file-error", "codes": ["CSV_UNKNOWN_COLUMN"] }
+    },
+    {
+      "id": "duplicate-column",
+      "path": "structural/duplicate-column.csv",
+      "kind": "csv",
+      "expected": { "result": "file-error", "codes": ["CSV_DUPLICATE_COLUMN"] }
+    },
+    {
+      "id": "invalid-delimiter",
+      "path": "structural/semicolon-delimiter.csv",
+      "kind": "csv",
+      "expected": { "result": "file-error", "codes": ["CSV_INVALID_DELIMITER"] }
+    },
+    {
+      "id": "malformed-quoting",
+      "path": "structural/malformed-quoting.csv",
+      "kind": "csv",
+      "expected": { "result": "file-error", "codes": ["CSV_MALFORMED_QUOTING"] }
+    },
+    {
+      "id": "invalid-utf8",
+      "path": "structural/invalid-utf8.hex",
+      "kind": "hex",
+      "expected": { "result": "file-error", "codes": ["CSV_INVALID_UTF8"] }
+    },
+    {
+      "id": "invalid-bom",
+      "path": "structural/invalid-bom.hex",
+      "kind": "hex",
+      "expected": { "result": "file-error", "codes": ["CSV_INVALID_BOM"] }
+    },
+    {
+      "id": "isolated-cr",
+      "path": "structural/isolated-cr.hex",
+      "kind": "hex",
+      "expected": { "result": "file-error", "codes": ["CSV_INVALID_NEWLINE"] }
+    },
+    {
+      "id": "zero-byte",
+      "path": "empty/zero-byte.recipe.json",
+      "kind": "recipe",
+      "expected": { "result": "file-error", "codes": ["CSV_EMPTY_FILE"] }
+    },
+    {
+      "id": "whitespace-only",
+      "path": "empty/whitespace-only.csv",
+      "kind": "csv",
+      "expected": { "result": "file-error", "codes": ["CSV_EMPTY_FILE"] }
+    },
+    {
+      "id": "bom-only",
+      "path": "empty/bom-only.hex",
+      "kind": "hex",
+      "expected": { "result": "file-error", "codes": ["CSV_EMPTY_FILE"] }
+    },
+    {
+      "id": "header-without-data",
+      "path": "empty/header-without-data.csv",
+      "kind": "csv",
+      "expected": { "result": "file-error", "codes": ["CSV_NO_DATA_ROWS"] }
+    },
+    {
+      "id": "field-too-large",
+      "path": "limits/description-over-16k.recipe.json",
+      "kind": "recipe",
+      "expected": { "result": "file-error", "codes": ["CSV_FIELD_TOO_LARGE"] }
+    },
+    {
+      "id": "too-many-rows",
+      "path": "limits/data-over-10000-rows.recipe.json",
+      "kind": "recipe",
+      "expected": { "result": "file-error", "codes": ["CSV_TOO_MANY_ROWS"] }
+    },
+    {
+      "id": "file-over-5mib",
+      "path": "limits/file-over-5mib.recipe.json",
+      "kind": "recipe",
+      "expected": { "result": "file-error", "codes": ["CSV_FILE_TOO_LARGE"] }
+    },
+    {
+      "id": "row-width-mismatch",
+      "path": "rows/row-width-mismatch.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 1,
+        "invalid": 1,
+        "codes": ["CSV_ROW_WIDTH_MISMATCH"],
+        "errorRows": [3]
+      }
+    },
+    {
+      "id": "empty-row",
+      "path": "rows/empty-row.csv",
+      "kind": "csv",
+      "expected": {
+        "result": "previewable",
+        "processed": 2,
+        "valid": 1,
+        "invalid": 1,
+        "codes": ["CSV_EMPTY_ROW"],
+        "errorRows": [3]
+      }
+    },
+    {
+      "id": "invalid-date",
+      "path": "rows/invalid-date.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_INVALID_DATE"], "errorRows": [2] }
+    },
+    {
+      "id": "future-date",
+      "path": "rows/future-date.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_DATE_IN_FUTURE"], "errorRows": [2], "clock": "2026-08-30" }
+    },
+    {
+      "id": "before-tracking-start",
+      "path": "rows/before-tracking-start.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["TRACKING_START_DATE_VIOLATION"], "errorRows": [2], "accountTrackingStartedOn": "2026-08-30" }
+    },
+    {
+      "id": "invalid-description",
+      "path": "rows/invalid-description.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_INVALID_DESCRIPTION"], "errorRows": [2] }
+    },
+    {
+      "id": "nul-in-description",
+      "path": "rows/nul-in-description.hex",
+      "kind": "hex",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_INVALID_DESCRIPTION"], "errorRows": [2] }
+    },
+    {
+      "id": "invalid-amount",
+      "path": "rows/invalid-amount.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_INVALID_AMOUNT"], "errorRows": [2] }
+    },
+    {
+      "id": "zero-amount",
+      "path": "rows/zero-amount.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_ZERO_AMOUNT"], "errorRows": [2] }
+    },
+    {
+      "id": "overflow-amount",
+      "path": "rows/overflow-amount.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_AMOUNT_OVERFLOW"], "errorRows": [2] }
+    },
+    {
+      "id": "invalid-external-id",
+      "path": "rows/invalid-external-id.hex",
+      "kind": "hex",
+      "expected": { "result": "previewable", "processed": 1, "valid": 0, "invalid": 1, "codes": ["CSV_INVALID_EXTERNAL_ID"], "errorRows": [2] }
+    },
+    {
+      "id": "no-valid-rows",
+      "path": "rows/no-valid-rows.csv",
+      "kind": "csv",
+      "expected": { "result": "previewable", "processed": 2, "valid": 0, "invalid": 2, "codes": ["IMPORT_NO_VALID_ROWS"], "confirmable": false }
+    }
+  ],
+  "boundaryScenarios": [
+    {
+      "id": "file-required",
+      "errorCode": "CSV_FILE_REQUIRED",
+      "fixture": null,
+      "setup": "omit-file",
+      "expectedHttpStatus": 400
+    },
+    {
+      "id": "unauthenticated",
+      "errorCode": "UNAUTHENTICATED",
+      "fixture": "valid/minimal.csv",
+      "setup": "no-session",
+      "expectedHttpStatus": 401
+    },
+    {
+      "id": "account-not-found-or-cross-household",
+      "errorCode": "ACCOUNT_NOT_FOUND",
+      "fixture": "valid/minimal.csv",
+      "setup": "account-from-another-household-or-unknown-id",
+      "expectedHttpStatus": 404
+    },
+    {
+      "id": "archived-account",
+      "errorCode": "RESOURCE_ARCHIVED",
+      "fixture": "valid/minimal.csv",
+      "setup": "account-status-ARCHIVED",
+      "expectedHttpStatus": 409
+    },
+    {
+      "id": "preview-from-another-household",
+      "errorCode": "PREVIEW_NOT_FOUND",
+      "fixture": "valid/minimal.csv",
+      "setup": "token-created-in-different-household",
+      "expectedHttpStatus": 404
+    },
+    {
+      "id": "expired-preview",
+      "errorCode": "PREVIEW_EXPIRED",
+      "fixture": "valid/minimal.csv",
+      "setup": "advance-server-clock-15-minutes",
+      "expectedHttpStatus": 409
+    },
+    {
+      "id": "consumed-preview",
+      "errorCode": "PREVIEW_ALREADY_CONSUMED",
+      "fixture": "valid/minimal.csv",
+      "setup": "confirm-once-then-use-new-command",
+      "expectedHttpStatus": 409
+    },
+    {
+      "id": "invalid-command",
+      "errorCode": "INVALID_COMMAND",
+      "fixture": "valid/minimal.csv",
+      "setup": "missing-command-payload",
+      "expectedHttpStatus": 400
+    },
+    {
+      "id": "invalid-command-id",
+      "errorCode": "INVALID_COMMAND_ID",
+      "fixture": "valid/minimal.csv",
+      "setup": "blank-or-control-command-id",
+      "expectedHttpStatus": 400
+    },
+    {
+      "id": "reused-command-id",
+      "errorCode": "COMMAND_ID_REUSED",
+      "fixture": "valid/minimal.csv",
+      "setup": "same-household-command-with-different-preview",
+      "expectedHttpStatus": 409
+    },
+    {
+      "id": "already-imported-dataset",
+      "errorCode": "IMPORT_DATASET_ALREADY_IMPORTED",
+      "fixture": "valid/duplicate-dataset-retry.csv",
+      "setup": "confirm-valid-duplicate-dataset-first",
+      "expectedHttpStatus": 409
+    }
+  ]
+}

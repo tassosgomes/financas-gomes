@@ -1,0 +1,1 @@
+ALTER TABLE "application_commands" ADD COLUMN "result" jsonb;

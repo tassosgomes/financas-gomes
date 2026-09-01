@@ -1,0 +1,125 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788026479000,
+      "tag": "1788026479000_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788028000000,
+      "tag": "1788028000000_better_auth_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788029000000,
+      "tag": "1788029000000_tenancy_schema",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788030000000,
+      "tag": "1788030000000_cross_space_isolation",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788047583181,
+      "tag": "20260829235303_mature_banshee",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788052508947,
+      "tag": "20260830011508_goofy_dragon_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788097189745,
+      "tag": "20260830133949_common_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788097231539,
+      "tag": "20260830134031_hard_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788097355299,
+      "tag": "20260830134235_married_professor_monster",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788097942934,
+      "tag": "20260830135222_bumpy_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788101191094,
+      "tag": "20260830144631_icy_omega_sentinel",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788108435192,
+      "tag": "20260830164715_overconfident_stardust",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1788124112199,
+      "tag": "20260830210832_outgoing_titanium_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788133719783,
+      "tag": "20260830234839_foamy_logan",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788134172733,
+      "tag": "20260830235612_billing-rules-no-overlap",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1788182580902,
+      "tag": "20260831132300_hesitant_stature",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1788214511133,
+      "tag": "20260831221511_opposite_slapstick",
+      "breakpoints": true
+    }
+  ]
+}

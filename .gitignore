@@ -1,0 +1,52 @@
+node_modules/
+.next/
+.next-e2e/
+.next-*/
+out/
+coverage/
+dist/
+build/
+playwright-report/
+test-results/
+blob-report/
+.nyc_output/
+*.tsbuildinfo
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+
+# Credentials, certificates and private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.crt
+*.cer
+credentials*.json
+service-account*.json
+
+# Local runtime data and logs
+*.log
+logs/
+*.pid
+*.pid.lock
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+
+# Local tooling and operating-system files
+.vercel/
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/

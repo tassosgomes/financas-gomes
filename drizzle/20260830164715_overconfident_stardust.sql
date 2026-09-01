@@ -1,0 +1,3 @@
+CREATE INDEX "financial_events_household_origin_occurred_on_id_idx" ON "financial_events" USING btree ("household_id","origin","occurred_on","id");--> statement-breakpoint
+CREATE INDEX "financial_events_household_category_occurred_on_id_idx" ON "financial_events" USING btree ("household_id","category_id","occurred_on","id");--> statement-breakpoint
+CREATE UNIQUE INDEX "transaction_import_items_household_event_uq" ON "transaction_import_items" USING btree ("household_id","financial_event_id");

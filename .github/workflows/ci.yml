@@ -1,0 +1,276 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run ESLint
+        run: npm run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run unit tests
+        run: npm test
+
+  migrations:
+    name: Migrations and schema
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Disposable CI-only PostgreSQL credentials; no repository secret is
+      # used by this job and this database is destroyed with the runner.
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/financas_gomes_ci
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: financas_gomes_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d financas_gomes_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate migration files
+        run: npm run db:check:files
+      - name: Apply migrations to a fresh PostgreSQL database
+        run: npm run db:migrate:local
+      - name: Verify migration status and drift
+        run: npm run db:check
+
+  integration:
+    name: Integration tests (PostgreSQL)
+    needs: migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/financas_gomes_ci
+      BETTER_AUTH_URL: http://127.0.0.1:3000
+      # Disposable test configuration only; never use these values outside CI.
+      BETTER_AUTH_SECRET: ci-only-secret-for-integration-tests-32-chars
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: financas_gomes_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d financas_gomes_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply migrations to the integration database
+        run: npm run db:migrate:local
+      - name: Run PostgreSQL integration suite
+        run: npm run test:integration
+
+  build:
+    name: Application build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      BETTER_AUTH_URL: https://ci.invalid
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/unused-ci-build
+      # Build-time placeholders are not credentials and are never deployed.
+      BETTER_AUTH_SECRET: ci-only-secret-for-build-validation-32-chars
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+      E2E_TEST_AUTH_ENABLED: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Next.js application
+        run: npm run build
+
+  e2e:
+    name: E2E smoke (Playwright)
+    needs: migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/financas_gomes_ci
+      E2E_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/financas_gomes_ci
+      BETTER_AUTH_URL: http://127.0.0.1:3100
+      NEXT_PUBLIC_BETTER_AUTH_URL: http://127.0.0.1:3100
+      # The fake provider is constrained by the app to local development/test
+      # and this job's server is bound to loopback on an ephemeral runner.
+      BETTER_AUTH_SECRET: ci-only-secret-for-playwright-32-chars
+      E2E_BETTER_AUTH_SECRET: ci-only-secret-for-playwright-32-chars
+      GOOGLE_CLIENT_ID: ci-google-client-id
+      GOOGLE_CLIENT_SECRET: ci-google-client-secret
+      E2E_TEST_AUTH_EMAIL: e2e-auth@example.test
+      E2E_TEST_AUTH_NAME: CI E2E Google User
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: financas_gomes_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d financas_gomes_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Apply migrations to the E2E database
+        run: npm run db:migrate:local
+      - name: Install Playwright Chromium and OS dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run critical browser smoke
+        run: npm run test:e2e
+
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build production image
+        run: docker build --tag financas-gomes:ci .
+
+  preview:
+    name: Vercel Preview (optional)
+    if: >-
+      ${{
+        github.event_name == 'pull_request' &&
+        vars.VERCEL_ORG_ID != '' &&
+        vars.VERCEL_PROJECT_ID != ''
+      }}
+    needs: [lint, typecheck, unit, migrations, integration, build, e2e, docker]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Deploy Preview when Vercel credentials are configured
+        run: |
+          if [ -z "${VERCEL_TOKEN:-}" ]; then
+            echo "::notice::Vercel Preview skipped; configure the VERCEL_TOKEN secret."
+            exit 0
+          fi
+
+          npx --yes vercel@latest pull \
+            --yes \
+            --environment=preview \
+            --project="$VERCEL_PROJECT_ID" \
+            --token="$VERCEL_TOKEN" \
+            --scope="$VERCEL_ORG_ID"
+          npx --yes vercel@latest build \
+            --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy \
+            --prebuilt \
+            --token="$VERCEL_TOKEN"
