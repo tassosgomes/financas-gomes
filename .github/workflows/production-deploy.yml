@@ -128,8 +128,7 @@ jobs:
             --yes \
             --environment=production \
             --project="$VERCEL_PROJECT_ID" \
-            --token="$VERCEL_TOKEN" \
-            --scope="$VERCEL_ORG_ID"
+            --token="$VERCEL_TOKEN"
 
       - name: Build the selected release with Vercel
         run: npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"

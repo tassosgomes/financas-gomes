@@ -74,11 +74,17 @@ protegida do GitHub. Não use os placeholders de `.env.example` em produção.
 
 No ambiente protegido `production` do GitHub Actions, configure:
 
-- Secret `VERCEL_TOKEN` com escopo mínimo para o projeto;
+- Secret `VERCEL_TOKEN` com escopo da equipe proprietária do projeto (ou da
+  conta pessoal, se o projeto não estiver em uma equipe); tokens limitados
+  somente ao projeto não são compatíveis com o preflight atual do `vercel pull`;
 - Secret `MIGRATION_DATABASE_URL` com a URL Neon de migration;
 - Variable `VERCEL_ORG_ID`;
 - Variable `VERCEL_PROJECT_ID`;
 - Variable `PRODUCTION_URL`, contendo apenas a URL pública HTTPS canônica.
+
+`VERCEL_ORG_ID` deve ser o `orgId` exato gerado pelo `vercel link` em
+`.vercel/project.json` — não o slug exibido na URL da conta. Os workflows usam
+esse valor junto com `VERCEL_PROJECT_ID` e não passam `--scope` explicitamente.
 
 Os IDs e a URL são valores públicos de configuração, mas ainda devem ser
 confirmados pelo responsável do projeto. O token e as URLs PostgreSQL são
