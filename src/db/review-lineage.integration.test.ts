@@ -742,15 +742,18 @@ integration("T03 lineage, constraints and indexes PostgreSQL", () => {
     );
     const pendingExplain = parseExplain(pendingPlan.rows);
     // Index Only Scan is an index-backed plan too and is preferable when the
-    // projection is covered; accept both forms while rejecting a full scan.
-    expect(pendingExplain).toMatch(/"Node Type":"Index(?: Only)? Scan"/);
-    // For a broad `IS NULL` range PostgreSQL may choose the shorter
-    // household/date index (and filter category) instead of the covering
-    // category index. The equality predicate above already gates the latter;
-    // here the invariant is an index-backed tenant/date path, never a full
-    // scan.
+    // projection is covered. PostgreSQL may also use a bitmap path for this
+    // broad nullable range, so accept both direct and bitmap index scans while
+    // rejecting a full scan.
     expect(pendingExplain).toMatch(
-      /"Index Name":"financial_events_household_(?:occurred_on|category_occurred_on_id|origin_occurred_on_id)_idx"/,
+      /"Node Type":"(?:Index(?: Only)? Scan|Bitmap Index Scan)"/,
+    );
+    // For a broad `IS NULL` range PostgreSQL may choose the shorter
+    // household/date or category/date index instead of the covering category
+    // index. The equality predicate above already gates the latter; here the
+    // invariant is an index-backed tenant/date path, never a full scan.
+    expect(pendingExplain).toMatch(
+      /"Index Name":"financial_events_household_(?:occurred_on|category_occurred_on(?:_id)?|origin_occurred_on_id)_idx"/,
     );
     expect(parseExplain(pendingPlan.rows)).toContain("household_id =");
     expect(parseExplain(pendingPlan.rows)).toContain("occurred_on >=");

@@ -4,7 +4,7 @@ Monólito modular para gestão financeira compartilhada. A aplicação usa Next.
 
 ## Executar localmente
 
-Requisitos: Node.js 20+ e npm.
+Requisitos: Node.js 22.22.2+ e npm.
 
 ```bash
 cp .env.example .env.local
