@@ -120,6 +120,13 @@
       "when": 1788214511133,
       "tag": "20260831221511_opposite_slapstick",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788310386649,
+      "tag": "20260902005306_s08-spendable-settings",
+      "breakpoints": true
     }
   ]
 }

@@ -117,24 +117,28 @@ paralelo ao T10 quando o read model de T06 estiver estável.
 
 ## Definition of Done do slice
 
-- [ ] Para os mesmos dados, cenário, data e horizonte, o cálculo retorna o
+- [x] Para os mesmos dados, cenário, data e horizonte, o cálculo retorna o
   mesmo resultado e a mesma composição.
-- [ ] O indicador usa forecast conservador de 90 dias por padrão, considera
+- [x] O indicador usa forecast conservador de 90 dias por padrão, considera
   obrigações conhecidas de S07 uma única vez e não confunde patrimônio,
   limite/fatura de cartão ou recursos excluídos com dinheiro gastável.
-- [ ] O usuário vê o valor, a data/horizonte/cenário usados, o buffer, o menor
+- [x] O usuário vê o valor, a data/horizonte/cenário usados, o buffer, o menor
   saldo projetado e os eventos que levam ao mínimo; os componentes reconciliam
   exatamente o resultado.
-- [ ] Zero e déficit são compreensíveis: disponibilidade mostrada não é
+- [x] Zero e déficit são compreensíveis: disponibilidade mostrada não é
   negativa, mas `rawSpendable`/déficit são expostos corretamente.
-- [ ] Leituras e commands respeitam `household_id`; um household nunca obtém
+- [x] Leituras e commands respeitam `household_id`; um household nunca obtém
   saldo, configuração, forecast ou breakdown de outro.
-- [ ] Recursos restritos/excluídos não inflam o spendable global e o contrato
+- [x] Recursos restritos/excluídos não inflam o spendable global e o contrato
   de reservas de caixinha está preparado para S09 sem bloquear S08.
-- [ ] Falhas técnicas de cálculo são observáveis com dados agregados e seguros;
+- [x] Falhas técnicas de cálculo são observáveis com dados agregados e seguros;
   valores financeiros crus e descrições não saem do processo.
-- [ ] Testes puros, PostgreSQL e E2E cobrem positivo, zero, déficit, ausência
+- [x] Testes puros, PostgreSQL e E2E cobrem positivo, zero, déficit, ausência
   de transações, parcelas/entradas futuras, não dupla contagem, isolamento e
   estados de UI. A integração com valores reservados fica explicitamente
   fechada por S09.
 
+Esta Definition of Done do slice foi auditada na T13. Os gates específicos de
+S08 estão verdes; a promoção global permanece bloqueada pela regressão E2E
+externa registrada em
+[`T13 — Validação de release e handoff para S09`](013-validacao-release-handoff-s09_task.md).

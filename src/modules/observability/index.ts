@@ -17,6 +17,7 @@ export * from "./s02";
 export * from "./s03";
 export * from "./s04";
 export * from "./s07";
+export * from "./s08";
 
 import { getClientSentryConfig } from "./client-config";
 import {

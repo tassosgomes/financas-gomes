@@ -1,0 +1,26 @@
+{
+  "fixtureVersion": "s08-spendable-v1",
+  "contractVersion": "s08.v1",
+  "ruleVersion": "spendable.v1",
+  "dateType": "Temporal.PlainDate",
+  "moneyType": "bigint-cents",
+  "fixtures": [
+    { "id": "positive", "case": "positive", "asOf": "2026-09-01", "from": "2026-09-02", "to": "2026-09-15", "openingBalanceCents": "1200000", "operationalBufferCents": "500000", "expectedMinimumCents": "734500", "expectedRawCents": "234500" },
+    { "id": "zero", "case": "zero", "asOf": "2026-09-01", "from": "2026-09-02", "to": "2026-09-02", "openingBalanceCents": "500000", "operationalBufferCents": "500000", "expectedMinimumCents": "500000", "expectedRawCents": "0" },
+    { "id": "negative", "case": "negative", "asOf": "2026-09-01", "from": "2026-09-02", "to": "2026-09-02", "openingBalanceCents": "600000", "operationalBufferCents": "500000", "expectedMinimumCents": "300000", "expectedRawCents": "-200000" },
+    { "id": "same-day", "case": "same-day-aggregation", "asOf": "2026-09-01", "from": "2026-09-02", "to": "2026-09-02", "openingBalanceCents": "100000", "expectedClosingCents": "200000" },
+    { "id": "no-events", "case": "empty-horizon", "asOf": "2026-09-01", "from": "2026-09-02", "to": "2026-12-01", "openingBalanceCents": "800000", "operationalBufferCents": "100000", "expectedMinimumCents": "800000", "expectedRawCents": "700000" },
+    { "id": "reliable-income", "case": "conservative-reliable-income" },
+    { "id": "uncertain-income", "case": "expected-uncertain-income" },
+    { "id": "future-commitment", "case": "future-commitment" },
+    { "id": "installments-once", "case": "installment-each-competence", "excludedReferenceIds": ["fx-purchase-total", "fx-card-payment"] },
+    { "id": "realized-once", "case": "realized-replaces-planned", "excludedReferenceIds": ["fx-planned-expense"] },
+    { "id": "card-payment-not-source", "case": "card-payment-not-a-second-source", "excludedReferenceIds": ["fx-purchase-total", "fx-card-payment", "fx-invoice-total"] },
+    { "id": "year-boundary", "case": "year-boundary", "asOf": "2026-12-30", "from": "2026-12-31", "to": "2027-01-02" },
+    { "id": "resource-scope", "case": "general-only", "resources": { "generalCents": "100000", "restrictedCents": "900000", "excludedCents": "500000" } },
+    { "id": "buffer-absent", "case": "absent-buffer-default-zero" },
+    { "id": "buffer-effective-before", "case": "buffer-before-effective-date", "asOf": "2026-09-09", "effectiveBufferFrom": null },
+    { "id": "buffer-effective-on", "case": "buffer-on-effective-date", "asOf": "2026-09-10", "effectiveBufferFrom": "2026-09-10", "operationalBufferCents": "50000" },
+    { "id": "reserve-zero", "case": "zero-reserve-adapter", "reserveStatus": "UNAVAILABLE" }
+  ]
+}

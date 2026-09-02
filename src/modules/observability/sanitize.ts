@@ -69,6 +69,35 @@ const safeTagKeys = new Set([
   "forecastquerybudgetms",
   "forecastslowquery",
   "forecastbudgetexceeded",
+  "spendablestage",
+  "spendablequerycode",
+  "spendablecontractversion",
+  "spendableruleversion",
+  "spendablescenario",
+  "spendablehorizondays",
+  "spendableresult",
+  "spendablebuffersource",
+  "spendablesourcekind",
+  "spendablesourcecount",
+  "spendablerecurringcount",
+  "spendableplannedeventcount",
+  "spendableinstallmentcount",
+  "spendablerealizedeventcount",
+  "spendablecancelledcount",
+  "spendableitemcount",
+  "spendableforecastitemcount",
+  "spendableprojecteditemcount",
+  "spendablerealizeditemcount",
+  "spendabledaycount",
+  "spendableperiodcount",
+  "spendablepointcount",
+  "spendablecausalpointcount",
+  "spendablegeneralaccountcount",
+  "spendablereservecomponentcount",
+  "spendableserializedfieldcount",
+  "spendablequerybudgetms",
+  "spendableslowquery",
+  "spendablebudgetexceeded",
 ]);
 
 const safeMeasurementKeys = new Set([
@@ -122,6 +151,27 @@ const safeContextScalarKeys = new Set([
   "forecastquerybudgetms",
   "forecastslowquery",
   "forecastbudgetexceeded",
+  "spendablehorizondays",
+  "spendablesourcecount",
+  "spendablerecurringcount",
+  "spendableplannedeventcount",
+  "spendableinstallmentcount",
+  "spendablerealizedeventcount",
+  "spendablecancelledcount",
+  "spendableitemcount",
+  "spendableforecastitemcount",
+  "spendableprojecteditemcount",
+  "spendablerealizeditemcount",
+  "spendabledaycount",
+  "spendableperiodcount",
+  "spendablepointcount",
+  "spendablecausalpointcount",
+  "spendablegeneralaccountcount",
+  "spendablereservecomponentcount",
+  "spendableserializedfieldcount",
+  "spendablequerybudgetms",
+  "spendableslowquery",
+  "spendablebudgetexceeded",
 ]);
 
 const secretPatterns = [
@@ -496,6 +546,141 @@ function safeBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
             typeof data.forecast_budget_exceeded === "boolean"
               ? data.forecast_budget_exceeded
               : undefined,
+          spendable_stage:
+            typeof data.spendable_stage === "string"
+              ? safeOperationalName(data.spendable_stage)
+              : undefined,
+          spendable_query_code:
+            typeof data.spendable_query_code === "string"
+              ? safeOperationalName(data.spendable_query_code)
+              : undefined,
+          spendable_contract_version:
+            typeof data.spendable_contract_version === "string"
+              ? safeOperationalName(data.spendable_contract_version)
+              : undefined,
+          spendable_rule_version:
+            typeof data.spendable_rule_version === "string"
+              ? safeOperationalName(data.spendable_rule_version)
+              : undefined,
+          spendable_scenario:
+            typeof data.spendable_scenario === "string"
+              ? safeOperationalName(data.spendable_scenario)
+              : undefined,
+          spendable_horizon_days:
+            typeof data.spendable_horizon_days === "number" &&
+            Number.isFinite(data.spendable_horizon_days)
+              ? Math.max(0, Math.round(data.spendable_horizon_days))
+              : undefined,
+          spendable_result:
+            typeof data.spendable_result === "string"
+              ? safeOperationalName(data.spendable_result)
+              : undefined,
+          spendable_buffer_source:
+            typeof data.spendable_buffer_source === "string"
+              ? safeOperationalName(data.spendable_buffer_source)
+              : undefined,
+          spendable_source_kind:
+            typeof data.spendable_source_kind === "string"
+              ? safeOperationalName(data.spendable_source_kind)
+              : undefined,
+          spendable_source_count:
+            typeof data.spendable_source_count === "number" &&
+            Number.isFinite(data.spendable_source_count)
+              ? Math.max(0, Math.round(data.spendable_source_count))
+              : undefined,
+          spendable_recurring_count:
+            typeof data.spendable_recurring_count === "number" &&
+            Number.isFinite(data.spendable_recurring_count)
+              ? Math.max(0, Math.round(data.spendable_recurring_count))
+              : undefined,
+          spendable_planned_event_count:
+            typeof data.spendable_planned_event_count === "number" &&
+            Number.isFinite(data.spendable_planned_event_count)
+              ? Math.max(0, Math.round(data.spendable_planned_event_count))
+              : undefined,
+          spendable_installment_count:
+            typeof data.spendable_installment_count === "number" &&
+            Number.isFinite(data.spendable_installment_count)
+              ? Math.max(0, Math.round(data.spendable_installment_count))
+              : undefined,
+          spendable_realized_event_count:
+            typeof data.spendable_realized_event_count === "number" &&
+            Number.isFinite(data.spendable_realized_event_count)
+              ? Math.max(0, Math.round(data.spendable_realized_event_count))
+              : undefined,
+          spendable_cancelled_count:
+            typeof data.spendable_cancelled_count === "number" &&
+            Number.isFinite(data.spendable_cancelled_count)
+              ? Math.max(0, Math.round(data.spendable_cancelled_count))
+              : undefined,
+          spendable_item_count:
+            typeof data.spendable_item_count === "number" &&
+            Number.isFinite(data.spendable_item_count)
+              ? Math.max(0, Math.round(data.spendable_item_count))
+              : undefined,
+          spendable_forecast_item_count:
+            typeof data.spendable_forecast_item_count === "number" &&
+            Number.isFinite(data.spendable_forecast_item_count)
+              ? Math.max(0, Math.round(data.spendable_forecast_item_count))
+              : undefined,
+          spendable_projected_item_count:
+            typeof data.spendable_projected_item_count === "number" &&
+            Number.isFinite(data.spendable_projected_item_count)
+              ? Math.max(0, Math.round(data.spendable_projected_item_count))
+              : undefined,
+          spendable_realized_item_count:
+            typeof data.spendable_realized_item_count === "number" &&
+            Number.isFinite(data.spendable_realized_item_count)
+              ? Math.max(0, Math.round(data.spendable_realized_item_count))
+              : undefined,
+          spendable_day_count:
+            typeof data.spendable_day_count === "number" &&
+            Number.isFinite(data.spendable_day_count)
+              ? Math.max(0, Math.round(data.spendable_day_count))
+              : undefined,
+          spendable_period_count:
+            typeof data.spendable_period_count === "number" &&
+            Number.isFinite(data.spendable_period_count)
+              ? Math.max(0, Math.round(data.spendable_period_count))
+              : undefined,
+          spendable_point_count:
+            typeof data.spendable_point_count === "number" &&
+            Number.isFinite(data.spendable_point_count)
+              ? Math.max(0, Math.round(data.spendable_point_count))
+              : undefined,
+          spendable_causal_point_count:
+            typeof data.spendable_causal_point_count === "number" &&
+            Number.isFinite(data.spendable_causal_point_count)
+              ? Math.max(0, Math.round(data.spendable_causal_point_count))
+              : undefined,
+          spendable_general_account_count:
+            typeof data.spendable_general_account_count === "number" &&
+            Number.isFinite(data.spendable_general_account_count)
+              ? Math.max(0, Math.round(data.spendable_general_account_count))
+              : undefined,
+          spendable_reserve_component_count:
+            typeof data.spendable_reserve_component_count === "number" &&
+            Number.isFinite(data.spendable_reserve_component_count)
+              ? Math.max(0, Math.round(data.spendable_reserve_component_count))
+              : undefined,
+          spendable_serialized_field_count:
+            typeof data.spendable_serialized_field_count === "number" &&
+            Number.isFinite(data.spendable_serialized_field_count)
+              ? Math.max(0, Math.round(data.spendable_serialized_field_count))
+              : undefined,
+          spendable_query_budget_ms:
+            typeof data.spendable_query_budget_ms === "number" &&
+            Number.isFinite(data.spendable_query_budget_ms)
+              ? Math.max(0, Math.round(data.spendable_query_budget_ms))
+              : undefined,
+          spendable_slow_query:
+            typeof data.spendable_slow_query === "boolean"
+              ? data.spendable_slow_query
+              : undefined,
+          spendable_budget_exceeded:
+            typeof data.spendable_budget_exceeded === "boolean"
+              ? data.spendable_budget_exceeded
+              : undefined,
           method:
             typeof data.method === "string"
               ? safeText(data.method, 16)?.toUpperCase()
@@ -613,7 +798,15 @@ function safeContexts(
           key === "forecast_scenario" ||
           key === "forecast_source_kind" ||
           key === "forecast_period_bucket" ||
-          key === "forecast_query_code"
+          key === "forecast_query_code" ||
+          key === "spendable_stage" ||
+          key === "spendable_query_code" ||
+          key === "spendable_contract_version" ||
+          key === "spendable_rule_version" ||
+          key === "spendable_scenario" ||
+          key === "spendable_result" ||
+          key === "spendable_buffer_source" ||
+          key === "spendable_source_kind"
         )
       ) {
         const text =
@@ -630,7 +823,15 @@ function safeContexts(
           key === "forecast_scenario" ||
           key === "forecast_source_kind" ||
           key === "forecast_period_bucket" ||
-          key === "forecast_query_code"
+          key === "forecast_query_code" ||
+          key === "spendable_stage" ||
+          key === "spendable_query_code" ||
+          key === "spendable_contract_version" ||
+          key === "spendable_rule_version" ||
+          key === "spendable_scenario" ||
+          key === "spendable_result" ||
+          key === "spendable_buffer_source" ||
+          key === "spendable_source_kind"
             ? safeOperationalName(value)
             : safeOpaqueId(value);
         if (text) {
@@ -887,6 +1088,42 @@ export function toSafeObservabilityContext(context?: ObservabilityContext): {
     "forecast_query_code",
     context.forecastQueryCode,
   );
+  addString("spendable_stage", "spendable_stage", context.spendableStage);
+  addString(
+    "spendable_query_code",
+    "spendable_query_code",
+    context.spendableQueryCode,
+  );
+  addString(
+    "spendable_contract_version",
+    "spendable_contract_version",
+    context.spendableContractVersion,
+  );
+  addString(
+    "spendable_rule_version",
+    "spendable_rule_version",
+    context.spendableRuleVersion,
+  );
+  addString(
+    "spendable_scenario",
+    "spendable_scenario",
+    context.spendableScenario,
+  );
+  addString(
+    "spendable_result",
+    "spendable_result",
+    context.spendableResult,
+  );
+  addString(
+    "spendable_buffer_source",
+    "spendable_buffer_source",
+    context.spendableBufferSource,
+  );
+  addString(
+    "spendable_source_kind",
+    "spendable_source_kind",
+    context.spendableSourceKind,
+  );
 
   if (typeof context.durationMs === "number" && Number.isFinite(context.durationMs)) {
     const duration = Math.max(0, Math.round(context.durationMs));
@@ -977,6 +1214,106 @@ export function toSafeObservabilityContext(context?: ObservabilityContext): {
   addForecastCount("forecast_day_count", context.forecastDayCount);
   addForecastCount("forecast_query_budget_ms", context.forecastQueryBudgetMs);
 
+  const addSpendableCount = (
+    tagKey:
+      | "spendable_horizon_days"
+      | "spendable_source_count"
+      | "spendable_recurring_count"
+      | "spendable_planned_event_count"
+      | "spendable_installment_count"
+      | "spendable_realized_event_count"
+      | "spendable_cancelled_count"
+      | "spendable_item_count"
+      | "spendable_forecast_item_count"
+      | "spendable_projected_item_count"
+      | "spendable_realized_item_count"
+      | "spendable_day_count"
+      | "spendable_period_count"
+      | "spendable_point_count"
+      | "spendable_causal_point_count"
+      | "spendable_general_account_count"
+      | "spendable_reserve_component_count"
+      | "spendable_serialized_field_count"
+      | "spendable_query_budget_ms",
+    value: number | undefined,
+  ) => {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      return;
+    }
+
+    const count = Math.max(0, Math.round(value));
+    tags[tagKey] = count;
+    safeContext[tagKey] = count;
+  };
+
+  addSpendableCount("spendable_horizon_days", context.spendableHorizonDays);
+  addSpendableCount("spendable_source_count", context.spendableSourceCount);
+  addSpendableCount(
+    "spendable_recurring_count",
+    context.spendableRecurringCount,
+  );
+  addSpendableCount(
+    "spendable_planned_event_count",
+    context.spendablePlannedEventCount,
+  );
+  addSpendableCount(
+    "spendable_installment_count",
+    context.spendableInstallmentCount,
+  );
+  addSpendableCount(
+    "spendable_realized_event_count",
+    context.spendableRealizedEventCount,
+  );
+  addSpendableCount(
+    "spendable_cancelled_count",
+    context.spendableCancelledCount,
+  );
+  addSpendableCount("spendable_item_count", context.spendableItemCount);
+  addSpendableCount(
+    "spendable_forecast_item_count",
+    context.spendableForecastItemCount,
+  );
+  addSpendableCount(
+    "spendable_projected_item_count",
+    context.spendableProjectedItemCount,
+  );
+  addSpendableCount(
+    "spendable_realized_item_count",
+    context.spendableRealizedItemCount,
+  );
+  addSpendableCount("spendable_day_count", context.spendableDayCount);
+  addSpendableCount("spendable_period_count", context.spendablePeriodCount);
+  addSpendableCount("spendable_point_count", context.spendablePointCount);
+  addSpendableCount(
+    "spendable_causal_point_count",
+    context.spendableCausalPointCount,
+  );
+  addSpendableCount(
+    "spendable_general_account_count",
+    context.spendableGeneralAccountCount,
+  );
+  addSpendableCount(
+    "spendable_reserve_component_count",
+    context.spendableReserveComponentCount,
+  );
+  addSpendableCount(
+    "spendable_serialized_field_count",
+    context.spendableSerializedFieldCount,
+  );
+  addSpendableCount(
+    "spendable_query_budget_ms",
+    context.spendableQueryBudgetMs,
+  );
+
+  if (typeof context.spendableSlowQuery === "boolean") {
+    tags.spendable_slow_query = context.spendableSlowQuery;
+    safeContext.spendable_slow_query = context.spendableSlowQuery;
+  }
+  if (typeof context.spendableBudgetExceeded === "boolean") {
+    tags.spendable_budget_exceeded = context.spendableBudgetExceeded;
+    safeContext.spendable_budget_exceeded = context.spendableBudgetExceeded;
+  }
+
   if (typeof context.forecastSlowQuery === "boolean") {
     tags.forecast_slow_query = context.forecastSlowQuery;
     safeContext.forecast_slow_query = context.forecastSlowQuery;
@@ -997,6 +1334,14 @@ function tagKeyIsOperational(key: string): boolean {
     normalized === "operation" ||
     normalized === "entitytype" ||
     normalized === "forecaststage" ||
-    normalized === "forecastquerycode"
+    normalized === "forecastquerycode" ||
+    normalized === "spendablestage" ||
+    normalized === "spendablequerycode" ||
+    normalized === "spendablecontractversion" ||
+    normalized === "spendableruleversion" ||
+    normalized === "spendablescenario" ||
+    normalized === "spendableresult" ||
+    normalized === "spendablebuffersource" ||
+    normalized === "spendablesourcekind"
   );
 }

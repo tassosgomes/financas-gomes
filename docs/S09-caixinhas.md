@@ -41,6 +41,61 @@ O produto utiliza o nome **caixinhas**.
 - S01.
 - S08 para integração final; a modelagem da caixinha pode ser implementada em paralelo após a base financeira.
 
+## Handoff S08 → S09 (T08)
+
+O proprietário da implementação final é o **domínio/backend do S09 —
+Caixinhas e movimentos**. S08 mantém somente a porta de leitura; T06 apenas a
+consumirá quando o domínio estiver disponível. Nenhuma tabela, migration ou
+CRUD de caixinhas é criada no slice S08.
+
+A porta versionada publicada em
+[`src/modules/spendable/reserve-adapter.ts`](../src/modules/spendable/reserve-adapter.ts)
+usa `s09.v1` e recebe, no servidor, apenas `asOf`, cenário, horizonte e as
+referências já refletidas. Não recebe `householdId`, `userId`, conta ou
+qualquer autoridade do browser. O contexto de tenancy é resolvido antes da
+porta pelo leitor server-side.
+
+O fornecedor S09 deve devolver saldo derivado dos movimentos efetivos até a
+data de corte, nunca um saldo persistido:
+
+- `CONTRIBUTION` soma e `WITHDRAWAL` subtrai, com `amount` positivo em
+  `Money`/centavos e `effectiveOn` em `Temporal.PlainDate`;
+- a caixinha é identificada por referência opaca e regra
+  `BOX_BALANCE_PROTECTED`; referências de movimentos são únicas;
+- saldo negativo é preservado no balanço da caixinha, mas gera proteção zero e
+  nunca aumenta o spendable global;
+- `closedOn` é efetivo: a consulta anterior ao encerramento preserva a
+  proteção histórica; na data de encerramento ou depois, a caixinha não
+  protege o global e seu histórico continua disponível;
+- a contribuição/retirada já refletida em `POSTED` ou em item do forecast não
+  gera ajuste novamente. A retirada não refletida libera a proteção uma única
+  vez; o ajuste de abertura é aplicado antes do mínimo, nunca como subtração
+  posterior do `rawSpendable`.
+
+Antes da entrega do S09, `ZeroReserveAdapter` retorna explicitamente
+`status=UNAVAILABLE`, `protectedCents="0"`,
+`appliedOpeningAdjustmentCents="0"` e `components=[]`. A serialização é a
+mesma do `SpendableReserveSnapshot` público, de modo que plugar o fornecedor
+de S09 não altera a API do S08.
+
+### Cenários que S09 deve habilitar
+
+Os testes de integração do S09 devem provar, com dados tenant-scoped:
+
+1. uma reserva reduz o bruto uma vez, mesmo quando a caixinha tem vários
+   aportes;
+2. uma retirada aumenta o disponível uma vez, sem devolver também o mesmo
+   movimento como entrada do forecast;
+3. saldo negativo e caixinha encerrada não aumentam o spendable global, mas
+   continuam explicáveis no domínio/histórico;
+4. recursos `RESTRICTED` e `EXCLUDED` não são somados à abertura `GENERAL`;
+5. referências de contribuição, retirada e despesa já refletidas são
+   deduplicadas, e uma parcela/compra/pagamento não é tratada como fonte de
+   reserva concorrente.
+
+Esses cenários pertencem ao fechamento do S09; o slice S08 comprova apenas a
+porta, o zero explícito e o adaptador puro de movimentos.
+
 ## Dados / domínio
 
 Possíveis entidades:

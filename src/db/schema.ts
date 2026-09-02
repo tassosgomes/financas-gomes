@@ -60,6 +60,7 @@ export {
   recurringOccurrences,
   recurringRules,
 } from "./recurring-schema";
+export { spendableSettings } from "./spendable-schema";
 
 import { betterAuthSchema } from "@/modules/auth/schema";
 import {
@@ -92,6 +93,7 @@ import {
   recurringOccurrences,
   recurringRules,
 } from "./recurring-schema";
+import { spendableSettings } from "./spendable-schema";
 
 export const schema = {
   ...betterAuthSchema,
@@ -116,6 +118,7 @@ export const schema = {
   recurringOccurrences,
   holidays,
   plannedEvents,
+  spendableSettings,
 } as const;
 
 export default schema;

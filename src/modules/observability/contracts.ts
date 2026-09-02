@@ -39,7 +39,7 @@ export interface ObservabilityContext {
   route?: string;
   /** HTTP status, when one exists. */
   statusCode?: number;
-  /** S04 import pipeline stage, never an input value. */
+  /** Closed S04/S07/S08 pipeline stage, never an input value. */
   stage?: string;
   /** Opaque server-side preview identifier; never the bearer token. */
   previewId?: string;
@@ -90,6 +90,51 @@ export interface ObservabilityContext {
   forecastQueryBudgetMs?: number;
   forecastSlowQuery?: boolean;
   forecastBudgetExceeded?: boolean;
+  /** S08 spendable stage; values are closed in observability/s08.ts. */
+  spendableStage?: "read" | "forecast" | "engine" | "serialization";
+  /** S08 code-owned operation identifier, never SQL or bind values. */
+  spendableQueryCode?: string;
+  /** Versioned serializable contract used by the spendable response. */
+  spendableContractVersion?: string;
+  /** Versioned formula/rule used by the spendable engine. */
+  spendableRuleVersion?: string;
+  /** S08 scenario; amounts and timeline values are never part of context. */
+  spendableScenario?: "CONSERVATIVE" | "EXPECTED";
+  /** Exact horizon length is technical metadata, not a financial value. */
+  spendableHorizonDays?: number;
+  /** Result category only; no raw or displayed cents are accepted. */
+  spendableResult?: "AVAILABLE" | "ZERO" | "DEFICIT" | "UNAVAILABLE";
+  /** Effective buffer source category; buffer cents are intentionally absent. */
+  spendableBufferSource?: "CONFIGURED" | "ABSENT_DEFAULT_ZERO";
+  /** Source category only; source/reference IDs are intentionally absent. */
+  spendableSourceKind?:
+    | "RECURRING"
+    | "PLANNED_EVENT"
+    | "INSTALLMENT"
+    | "REALIZED_EVENT"
+    | "RESERVE"
+    | "ALL";
+  /** Bounded S08 aggregate counters; individual items are omitted. */
+  spendableSourceCount?: number;
+  spendableRecurringCount?: number;
+  spendablePlannedEventCount?: number;
+  spendableInstallmentCount?: number;
+  spendableRealizedEventCount?: number;
+  spendableCancelledCount?: number;
+  spendableItemCount?: number;
+  spendableForecastItemCount?: number;
+  spendableProjectedItemCount?: number;
+  spendableRealizedItemCount?: number;
+  spendableDayCount?: number;
+  spendablePeriodCount?: number;
+  spendablePointCount?: number;
+  spendableCausalPointCount?: number;
+  spendableGeneralAccountCount?: number;
+  spendableReserveComponentCount?: number;
+  spendableSerializedFieldCount?: number;
+  spendableQueryBudgetMs?: number;
+  spendableSlowQuery?: boolean;
+  spendableBudgetExceeded?: boolean;
 }
 
 export type SentryRuntime = "server" | "edge" | "client";

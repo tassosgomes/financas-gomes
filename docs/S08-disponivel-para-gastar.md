@@ -37,6 +37,14 @@ O usuário recebe um número explicável de disponibilidade para gasto, em vez d
 - S07.
 - Integração final com S09 para descontar/proteger caixinhas conforme regra do produto.
 
+## Contrato normativo
+
+O contrato de entrada/saída, a fórmula versionada, o gate de S07, a semântica
+de `GENERAL`/`RESTRICTED`/`EXCLUDED`, o buffer operacional e a porta neutra de
+reservas estão em [`ADR-011 — Contrato de disponibilidade para gastar do
+S08`](adr/011-s08-spendable-contract.md). Ele prevalece sobre esta descrição
+genérica quando definir campos, datas, cenários, deduplicação e reconciliação.
+
 ## Dados / domínio
 
 Preferir um serviço de cálculo derivado dos dados existentes em vez de persistir um saldo "disponível" suscetível a ficar inconsistente, salvo necessidade técnica comprovada.
