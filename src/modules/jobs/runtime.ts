@@ -16,6 +16,7 @@ import {
   type S11JobName,
   type S11TechnicalErrorCode,
 } from "@/modules/observability/s11";
+import { flushSentrySafely } from "@/modules/observability/server";
 
 export const JOB_RETRY_BACKOFF_MS = [1_000, 4_000, 16_000] as const;
 export const MAX_JOB_ATTEMPTS = 3;
@@ -368,6 +369,7 @@ export async function runJob(options: RunJobOptions): Promise<JobRunResult> {
           result: "FAILED",
           errorCode: lastErrorCode,
         });
+        await flushSentrySafely();
 
         return {
           status: "FAILED",

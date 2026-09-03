@@ -74,6 +74,41 @@ permanece opaca (`toS11ErrorEnvelope`).
 Tentativas de retry do mesmo job correlacionam por `executionId` opaco e campo
 `attempt`.
 
+## Sentry nos jobs e alertas (T12)
+
+| Runtime job | Init Sentry | Release / ambiente | Flush |
+| --- | --- | --- | --- |
+| CLI `src/modules/jobs/cli.ts` | `initializeServerSentry()` | `SENTRY_RELEASE` → `VERCEL_GIT_COMMIT_SHA` → `GITHUB_SHA`; `SENTRY_ENVIRONMENT` | `flushSentrySafely()` no `exit` |
+| `runJob` / heartbeat | via `reportS11UnexpectedError` → `captureServerException` | herdado do processo | `flushSentrySafely()` após falha terminal |
+
+**Backup (T09 caminho B):** não há job `s11.backup.logical` na V1. Falhas de
+PITR/restore são acompanhadas no Neon; o proxy operacional no Sentry é a
+ausência do heartbeat diário (`s11.job.heartbeat`).
+
+**Alertas mínimos (configurar no Sentry, sem IDs no repo):**
+
+| Sinal | Limiar | Destino |
+| --- | --- | --- |
+| `job.finish` + `result: FAILED` | 1 evento | on-call / dono do projeto |
+| `export.request` + `unexpected_error` | > 5 em 5 min (ajustar `N`) | on-call / dono do projeto |
+| Backup lógico | N/A | Neon PITR; heartbeat parado = incidente |
+
+**Cron sugerido (operador):** diariamente em UTC, por exemplo `0 6 * * *`,
+com `DATABASE_URL` e `SENTRY_*` do ambiente de produção:
+
+```bash
+npx tsx src/modules/jobs/cli.ts heartbeat
+```
+
+Não há workflow agendado neste repositório: o `DATABASE_URL` de produção não
+está disponível nos secrets do CI (apenas Postgres descartável). Configure o
+cron no provedor de execução (GitHub Actions com secrets de produção, Vercel
+Cron, ou runner interno) conforme a política do time.
+
+**Validação controlada:** em não produtivo, `npx tsx src/modules/jobs/cli.ts
+heartbeat --inject-failure` após configurar DSN; confirme evento e alerta no
+Sentry. Ver também `docs/observability.md` (probe `/api/observability/test`).
+
 ## Estado de execuções de jobs (T08)
 
 O runtime em [`src/modules/jobs/runtime.ts`](../src/modules/jobs/runtime.ts)
@@ -96,8 +131,16 @@ Na aplicação, use `listRecentJobExecutions(limit)` de
 [`src/modules/jobs/query.ts`](../src/modules/jobs/query.ts) ou
 `runS11JobHeartbeat()` de
 [`src/modules/jobs/heartbeat.ts`](../src/modules/jobs/heartbeat.ts) para
-exercitar o job operacional `s11.job.heartbeat`. Não há tela nem endpoint
-público novo; `/api/readiness` permanece inalterado.
+exercitar o job operacional `s11.job.heartbeat`. Para cron ou operador:
+
+```bash
+npx tsx src/modules/jobs/cli.ts heartbeat
+```
+
+O CLI inicializa Sentry (`initializeServerSentry`), executa o heartbeat,
+faz `flushSentrySafely()` e termina com código `0` ou `1`. Falhas terminais no
+runtime também chamam flush após `logS11JobFinish` / `reportS11UnexpectedError`.
+Não há tela nem endpoint público novo; `/api/readiness` permanece inalterado.
 
 Status persistidos: `RUNNING`, `SUCCEEDED`, `FAILED`. Chamadas duplicadas na
 mesma janela já concluída retornam `SKIPPED_IDEMPOTENT` nos eventos sem

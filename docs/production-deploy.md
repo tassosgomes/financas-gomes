@@ -214,6 +214,23 @@ evento tem ambiente/release corretos e não contém cookies, Authorization,
 tokens de convite, secrets, mensagens de erro ou dados financeiros. Desative o
 modo de teste imediatamente após a validação.
 
+### Job heartbeat agendado
+
+Execute diariamente (UTC) o CLI de jobs com as mesmas variáveis de produção
+(`DATABASE_URL`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, release via SHA ou
+`SENTRY_RELEASE`):
+
+```bash
+npx tsx src/modules/jobs/cli.ts heartbeat
+```
+
+Exemplo de cron: `0 6 * * *`. Não há workflow agendado versionado aqui porque
+o repositório não expõe `DATABASE_URL` de produção nos workflows de CI; o
+operador deve configurar o agendamento no ambiente protegido (GitHub Actions
+com secrets de produção, Vercel Cron ou runner interno). Falha do job deve
+disparar o alerta Sentry de `job.finish` + `FAILED` descrito em
+[`docs/observability.md`](observability.md).
+
 ## Rollback e reexecução segura
 
 As migrations são forward-only. Não edite nem tente executar uma migration

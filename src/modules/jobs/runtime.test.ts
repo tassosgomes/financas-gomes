@@ -3,9 +3,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/observability/server", () => ({
   addBreadcrumbSafely: vi.fn(),
   captureServerException: vi.fn(),
+  flushSentrySafely: vi.fn(async () => true),
 }));
 
-import { captureServerException } from "@/modules/observability/server";
+import { captureServerException, flushSentrySafely } from "@/modules/observability/server";
 
 import {
   JOB_RETRY_BACKOFF_MS,
@@ -75,6 +76,7 @@ describe("S11 job runtime (unit)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.mocked(captureServerException).mockClear();
+    vi.mocked(flushSentrySafely).mockClear();
   });
 
   it("classifies deterministic errors without retrying", async () => {
@@ -112,6 +114,7 @@ describe("S11 job runtime (unit)", () => {
     expect(result.errorCode).toBe("JOB_INVALID_INPUT");
     expect(effect).toHaveBeenCalledOnce();
     expect(sleep).not.toHaveBeenCalled();
+    expect(flushSentrySafely).toHaveBeenCalledOnce();
   });
 
   it("retries transient failures with bounded backoff", async () => {
