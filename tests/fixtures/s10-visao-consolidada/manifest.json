@@ -1,0 +1,55 @@
+{
+  "fixtureVersion": "s10-visao-consolidada-t09-v1",
+  "normativeContract": "../../../docs/adr/013-s10-visao-consolidada-contract.md",
+  "dateType": "Temporal.PlainDate",
+  "moneyType": "bigint-cents",
+  "syntheticData": true,
+  "seedSource": "seed.ts",
+  "observabilityFixtureSource": "../../../src/modules/observability/s10.ts",
+  "households": 2,
+  "months": ["2026-07", "2026-08", "2026-09"],
+  "asOf": "2026-09-15",
+  "expectedIndexes": [
+    "financial_events_household_occurred_on_idx",
+    "financial_events_household_category_occurred_on_idx"
+  ],
+  "performanceBudget": {
+    "slowQueryThresholdMs": 500,
+    "blockTimeoutMs": 2500,
+    "constants": [
+      "OVERVIEW_SLOW_QUERY_THRESHOLD_MS",
+      "OVERVIEW_BLOCK_TIMEOUT_MS"
+    ]
+  },
+  "fixtures": [
+    {
+      "id": "volume-seed",
+      "owner": "T09",
+      "source": "seed.ts",
+      "flag": "T10_INTEGRATION=1",
+      "service": "docker-compose.test.yml#db",
+      "coverage": [
+        "representative-volume",
+        "two-households",
+        "expense-income-purchase",
+        "installment-plan",
+        "transfer-excluded",
+        "reversal",
+        "outros-categories",
+        "optional-budgets"
+      ]
+    },
+    {
+      "id": "period-aggregation-explain",
+      "owner": "T09/T13/T15",
+      "source": "../../../src/modules/overview/query.ts#explainPeriodAggregationQuery",
+      "flag": "T10_INTEGRATION=1",
+      "coverage": ["index-usage", "tenant-scope", "no-seq-scan"]
+    }
+  ],
+  "openGates": [
+    "T13 integration EXPLAIN with ANALYZE",
+    "T14 E2E",
+    "T15 release"
+  ]
+}

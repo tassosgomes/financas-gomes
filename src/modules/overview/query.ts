@@ -20,6 +20,8 @@ export type OverviewReadExecutor = TransactionReferenceExecutor;
 
 export interface OverviewQueryOptions {
   readonly database?: OverviewReadExecutor;
+  /** When true, runs `EXPLAIN (ANALYZE, FORMAT TEXT)` instead of `EXPLAIN` only. */
+  readonly analyze?: boolean;
 }
 
 export class OverviewQueryError extends Error {
@@ -219,8 +221,12 @@ export async function explainPeriodAggregationQuery(
   assertFinancialContext(context);
   const executor = resolveExecutor(options.database);
 
+  const explainClause = options.analyze
+    ? sql`EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)`
+    : sql`EXPLAIN (FORMAT TEXT)`;
+
   const result = await executor.execute(sql`
-    EXPLAIN (FORMAT TEXT)
+    ${explainClause}
     SELECT fe.id
     FROM financial_events fe
     LEFT JOIN categories c
