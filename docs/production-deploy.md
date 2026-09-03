@@ -31,9 +31,38 @@ tem gatilho em pull request nem executa migration no boot da aplicação.
 
 ### Neon
 
-Crie ou selecione o banco PostgreSQL de produção no projeto Neon e confirme
-que o backup/PITR compatível com a política operacional está habilitado. Use
-duas conexões quando possível:
+Crie ou selecione o banco PostgreSQL de produção no projeto Neon. A Vercel
+**não faz backup** dos dados do PostgreSQL — a integração de marketplace apenas
+injeta `DATABASE_URL` e hospeda a aplicação. Toda política de retenção,
+PITR e restauração é responsabilidade do **Neon** (decisão T02 / ADR-014).
+
+Antes do primeiro deploy de produção, o operador deve confirmar no console Neon
+(sem registrar IDs neste documento):
+
+1. **Plano pago** (Launch ou Scale). O plano Free limita o histórico a 6 horas
+   e **não** atende a política de retenção ≥ 7 dias da V1.
+2. **Instant restore (PITR) habilitado** — janela de histórico maior que zero
+   (`Settings → Instant restore`). Valor zero desliga PITR e Time Travel.
+3. **Janela de histórico ≥ 7 dias** (`history_retention_seconds` ≥ 604800).
+   Planos Launch permitem até 7 dias; Scale até 30 dias. O padrão de planos
+   pagos é 1 dia — é necessário **aumentar** explicitamente para 7 dias.
+4. O branch usado em produção é um **root branch** (PITR só é suportado em root
+   branches, por exemplo `main` ou `production`).
+5. Existe procedimento aprovado para restaurar em **branch separada** antes de
+   promover qualquer troca em produção — ver
+   [`docs/backup-restore.md`](backup-restore.md) (runbook T13).
+
+Fontes públicas (consultadas em 2026-09-03): [Neon — History
+window](https://neon.com/docs/introduction/history-window), [Neon — Instant
+restore](https://neon.com/docs/introduction/branch-restore), [Vercel — Postgres
+on Vercel](https://vercel.com/docs/storage/vercel-postgres) (confirma que a
+Vercel não hospeda nem backupa PostgreSQL).
+
+Matriz completa da auditoria: [`docs/S11-backup-audit.md`](S11-backup-audit.md).
+T09 confirmou o caminho B: **não** configure chaves de object storage para
+backup da V1 (`BACKUP_*`, `S3_*`, `R2_*` não fazem parte do runtime).
+
+Use duas conexões quando possível:
 
 - `DATABASE_URL` no Vercel: endpoint pooled do Neon, com TLS, para o runtime da
   aplicação;
@@ -186,6 +215,23 @@ evento tem ambiente/release corretos e não contém cookies, Authorization,
 tokens de convite, secrets, mensagens de erro ou dados financeiros. Desative o
 modo de teste imediatamente após a validação.
 
+### Job heartbeat agendado
+
+Execute diariamente (UTC) o CLI de jobs com as mesmas variáveis de produção
+(`DATABASE_URL`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, release via SHA ou
+`SENTRY_RELEASE`):
+
+```bash
+npx tsx src/modules/jobs/cli.ts heartbeat
+```
+
+Exemplo de cron: `0 6 * * *`. Não há workflow agendado versionado aqui porque
+o repositório não expõe `DATABASE_URL` de produção nos workflows de CI; o
+operador deve configurar o agendamento no ambiente protegido (GitHub Actions
+com secrets de produção, Vercel Cron ou runner interno). Falha do job deve
+disparar o alerta Sentry de `job.finish` + `FAILED` descrito em
+[`docs/observability.md`](observability.md).
+
 ## Rollback e reexecução segura
 
 As migrations são forward-only. Não edite nem tente executar uma migration
@@ -198,9 +244,9 @@ As migrations são forward-only. Não edite nem tente executar uma migration
   for compatível com o schema expandido; corrija o build e publique uma nova
   versão. Não reverta SQL manualmente.
 - Migration com dados incorretos ou destrutivos: pare a operação, preserve os
-  logs sem segredos e siga o procedimento de restauração/PITR aprovado pelo
-  responsável Neon. Restauração de produção exige autorização explícita e
-  validação em um banco separado antes de qualquer troca.
+  logs sem segredos e siga o procedimento de restauração/PITR em
+  [`docs/backup-restore.md`](backup-restore.md). Restauração de produção exige
+  autorização explícita e validação em um banco separado antes de qualquer troca.
 - Após corrigir a causa, reexecute o mesmo workflow no commit aprovado. A
   tabela `drizzle.__drizzle_migrations` torna a aplicação idempotente: versões
   já aplicadas ficam registradas e somente pendências são executadas.

@@ -1,6 +1,6 @@
 # T02 — Auditoria do backup nativo e decisão sobre backup externo e workflows duráveis
 
-- Status: Não iniciada
+- Status: Concluída (2026-09-03)
 - Onda: 1
 - Dependências: T01
 - Paralelização: Com T03, T04, T05 e T06
@@ -40,32 +40,32 @@ o backup nativo da infraestrutura já satisfaz a política definida em T01.
 
 ## Subtarefas
 
-- [ ] Levantar e registrar as capacidades nativas verificadas, com data e
+- [x] Levantar e registrar as capacidades nativas verificadas, com data e
   origem da informação.
-- [ ] Preencher a matriz política × capacidade nativa × lacuna.
-- [ ] Registrar a decisão sobre backup externo com alternativas consideradas e
+- [x] Preencher a matriz política × capacidade nativa × lacuna.
+- [x] Registrar a decisão sobre backup externo com alternativas consideradas e
   consequências.
-- [ ] Registrar a decisão sobre orquestrador durável com o mesmo rigor.
-- [ ] Atualizar a ADR-014 com ambas as decisões e o gatilho que faria
+- [x] Registrar a decisão sobre orquestrador durável com o mesmo rigor.
+- [x] Atualizar a ADR-014 com ambas as decisões e o gatilho que faria
   revisitá-las.
 
 ## Critérios de aceite
 
-- [ ] Cada capacidade afirmada tem origem verificável, não suposição.
-- [ ] Toda lacuna está descrita em relação à política de T01, com impacto.
-- [ ] A decisão sobre R2/S3 é binária, datada e justificada; se for "não
+- [x] Cada capacidade afirmada tem origem verificável, não suposição.
+- [x] Toda lacuna está descrita em relação à política de T01, com impacto.
+- [x] A decisão sobre R2/S3 é binária, datada e justificada; se for "não
   implementar", a justificativa e o gatilho de revisão ficam registrados.
-- [ ] A decisão sobre workflow durável é binária e não introduz componente sem
+- [x] A decisão sobre workflow durável é binária e não introduz componente sem
   workflow real que o exija.
-- [ ] Nenhuma decisão cria dependência de domínio em provedor específico.
-- [ ] Nenhum segredo, URL de banco ou identificador de projeto entra na
+- [x] Nenhuma decisão cria dependência de domínio em provedor específico.
+- [x] Nenhum segredo, URL de banco ou identificador de projeto entra na
   documentação.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Seção de auditoria e decisão na ADR-014.
-- [ ] Matriz política × capacidade × lacuna publicada em `docs/`.
-- [ ] Atualização de `docs/production-deploy.md` com o que o operador precisa
+- [x] Seção de auditoria e decisão na ADR-014.
+- [x] Matriz política × capacidade × lacuna publicada em `docs/`.
+- [x] Atualização de `docs/production-deploy.md` com o que o operador precisa
   confirmar no provedor.
 
 ## Sequenciamento

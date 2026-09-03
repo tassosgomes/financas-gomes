@@ -1,0 +1,69 @@
+{
+  "columns": [
+    "id",
+    "kind",
+    "status",
+    "origin",
+    "amountCents",
+    "occurredOn",
+    "description",
+    "categoryId",
+    "reversalOfEventId",
+    "createdAt",
+    "updatedAt"
+  ],
+  "rows": [
+    {
+      "id": "018f1a2b-0000-7000-8000-000000000001",
+      "kind": "EXPENSE",
+      "status": "POSTED",
+      "origin": "MANUAL",
+      "amountCents": "250000",
+      "occurredOn": "2026-01-15",
+      "description": "Almoço, centro",
+      "categoryId": "018f1a2b-0000-7000-8000-000000000010",
+      "reversalOfEventId": null,
+      "createdAt": "2026-01-15T14:30:00.000Z",
+      "updatedAt": "2026-01-15T14:30:00.000Z"
+    },
+    {
+      "id": "018f1a2b-0000-7000-8000-000000000002",
+      "kind": "EXPENSE",
+      "status": "POSTED",
+      "origin": "MANUAL",
+      "amountCents": "-1500",
+      "occurredOn": "2026-01-16",
+      "description": "=1+1",
+      "categoryId": null,
+      "reversalOfEventId": null,
+      "createdAt": "2026-01-16T08:00:00.000Z",
+      "updatedAt": "2026-01-16T08:00:00.000Z"
+    },
+    {
+      "id": "018f1a2b-0000-7000-8000-000000000003",
+      "kind": "INCOME",
+      "status": "POSTED",
+      "origin": "MANUAL",
+      "amountCents": "999999999999999",
+      "occurredOn": "2026-02-01",
+      "description": "Salário \"especial\"\nlinha 2",
+      "categoryId": null,
+      "reversalOfEventId": null,
+      "createdAt": "2026-02-01T12:00:00.000Z",
+      "updatedAt": "2026-02-01T12:00:00.000Z"
+    },
+    {
+      "id": "018f1a2b-0000-7000-8000-000000000004",
+      "kind": "EXPENSE",
+      "status": "CANCELLED",
+      "origin": "MANUAL",
+      "amountCents": "0",
+      "occurredOn": "2026-03-01",
+      "description": "@SUM(A1:A9)",
+      "categoryId": null,
+      "reversalOfEventId": "018f1a2b-0000-7000-8000-000000000001",
+      "createdAt": "2026-03-01T00:00:00.000Z",
+      "updatedAt": "2026-03-01T00:00:00.000Z"
+    }
+  ]
+}

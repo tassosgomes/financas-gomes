@@ -1,6 +1,6 @@
 # T01 — Contrato do S11, datasets exportáveis e fronteira do slice
 
-- Status: Não iniciada
+- Status: Concluída (2026-09-03)
 - Onda: 0
 - Dependências: modelo de dados final da V1 (S01–S10) e handoff S10 → S11
 - Paralelização: Serial; desbloqueia todo o slice
@@ -51,42 +51,43 @@ retenção e fronteira entre backup nativo e backup adicional.
 
 ## Subtarefas
 
-- [ ] Inventariar as tabelas e leituras existentes candidatas a dataset,
+- [x] Inventariar as tabelas e leituras existentes candidatas a dataset,
   registrando origem, colunas disponíveis e sensibilidade de cada campo.
-- [ ] Publicar a ADR-014 com o contrato `s11.v1`, invariantes, exemplos de
+- [x] Publicar a ADR-014 com o contrato `s11.v1`, invariantes, exemplos de
   linha e a precedência entre PRD §25–26, TechSpec §4, §98, §102–103, §112–113
   e este slice.
-- [ ] Publicar a matriz de cenários: espaço vazio, espaço completo, filtro sem
+- [x] Publicar a matriz de cenários: espaço vazio, espaço completo, filtro sem
   resultado, dataset de slice ainda aberto, volume representativo, caracteres
   especiais/injeção de fórmula em CSV e tentativa cross-space.
-- [ ] Mapear cada critério de aceite de `docs/S11-operacao-confiavel.md` para
+- [x] Mapear cada critério de aceite de `docs/S11-operacao-confiavel.md` para
   as tasks T02–T16 e para a evidência que vai prová-lo.
-- [ ] Publicar a lista de gates externos abertos (S09 T04/T07/T08/T11–T15 e
-  todo o S10) e o comportamento contratado da exportação enquanto o dataset
-  correspondente não existir.
+- [x] Publicar a lista de gates externos abertos (S09 publicado em `main`;
+  S10 ainda não iniciado e sem dataset persistido) e o comportamento
+  contratado da exportação enquanto o dataset correspondente não existir.
 
 ## Critérios de aceite
 
-- [ ] Nenhuma coluna, formato ou regra de exclusão depende da interpretação
+- [x] Nenhuma coluna, formato ou regra de exclusão depende da interpretação
   local de uma task posterior.
-- [ ] Todo dataset tem justificativa explícita de portabilidade ou
+- [x] Todo dataset tem justificativa explícita de portabilidade ou
   reconciliação e um dono declarado.
-- [ ] A lista de dados proibidos é fechada e verificável por teste.
-- [ ] O contrato proíbe autoridade de tenancy vinda do browser em qualquer
+- [x] A lista de dados proibidos é fechada e verificável por teste.
+- [x] O contrato proíbe autoridade de tenancy vinda do browser em qualquer
   etapa da exportação.
-- [ ] A política de retenção e restauração declara janela, RPO, RTO e critério
+- [x] A política de retenção e restauração declara janela, RPO, RTO e critério
   de sucesso, mesmo que conservadores.
-- [ ] O contrato afirma que a exportação não recalcula nem reinterpreta valor
+- [x] O contrato afirma que a exportação não recalcula nem reinterpreta valor
   financeiro derivado.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `docs/adr/014-s11-portabilidade-backup.md` com o contrato versionado.
-- [ ] `docs/S11-operacao-confiavel-contract-matrix.md` com cenários e o
+- [x] `docs/adr/014-s11-portabilidade-backup.md` com o contrato versionado.
+- [x] `docs/S11-operacao-confiavel-contract-matrix.md` com cenários e o
   mapeamento de critérios para tasks.
-- [ ] Atualização de `docs/S11-operacao-confiavel.md` apenas com decisões
+- [x] Atualização de `docs/S11-operacao-confiavel.md` apenas com decisões
   compatíveis com o escopo do slice.
-- [ ] `rtk npm exec tsc -- --noEmit` e revisão dos links da documentação.
+- [ ] `rtk npm exec tsc -- --noEmit` e revisão dos links da documentação
+  (gate de compilação na onda de código; links conferidos em T01).
 
 ## Sequenciamento
 

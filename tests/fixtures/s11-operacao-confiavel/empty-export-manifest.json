@@ -1,0 +1,148 @@
+{
+  "contractVersion": "s11.v1",
+  "generatedAt": "2000-01-01T00:00:00.000Z",
+  "datasetCount": 17,
+  "availableCount": 17,
+  "unavailableCount": 0,
+  "rowCountTotal": 0,
+  "byteCountTotal": 1600,
+  "filtersApplied": null,
+  "datasets": [
+    {
+      "id": "accounts",
+      "fileName": "accounts.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 99,
+      "sort": "name ASC, id ASC"
+    },
+    {
+      "id": "categories",
+      "fileName": "categories.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 49,
+      "sort": "kind ASC, name ASC, id ASC"
+    },
+    {
+      "id": "financial_events",
+      "fileName": "financial_events.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 106,
+      "sort": "occurredOn ASC, id ASC"
+    },
+    {
+      "id": "account_entries",
+      "fileName": "account_entries.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 93,
+      "sort": "postedOn NULLS LAST, expectedOn NULLS LAST, id ASC"
+    },
+    {
+      "id": "credit_cards",
+      "fileName": "credit_cards.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 74,
+      "sort": "id ASC"
+    },
+    {
+      "id": "credit_card_billing_rules",
+      "fileName": "credit_card_billing_rules.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 67,
+      "sort": "cardId ASC, effectiveFrom ASC, id ASC"
+    },
+    {
+      "id": "credit_card_purchases",
+      "fileName": "credit_card_purchases.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 65,
+      "sort": "id ASC"
+    },
+    {
+      "id": "installment_plans",
+      "fileName": "installment_plans.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 58,
+      "sort": "id ASC"
+    },
+    {
+      "id": "installments",
+      "fileName": "installments.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 169,
+      "sort": "planId ASC, sequence ASC, id ASC"
+    },
+    {
+      "id": "recurring_rules",
+      "fileName": "recurring_rules.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 146,
+      "sort": "startOn ASC, id ASC"
+    },
+    {
+      "id": "recurring_occurrences",
+      "fileName": "recurring_occurrences.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 110,
+      "sort": "recurringRuleId ASC, occurrenceKey ASC, id ASC"
+    },
+    {
+      "id": "planned_events",
+      "fileName": "planned_events.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 148,
+      "sort": "expectedOn ASC, id ASC"
+    },
+    {
+      "id": "holidays",
+      "fileName": "holidays.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 33,
+      "sort": "date ASC, id ASC"
+    },
+    {
+      "id": "spendable_settings",
+      "fileName": "spendable_settings.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 50,
+      "sort": "effectiveFrom ASC, id ASC"
+    },
+    {
+      "id": "budgets",
+      "fileName": "budgets.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 107,
+      "sort": "name ASC, id ASC"
+    },
+    {
+      "id": "budget_movements",
+      "fileName": "budget_movements.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 163,
+      "sort": "effectiveOn ASC, id ASC"
+    },
+    {
+      "id": "budget_allocation_rules",
+      "fileName": "budget_allocation_rules.csv",
+      "availability": "AVAILABLE",
+      "rowCount": 0,
+      "byteCount": 63,
+      "sort": "budgetId ASC, effectiveFrom ASC, id ASC"
+    }
+  ]
+}

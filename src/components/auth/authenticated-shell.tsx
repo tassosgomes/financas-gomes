@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeftRight,
   CalendarRange,
+  Database,
   LayoutDashboard,
   Tags,
   WalletCards,
@@ -20,6 +21,10 @@ import {
 } from "@/modules/transactions/routes";
 import { CREDIT_CARD_ROUTES } from "@/components/credit-cards/ui-contracts";
 import { FORECAST_ROUTE } from "@/modules/forecast/routes";
+import {
+  EXPORT_SETTINGS_NAV_LABEL,
+  EXPORT_SETTINGS_ROUTE,
+} from "@/modules/export/routes";
 
 export interface AuthenticatedShellUser {
   name: string;
@@ -129,6 +134,13 @@ export function AuthenticatedShell({
           >
             Categorias
           </Link>
+          <Link
+            className="shrink-0 rounded-lg border bg-card px-3 py-2 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            href={EXPORT_SETTINGS_ROUTE}
+            prefetch={false}
+          >
+            {EXPORT_SETTINGS_NAV_LABEL}
+          </Link>
         </nav>
         <aside className="hidden md:block">
           <nav aria-label="Navegação do espaço financeiro">
@@ -188,6 +200,14 @@ export function AuthenticatedShell({
               >
                 <Tags aria-hidden="true" className="size-4" />
                 Categorias
+              </Link>
+              <Link
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                href={EXPORT_SETTINGS_ROUTE}
+                prefetch={false}
+              >
+                <Database aria-hidden="true" className="size-4" />
+                {EXPORT_SETTINGS_NAV_LABEL}
               </Link>
             </div>
           </nav>
