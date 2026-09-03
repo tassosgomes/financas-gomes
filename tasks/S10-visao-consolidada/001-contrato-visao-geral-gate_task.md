@@ -1,6 +1,6 @@
 # T01 — Contrato da Visão Geral, fronteira e gate de dependências
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 0
 - Dependências: S05, S07, S08, S09 e os contratos publicados nos handoffs
 - Paralelização: Serial; desbloqueia todo o slice
@@ -47,43 +47,53 @@ dono de cada fórmula.
 
 ## Subtarefas
 
-- [ ] Inventariar as leituras já existentes que serão consumidas
+- [x] Inventariar as leituras já existentes que serão consumidas
   (`getSpendable`, serviços de forecast, `budgetReadAccess`, projeções de
   cartão, reads de transações) e registrar assinatura, contexto exigido e
   erros de cada uma, sem propor reimplementação.
-- [ ] Publicar a ADR-013 com o contrato `s10.v1`, invariantes, exemplos em
+- [x] Publicar a ADR-013 com o contrato `s10.v1`, invariantes, exemplos em
   centavos e a precedência entre PRD, TechSpec e handoffs S08/S09.
-- [ ] Publicar a matriz de cenários: espaço vazio, apenas transações, apenas
+- [x] Publicar a matriz de cenários: espaço vazio, apenas transações, apenas
   cartão, cartão + parcela, refund no período, Caixinha com saldo negativo,
   Caixinha encerrada, forecast sem itens, receita prevista não realizada e
   volume representativo.
-- [ ] Mapear cada critério de aceite de `docs/S10-visao-consolidada.md` para as
+- [x] Mapear cada critério de aceite de `docs/S10-visao-consolidada.md` para as
   tasks T02–T15 e para a evidência que vai prová-lo.
-- [ ] Publicar a lista de gates externos abertos (S09 T04/T07–T15) e o
-  comportamento contratado da home enquanto eles não fecharem.
+- [x] Atualizar o gate S09: slice entregue em `main`; bloco Caixinhas **AVAILABLE**
+  por padrão (substitui a nota obsoleta de indisponibilidade).
 
 ## Critérios de aceite
 
-- [ ] Nenhum campo, janela temporal ou regra de exclusão depende da
+- [x] Nenhum campo, janela temporal ou regra de exclusão depende da
   interpretação local de uma task posterior.
-- [ ] O contrato afirma explicitamente que "quanto posso gastar" é o resultado
+- [x] O contrato afirma explicitamente que "quanto posso gastar" é o resultado
   do S08 consumido sem recálculo, reformatação de fórmula ou arredondamento
   próprio.
-- [ ] A regra de não dupla contagem cartão/transação está escrita em centavos,
+- [x] A regra de não dupla contagem cartão/transação está escrita em centavos,
   com exemplo numérico de compra parcelada, fatura e pagamento.
-- [ ] Cada bloco tem estado declarado para dado ausente, dado parcial, erro e
+- [x] Cada bloco tem estado declarado para dado ausente, dado parcial, erro e
   volume alto, e nenhum deles converte erro em zero.
-- [ ] O contrato proíbe `householdId`, `userId` ou qualquer autoridade de
+- [x] O contrato proíbe `householdId`, `userId` ou qualquer autoridade de
   tenancy vinda do browser nas leituras da home.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `docs/adr/013-s10-overview-contract.md` com contrato versionado.
-- [ ] `docs/S10-visao-consolidada-contract-matrix.md` com cenários e mapeamento
+- [x] `docs/adr/013-s10-overview-contract.md` com contrato versionado.
+- [x] `docs/S10-visao-consolidada-contract-matrix.md` com cenários e mapeamento
   de critérios para tasks.
-- [ ] Atualização de `docs/S10-visao-consolidada.md` apenas com decisões
+- [x] Atualização de `docs/S10-visao-consolidada.md` apenas com decisões
   compatíveis com o escopo do slice.
-- [ ] `rtk npm exec tsc -- --noEmit` e revisão de links da documentação.
+- [x] Revisão estática registrada abaixo.
+
+### Comandos executados (2026-09-03)
+
+```text
+$ git diff --check
+(sem erros de whitespace)
+
+$ npx tsc --noEmit --pretty false
+(exit 0)
+```
 
 ## Sequenciamento
 

@@ -17,14 +17,34 @@ Ao abrir o sistema, o usuário entende onde o dinheiro está indo, quanto pode g
 
 ## Escopo
 
-- Resumo do período atual.
-- Despesas por categoria ou agrupamento principal.
-- Receitas/despesas realizadas.
-- Disponível para gastar vindo do cálculo único do S08.
-- Próximos compromissos relevantes.
-- Resumo de caixinhas.
-- Links/drill-down para as telas de origem.
-- Empty states coerentes para usuário novo.
+- Home autenticada em `/app` (`AUTHENTICATED_ROUTE`).
+- Resumo do **período atual** (mês civil do `asOf` resolvido no servidor).
+- Despesas por categoria ou agrupamento principal (máx. 8 grupos + "Outros").
+- Receitas/despesas realizadas e planejado × realizado do mês (composição S07).
+- Disponível para gastar: resultado **byte-a-byte** do S08 (`s08.v1`), sem recálculo.
+- Próximos compromissos e receitas (S07).
+- Resumo de caixinhas (S09 **disponível** — slice entregue em `main`).
+- Faturas de cartão informativas (S06; não entram em despesas do período).
+- Alertas determinísticos derivados do read model consolidado.
+- Links/drill-down para as telas de origem com filtros na URL.
+- Empty states coerentes para usuário novo; erro por bloco nunca como zero monetário.
+
+## Contrato
+
+A semântica pública está fechada em
+[`docs/adr/013-s10-overview-contract.md`](adr/013-s10-overview-contract.md)
+(`s10.v1`). A matriz de cenários e gates está em
+[`docs/S10-visao-consolidada-contract-matrix.md`](S10-visao-consolidada-contract-matrix.md).
+
+Decisões normativas já fechadas em T01:
+
+- **Período atual:** mês civil inclusivo de `asOf`; `Temporal.PlainDate` apenas.
+- **Composição:** S10 compõe S06/S07/S08/S09; a única agregação nova é despesas
+  por categoria do período (T02).
+- **Não dupla contagem:** `PURCHASE` econômico uma vez; fatura, parcela,
+  pagamento `TRANSFER` e movimentos de Caixinha ficam fora das despesas do mês.
+- **Degradação:** leituras concorrentes por bloco; timeout 2500 ms; sem cache V1.
+- **Tenancy:** browser nunca envia `householdId`/`userId`.
 
 ## Fora de escopo
 
@@ -33,6 +53,9 @@ Ao abrir o sistema, o usuário entende onde o dinheiro está indo, quanto pode g
 - Relatórios customizados pelo usuário.
 - Benchmark contra outros usuários.
 - Insights de IA não previstos no PRD.
+- Patrimônio total/líquido e gráficos de evolução patrimonial (S11 ou posterior).
+- Cache na home V1.
+- Segundo card de "quanto posso gastar".
 
 ## Dependências
 
@@ -47,10 +70,12 @@ Esta slice deve **consumir serviços de domínio existentes**, evitando reimplem
 
 ## Backend
 
-- Queries agregadas eficientes.
-- Contrato de dashboard consolidado ou composição eficiente de endpoints existentes.
+- Contrato `s10.v1` (ADR-013): composição de leituras existentes + agregação de
+  período/categorias (T02).
+- Queries agregadas eficientes para a agregação nova; demais blocos reutilizam
+  serviços publicados.
 - Paginação/drill-down onde necessário.
-- Cache somente se necessário e sem sacrificar consistência da V1.
+- **Sem cache** na V1 (qualquer exceção exige ADR com invalidação explícita).
 
 ## Frontend
 

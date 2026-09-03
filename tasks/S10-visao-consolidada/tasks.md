@@ -53,11 +53,11 @@ cartão, fatura e parcelas. S07 fornece forecast e timeline. S08 fornece a
 fórmula e o read model de Spendable. S09 fornece Caixinhas, saldo derivado e a
 porta `s09.v1`.
 
-**Gate externo aberto:** no S09, T04, T07, T08 e T11–T15 ainda não estão
-concluídas. Enquanto os movimentos, o provider integrado e a UI `/budgets` não
-existirem, o bloco de caixinhas da home opera no estado de indisponibilidade
-contratado em T01 e o drill-down correspondente permanece desabilitado e
-explicado. Nenhuma task do S10 deve compensar isso com número derivado próprio.
+**Gate S09 — fechado:** o slice S09 está integralmente entregue em `main`
+(`feat: deliver S09 caixinhas`). O bloco de Caixinhas da home opera em estado
+**AVAILABLE** por padrão, consumindo `budgetReadAccess` / `s09.v1`. Falha
+técnica isolada do bloco renderiza `error` próprio; não há fallback default de
+indisponibilidade nem número derivado próprio pelo S10.
 
 ## Ordem de execução
 
