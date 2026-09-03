@@ -32,16 +32,6 @@ export const JOB_EXECUTION_STATUSES = [
 
 export type JobExecutionStatus = (typeof JOB_EXECUTION_STATUSES)[number];
 
-const JOB_NAME_ALLOWLIST_SQL = sql.join(
-  JOB_EXECUTION_JOB_NAMES.map((name) => sql`${name}`),
-  sql`, `,
-);
-
-const JOB_STATUS_ALLOWLIST_SQL = sql.join(
-  JOB_EXECUTION_STATUSES.map((status) => sql`${status}`),
-  sql`, `,
-);
-
 /**
  * One logical job run per UTC civil day (`logical_window` = `YYYY-MM-DD`).
  * Concurrent starters contend on the unique `(job_name, logical_window)` key.
@@ -80,11 +70,19 @@ export const jobExecutions = pgTable(
     ),
     check(
       "job_executions_job_name_allowlist_check",
-      sql`${table.jobName} in (${JOB_NAME_ALLOWLIST_SQL})`,
+      sql`${table.jobName} in (
+        's11.job.heartbeat',
+        's11.backup.logical'
+      )`,
     ),
     check(
       "job_executions_status_allowlist_check",
-      sql`${table.status} in (${JOB_STATUS_ALLOWLIST_SQL})`,
+      sql`${table.status} in (
+        'RUNNING',
+        'SUCCEEDED',
+        'FAILED',
+        'SKIPPED_IDEMPOTENT'
+      )`,
     ),
     check(
       "job_executions_logical_window_shape_check",
