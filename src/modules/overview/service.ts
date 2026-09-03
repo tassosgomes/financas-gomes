@@ -22,6 +22,7 @@ import {
   type ComposeOverviewOptions,
   type ComposeOverviewOriginsResult,
 } from "./composition";
+import { deriveOverviewAlerts } from "./alerts";
 import {
   OVERVIEW_CONTRACT_VERSION,
   OverviewDomainError,
@@ -411,17 +412,14 @@ function mapCardInvoicesBlock(
   });
 }
 
-/** Stub for T08 — returns no alerts until deterministic rules land. */
-export function deriveOverviewAlerts(
-  _readModel: OverviewReadModel,
-): readonly OverviewAlert[] {
-  return [];
-}
-
 function mapAlertsBlock(
   readModel: OverviewReadModel,
+  forecast: OriginResult<ForecastTimeline>,
 ): OverviewBlockEnvelope<{ items: readonly OverviewAlert[] }> {
-  return readyBlock({ items: deriveOverviewAlerts(readModel) });
+  const extras = forecast.ok
+    ? { forecast: forecast.value }
+    : { forecastOriginFailed: true as const };
+  return readyBlock({ items: deriveOverviewAlerts(readModel, extras) });
 }
 
 function summarizeReadModel(value: unknown): S10OverviewResultSummary {
@@ -507,7 +505,7 @@ function assembleReadModel(
 
   return {
     ...partial,
-    alerts: mapAlertsBlock(partial),
+    alerts: mapAlertsBlock(partial, composition.forecast),
   };
 }
 

@@ -1,6 +1,6 @@
 # T08 — Alertas determinísticos da V1
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 2
 - Dependências: T06
 - Paralelização: Com T07 e T09
@@ -27,28 +27,28 @@ e sem qualquer inferência de IA.
 
 ## Subtarefas
 
-- [ ] Escrever a tabela de regras (condição, severidade, mensagem, destino) e
+- [x] Escrever a tabela de regras (condição, severidade, mensagem, destino) e
   aprová-la contra o ADR-013.
-- [ ] Implementar a derivação pura dos alertas com testes por regra.
-- [ ] Cobrir limites: exatamente no limiar, logo abaixo e logo acima.
-- [ ] Cobrir espaço vazio, dado parcial e origem em erro.
-- [ ] Garantir ordenação e teto determinísticos.
+- [x] Implementar a derivação pura dos alertas com testes por regra.
+- [x] Cobrir limites: exatamente no limiar, logo abaixo e logo acima.
+- [x] Cobrir espaço vazio, dado parcial e origem em erro.
+- [x] Garantir ordenação e teto determinísticos.
 
 ## Critérios de aceite
 
-- [ ] Toda regra é pura e determinística; a mesma entrada gera exatamente o
+- [x] Toda regra é pura e determinística; a mesma entrada gera exatamente o
   mesmo conjunto de alertas.
-- [ ] Nenhum alerta consulta o banco por conta própria.
-- [ ] Uma origem em erro não gera alerta falso nem esconde alerta válido de
+- [x] Nenhum alerta consulta o banco por conta própria.
+- [x] Uma origem em erro não gera alerta falso nem esconde alerta válido de
   outra origem.
-- [ ] As mensagens seguem o tom orientativo e não expõem cálculo interno.
-- [ ] Um espaço financeiro novo não recebe alerta crítico.
+- [x] As mensagens seguem o tom orientativo e não expõem cálculo interno.
+- [x] Um espaço financeiro novo não recebe alerta crítico.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/overview/alerts.ts` e testes por regra e por limite.
-- [ ] Tabela de regras registrada no ADR-013.
-- [ ] `vitest`, `eslint` e `tsc` aprovados.
+- [x] `src/modules/overview/alerts.ts` e testes por regra e por limite.
+- [x] Tabela de regras registrada no ADR-013.
+- [x] `vitest`, `eslint` e `tsc` aprovados.
 
 ## Sequenciamento
 
