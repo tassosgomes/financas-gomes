@@ -5,7 +5,6 @@ import { Temporal } from "@js-temporal/polyfill";
 import { describe, expect, it } from "vitest";
 
 import {
-  S11_FINANCIAL_EVENTS_COLUMNS,
   S11_CONTRACT_VERSION,
   S11_DATASET_COLUMNS,
   S11_DATASET_IDS,
