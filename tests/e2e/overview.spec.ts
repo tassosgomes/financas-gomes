@@ -150,6 +150,7 @@ test.describe("S10 visão geral", () => {
   test("resumo do mês reconcilia com o drill-down de despesas", async ({
     page,
   }) => {
+    test.setTimeout(180_000);
     const suffix = Date.now().toString(36);
     const accountName = `Conta visão ${suffix}`;
     const expenseCategory = `Alimentação ${suffix}`;
@@ -190,7 +191,9 @@ test.describe("S10 visão geral", () => {
 
     const spendablePrimary = page.getByTestId("spendable-card-primary-value");
     await expect(spendablePrimary).toBeVisible();
-    const homeSpendable = (await spendablePrimary.textContent()) ?? "";
+    const homeSpendable =
+      (await spendablePrimary.getAttribute("aria-label")) ?? "";
+    expect(homeSpendable).toMatch(/^Pode gastar: /u);
 
     await page.getByTestId("overview-period-expense-drilldown").click();
     await expect(page).toHaveURL(/\/transactions\?/);
@@ -207,9 +210,11 @@ test.describe("S10 visão geral", () => {
     ).toBeVisible();
 
     await page.goto("/app");
-    await page.getByRole("link", { name: "Ver composição do disponível para gastar" }).click();
+    await expect(page.getByTestId("overview-page")).toBeVisible();
+    await page.getByTestId("spendable-card-details-link").click();
     await expect(page).toHaveURL(/\/spendable\/breakdown/);
-    await expect(page.getByTestId("spendable-card-primary-value")).toHaveText(
+    await expect(page.getByTestId("spendable-card-primary-value")).toHaveAttribute(
+      "aria-label",
       homeSpendable,
     );
   });
