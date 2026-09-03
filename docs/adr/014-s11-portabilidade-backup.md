@@ -494,6 +494,116 @@ T01 não escolhe provedor de storage. T02 preenche nesta ADR:
 Gatilho de revisão: retenção nativa abaixo de 7 dias, RPO medido acima de 24 h,
 ou job cujo efeito não possa ser tornado idempotente sem orquestrador.
 
+## Auditoria e decisões T02 (2026-09-03)
+
+Auditoria da capacidade nativa de backup/restauração confrontada com a política
+mínima de T01 (retenção ≥ 7 dias, RPO ≤ 24 h, RTO ≤ 4 h). Fontes públicas
+consultadas em 2026-09-03; nenhum identificador de projeto, URL de banco ou
+segredo foi registrado.
+
+### Capacidades nativas verificadas
+
+| Capacidade | O que foi verificado | Fonte | Data |
+| --- | --- | --- | --- |
+| PITR / instant restore no Neon | Root branch pode ser restaurada a qualquer timestamp ou LSN dentro da janela de histórico; operação sobrescreve o branch, cria branch de backup automático e mantém a connection string estável; duração típica de segundos | [Neon — Instant restore](https://neon.com/docs/introduction/branch-restore) | 2026-09-03 |
+| Janela de histórico (retenção PITR) | Plano Free: máx. 6 h; Launch: máx. 7 dias (padrão 1 dia); Scale: máx. 30 dias (padrão 1 dia). Configurável em Settings → Instant restore (`history_retention_seconds`; 7 dias = 604800) | [Neon — History window](https://neon.com/docs/introduction/history-window) | 2026-09-03 |
+| Granularidade de restauração | Timestamp RFC 3339 ou LSN, até milissegundo, dentro da janela | [Neon — Instant restore](https://neon.com/docs/introduction/branch-restore) | 2026-09-03 |
+| Escopo da restauração | Aplica-se a todas as databases do branch; conexões são interrompidas temporariamente | [Neon — Instant restore](https://neon.com/docs/introduction/branch-restore) | 2026-09-03 |
+| Vercel e backup de dados | Vercel não hospeda nem faz backup do PostgreSQL; Postgres é integração de marketplace (Neon). Vercel Postgres legado foi descontinuado | [Vercel — Postgres on Vercel](https://vercel.com/docs/storage/vercel-postgres) | 2026-09-03 |
+| Exportação portável V1 | Exportação CSV manual autenticada (`s11.v1`) já prevista nesta ADR; não substitui PITR | ADR-014 + TechSpec §113 | 2026-09-03 |
+
+**Premissa operacional:** produção usa plano Neon pago (Launch ou Scale) com
+janela de histórico configurada para **≥ 7 dias**. O plano Free (máx. 6 h) não
+atende a política de T01 e não é adequado para produção deste produto.
+
+### Matriz política × capacidade nativa × lacuna
+
+| Política T01 | Capacidade nativa verificada | Lacuna | Impacto |
+| --- | --- | --- | --- |
+| Retenção ≥ 7 dias | Launch até 7 dias; Scale até 30 dias, se configurado | Nenhuma, com plano pago e janela ≥ 7 dias | — |
+| RPO ≤ 24 h | PITR contínuo via WAL dentro da janela | Nenhuma com PITR habilitado | Perda máxima teórica ≈ tempo desde último WAL retido, não 24 h |
+| RTO ≤ 4 h | Restore Neon em segundos + migrations/checks manuais | Validação operacional (T13) ainda não exercitada em produção | Risco de estourar RTO se o runbook não for seguido; não exige backup externo |
+| Restauração bem-sucedida | Branch restaurável + `db:check` + readiness | Procedimento formal é T13 | Lacuna de processo, não de capacidade nativa |
+| Portabilidade (TechSpec §4) | CSV manual + possibilidade de `pg_dump` ad hoc pelo operador | Cópia lógica off-site automática não existe na V1 | Independência de vendor parcial; aceito pelo backlog §113 |
+| Vercel não backupa DB | Confirmado: backup é responsabilidade do Neon | Operador deve confirmar Neon, não Vercel | Erro de configuração se só confiar na Vercel |
+
+Matriz detalhada para operação: [`docs/S11-backup-audit.md`](../S11-backup-audit.md).
+
+### Decisão 1 — Backup lógico externo `pg_dump → S3/R2`
+
+**Decisão:** **Não implementar na V1** (caminho B).
+
+**Justificativa:** Com plano Neon pago e janela de histórico ≥ 7 dias, o PITR
+nativo cobre retenção, RPO e escopo de restauração exigidos por T01. A TechSpec
+§113 já define V1 como `Neon recovery/PITR + exportação CSV manual` e coloca
+`pg_dump → R2/S3` no backlog. Não há lacuna demonstrada que exija vencer esse
+padrão. §112 continua proibindo uso rotineiro de dados de produção fora do
+runbook aprovado.
+
+**Alternativas consideradas:**
+
+| Alternativa | Prós | Contras | Por que não na V1 |
+| --- | --- | --- | --- |
+| A — `pg_dump` agendado → R2/S3 | Cópia off-site independente do Neon; formato portável | Segredos de storage, job T09, custo, duplica PITR | Sem lacuna contra política T01 |
+| B — Apenas Neon PITR + CSV manual | Alinhado à TechSpec §113; zero infra nova | Dependência do provedor de DB para DR | **Escolhida** |
+| C — Branch Neon periódica como “backup” | Sem bucket externo | Não é off-site; custo de branches | Redundante com PITR |
+
+**Consequências:**
+
+- T09 registra formalmente a não implementação do job de backup externo.
+- T13 documenta restore via Neon PITR (e validação em branch separada antes de
+  promover).
+- Exportação `s11.v1` permanece o mecanismo de portabilidade do usuário, não de
+  DR operacional.
+
+**Gatilhos de revisão (decisão 1):**
+
+1. Retenção nativa configurável **abaixo de 7 dias** no plano de produção.
+2. RPO **medido acima de 24 h** em incidente ou exercício.
+3. Restore validado **não atinge RTO ≤ 4 h** em horário comercial.
+4. Mudança de provedor de PostgreSQL sem PITR equivalente.
+
+### Decisão 2 — Orquestrador de workflows duráveis (Temporal o produto)
+
+**Decisão:** **Não implementar na V1** (caminho B).
+
+**Justificativa:** Nenhum workflow do slice exige orquestração durável além do
+que T08 oferece (registro de execução, idempotência por
+`(jobName, logicalWindow)`, retry com backoff, estado observável). O termo
+“Temporal” na stack é `@js-temporal/polyfill` (datas), não o servidor Temporal.
+TechSpec §104 rejeita infraestrutura preventiva. Com a decisão 1 negativa, o
+único job recorrente relevante na V1 é o runtime genérico de T08 (ex.:
+`s11.job.heartbeat`) mais exportação sob demanda (não agendada).
+
+**Mecanismo alternativo:** agendador externo (GitHub Actions `schedule`, cron do
+host ou equivalente) **invoca** o endpoint/comando do job; o job não importa o
+agendador. Limites: sem garantia de exactly-once entre agendador e processo
+(idempotência compensa); sem saga multi-etapa durável; falha entre tentativas
+depende de retry de T08 e alerta no Sentry.
+
+**Alternativas consideradas:**
+
+| Alternativa | Prós | Contras | Por que não na V1 |
+| --- | --- | --- | --- |
+| Temporal (produto) | Workflows duráveis, compensação | Infra nova, operação, §104 | Nenhum workflow real exige |
+| T08 + cron/GitHub Actions | Simples, portável, sem vendor lock-in de orquestração | Sem estado de workflow longo | **Escolhida** |
+| Fila + worker dedicado | Assíncrono | Over-engineering para V1 | Fora do escopo S11 |
+
+**Gatilho de revisão (decisão 2):** surgir job cujo efeito **não possa ser
+tornado idempotente** sem orquestrador durável (ex.: pipeline multi-etapa com
+compensação obrigatória e janela > retry de T08).
+
+### Superfície de configuração (decisões T02)
+
+| Componente | Variáveis / segredos | Comportamento se ausente |
+| --- | --- | --- |
+| Backup externo `pg_dump → R2/S3` | Nenhuma na V1 (decisão negativa) | N/A — T09 não implementa |
+| PITR Neon | Configuração no console Neon (`history_retention_seconds`); não é variável da app | Operador deve confirmar antes de produção; ver `docs/production-deploy.md` |
+| Jobs T08 | Sem variáveis novas além do runtime existente (`DATABASE_URL`, Sentry) | Job falha de forma observável; sem efeito financeiro |
+| Agendador | Secrets do CI (`MIGRATION_DATABASE_URL`, etc.) ou cron do host; fora do `.env.example` | Job não dispara; heartbeat ausente detectável |
+
+Nenhuma regra de domínio passa a depender de Vercel, Neon, R2 ou S3.
+
 ## Consequências
 
 - T03 implementa um único encoder conforme esta tabela.
