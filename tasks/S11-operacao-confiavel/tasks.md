@@ -56,9 +56,9 @@ S01 fornece autenticação, household, Sentry, health/readiness e o pipeline de
 deploy. S02–S09 fornecem os dados que compõem os datasets. S10 fornece o
 handoff com as leituras usadas pela home e os pontos de falha monitorados.
 
-**Gates externos abertos:** no S09, T04, T07, T08 e T11–T15 seguem pendentes;
-todo o S10 está por iniciar. Enquanto os datasets de movimento de caixinha e os
-artefatos do S10 não existirem, T01 declara o comportamento contratado e a
+**Gates externos:** S09 está publicado em `main` (datasets de Caixinha
+persistidos). S10 ainda não iniciou e não persiste dataset: a exportação `s11.v1`
+não inclui agregados de dashboard. Se uma leitura de slice estiver ausente, a
 exportação marca o dataset como indisponível — nunca entrega arquivo vazio como
 se fosse completo, e nenhuma task do S11 compensa a ausência com dado derivado
 próprio.
@@ -72,7 +72,7 @@ estabilizado.
 
 ### Onda 0 — Contrato
 
-1. [T01 — Contrato do S11, datasets exportáveis e fronteira do slice](001-contrato-datasets-fronteira_task.md)
+1. [T01 — Contrato do S11, datasets exportáveis e fronteira do slice](001-contrato-datasets-fronteira_task.md) — concluída 2026-09-03
 
 T01 é serial. Ela fecha datasets, colunas, dialeto CSV, redaction, tenancy,
 retenção e limites antes de qualquer código.
