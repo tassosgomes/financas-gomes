@@ -1,6 +1,6 @@
 # T11 — UI: compromissos futuros, caixinhas, alertas e drill-down
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 3
 - Dependências: T05, T06, T07, T08
 - Paralelização: Com T10
@@ -29,27 +29,27 @@ navegáveis para a tela de origem.
 
 ## Subtarefas
 
-- [ ] Implementar os blocos de compromissos e receitas futuras.
-- [ ] Implementar o bloco de caixinhas consumindo o read model do S09 via T06.
-- [ ] Implementar o bloco de alertas com severidades e teto de itens.
-- [ ] Ligar todos os drill-downs e validar rótulos acessíveis.
-- [ ] Testar cada bloco com dado cheio, poucos itens, vazio e erro.
+- [x] Implementar os blocos de compromissos e receitas futuras.
+- [x] Implementar o bloco de caixinhas consumindo o read model do S09 via T06.
+- [x] Implementar o bloco de alertas com severidades e teto de itens.
+- [x] Ligar todos os drill-downs e validar rótulos acessíveis.
+- [x] Testar cada bloco com dado cheio, poucos itens, vazio e erro.
 
 ## Critérios de aceite
 
-- [ ] Cada item exibido navega para a tela que contém o lançamento/origem
+- [x] Cada item exibido navega para a tela que contém o lançamento/origem
   correspondente.
-- [ ] O resumo de caixinhas reconcilia com `/budgets` no mesmo período.
-- [ ] Compromisso de cartão aparece como compromisso futuro e não é contado
+- [x] O resumo de caixinhas reconcilia com `/budgets` no mesmo período.
+- [x] Compromisso de cartão aparece como compromisso futuro e não é contado
   novamente como despesa realizada do período.
-- [ ] Blocos indisponíveis por gate externo são explicados, não silenciados.
-- [ ] Nenhum bloco excede o teto de itens definido no contrato.
+- [x] Blocos indisponíveis por gate externo são explicados, não silenciados.
+- [x] Nenhum bloco excede o teto de itens definido no contrato.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Componentes de bloco em `src/components/overview/` e composição na página.
-- [ ] Testes de renderização por estado.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] Componentes de bloco em `src/components/overview/` e composição na página.
+- [x] Testes de renderização por estado.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 

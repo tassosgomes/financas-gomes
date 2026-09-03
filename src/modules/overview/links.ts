@@ -13,6 +13,7 @@ import {
   budgetDetailRoute,
   SPENDABLE_BREAKDOWN_ROUTE,
 } from "@/modules/budgets/routes";
+import { FORECAST_ORIGIN_ROUTE } from "@/modules/forecast/routes";
 import { forecastHref } from "@/modules/forecast/ui-contracts";
 
 import {
@@ -22,6 +23,7 @@ import {
   type OverviewCaixinhaItem,
   type OverviewCardInvoiceItem,
   type OverviewCategoryGroup,
+  type OverviewCommitmentItem,
   type OverviewPeriod,
   type OverviewReadModel,
   type OverviewScenario,
@@ -49,6 +51,7 @@ export interface OverviewLinks {
   readonly caixinhaHref: (item: OverviewCaixinhaItem) => string;
   readonly cardHref: (item: OverviewCardInvoiceItem) => string;
   readonly alertHref: (alert: OverviewAlert) => string;
+  readonly commitmentItemHref: (item: OverviewCommitmentItem) => string;
 }
 
 interface OverviewLinkContext {
@@ -107,6 +110,19 @@ function resolveCategoryTransactionsHref(
 
   const categoryId = group.categoryId ?? group.key;
   return periodTransactionsHref(context, "EXPENSE", categoryId);
+}
+
+function resolveCommitmentItemHref(item: OverviewCommitmentItem): string {
+  const referenceId = item.referenceId.trim();
+  if (!referenceId) {
+    return "";
+  }
+
+  const params = new URLSearchParams({
+    kind: item.originKind,
+    referenceId,
+  });
+  return `${FORECAST_ORIGIN_ROUTE}?${params.toString()}`;
 }
 
 function resolveAlertHref(
@@ -172,5 +188,6 @@ export function buildOverviewLinks(
         : "",
     cardHref: (item) => creditCardHref(item.cardId),
     alertHref: (alert) => resolveAlertHref(context, alert),
+    commitmentItemHref: (item) => resolveCommitmentItemHref(item),
   };
 }

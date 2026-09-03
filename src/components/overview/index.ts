@@ -33,3 +33,6 @@ export type {
   OverviewErrorStateProps,
   OverviewLoadingStateProps,
 } from "./overview-states";
+
+export { OverviewHome, OverviewPageError } from "./overview-home";
+export type { OverviewHomeProps } from "./overview-home";

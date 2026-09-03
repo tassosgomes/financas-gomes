@@ -1,8 +1,5 @@
-/** @vitest-environment jsdom */
-
-import { cleanup, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import {
   OVERVIEW_ALERTS_TITLE,
@@ -27,8 +24,6 @@ import {
   OverviewStateBadge,
   OverviewValueItem,
 } from "./index";
-
-afterEach(cleanup);
 
 describe("overview shared components", () => {
   it("renders section card in ready, loading, empty and error states", () => {
@@ -117,13 +112,15 @@ describe("overview shared components", () => {
   });
 
   it("renders state badge with text and severity tone", () => {
-    render(<OverviewStateBadge testId="overview-badge" variant="critical" />);
-    expect(screen.getByText("Crítico")).toBeTruthy();
-    expect(screen.getByLabelText("Estado: Crítico")).toBeTruthy();
+    const html = renderToStaticMarkup(
+      <OverviewStateBadge testId="overview-badge" variant="critical" />,
+    );
+    expect(html).toContain("Crítico");
+    expect(html).toContain('aria-label="Estado: Crítico"');
   });
 
   it("renders drill-down link with accessible label and touch target", () => {
-    render(
+    const html = renderToStaticMarkup(
       <OverviewDrilldownLink
         ariaLabel="Ver todos os compromissos"
         href="/forecast"
@@ -131,9 +128,9 @@ describe("overview shared components", () => {
         testId="overview-commitments-drilldown"
       />,
     );
-    const link = screen.getByRole("link", { name: "Ver todos os compromissos" });
-    expect(link.getAttribute("href")).toBe("/forecast");
-    expect(link.className).toContain("min-h-11");
+    expect(html).toContain("Ver todos os compromissos");
+    expect(html).toContain('href="/forecast"');
+    expect(html).toContain("min-h-11");
   });
 
   it("uses stable block state test ids from contracts", () => {

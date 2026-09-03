@@ -155,6 +155,7 @@ export interface OverviewCaixinhaItemViewModel {
   readonly name: string;
   readonly balanceLabel: string;
   readonly protectedLabel?: string;
+  readonly progressLabel?: string;
   readonly status: OverviewCaixinhaItem["status"];
   readonly statusLabel: string;
 }
@@ -207,6 +208,15 @@ export function formatOverviewPercent(percent: number): string {
     return "—";
   }
   return `${percent}%`;
+}
+
+/** Formats basis points (0–10000) for progress display without arithmetic. */
+export function formatOverviewProgressBps(value: string): string {
+  if (!UNSIGNED_CENTS_PATTERN.test(value)) return "Progresso indisponível";
+  const digits = value.replace(/^0+(?=\d)/u, "");
+  const whole = digits.length > 2 ? digits.slice(0, -2) : "0";
+  const fraction = digits.length > 2 ? digits.slice(-2) : digits.padStart(2, "0");
+  return `${whole},${fraction}%`;
 }
 
 export function toOverviewPeriodViewModel(period: OverviewPeriod): OverviewPeriodViewModel {
@@ -287,6 +297,9 @@ export function toOverviewCaixinhaItemViewModel(
     balanceLabel: safeSignedCents(item.balanceCents),
     protectedLabel: item.protectedCents
       ? safeSignedCents(item.protectedCents)
+      : undefined,
+    progressLabel: item.progress
+      ? `${formatOverviewProgressBps(item.progress.progressBps)} do alvo`
       : undefined,
     status: item.status,
     statusLabel: item.status === "ACTIVE" ? "Ativa" : "Encerrada",
