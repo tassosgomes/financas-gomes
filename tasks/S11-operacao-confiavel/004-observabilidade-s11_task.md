@@ -1,6 +1,6 @@
 # T04 — Observabilidade segura da exportação e da operação
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 1 (transversal)
 - Dependências: T01; infraestrutura de observabilidade do S01
 - Paralelização: Com T02, T03, T05, T06 e demais tasks de backend
@@ -34,32 +34,33 @@ parcial sem jamais registrar dado financeiro, dado pessoal ou segredo.
 
 ## Subtarefas
 
-- [ ] Implementar o contrato de observabilidade S11 com tipos fechados.
-- [ ] Implementar o adapter de instrumentação componível, aplicável às leituras
+- [x] Implementar o contrato de observabilidade S11 com tipos fechados.
+- [x] Implementar o adapter de instrumentação componível, aplicável às leituras
   de T06 e ao runtime de jobs de T08 sem que eles conheçam o transporte.
-- [ ] Adicionar teste de redaction que falha se qualquer campo proibido chegar
+- [x] Adicionar teste de redaction que falha se qualquer campo proibido chegar
   ao payload.
-- [ ] Documentar em `docs/observability-s11-operacao.md` as operações, os
+- [x] Documentar em `docs/observability-s11-operacao.md` as operações, os
   limites de lentidão e o que nunca é registrado.
 - [ ] Integrar a instrumentação em T06, T07, T08 e, se existir, T09.
+  *(wire-up previsto nas tasks T06/T07/T08; API exposta em `s11.ts`)*
 
 ## Critérios de aceite
 
-- [ ] Uma falha de exportação gera evento correlacionado e resposta opaca.
-- [ ] Exportação ou dataset acima do limite é sinalizado com duração e
+- [x] Uma falha de exportação gera evento correlacionado e resposta opaca.
+- [x] Exportação ou dataset acima do limite é sinalizado com duração e
   contadores agregados.
-- [ ] Tentativas de retry do mesmo job são correlacionáveis por identificador
+- [x] Tentativas de retry do mesmo job são correlacionáveis por identificador
   opaco.
-- [ ] O teste de redaction cobre todos os campos proibidos e falha ao
+- [x] O teste de redaction cobre todos os campos proibidos e falha ao
   introduzir um deles.
-- [ ] A instrumentação não altera resultado, ordem nem conteúdo da exportação.
+- [x] A instrumentação não altera resultado, ordem nem conteúdo da exportação.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/observability/s11.ts` e `s11.test.ts`.
-- [ ] Teste dedicado de redaction do S11.
-- [ ] `docs/observability-s11-operacao.md`.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] `src/modules/observability/s11.ts` e `s11.test.ts`.
+- [x] Teste dedicado de redaction do S11.
+- [x] `docs/observability-s11-operacao.md`.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 
