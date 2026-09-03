@@ -70,6 +70,13 @@ export {
   budgetStatusEnum,
   budgets,
 } from "./budgets-schema";
+export {
+  JOB_EXECUTION_JOB_NAMES,
+  JOB_EXECUTION_STATUSES,
+  jobExecutions,
+  type JobExecutionRecord,
+  type JobExecutionStatus,
+} from "./jobs-schema";
 
 import { betterAuthSchema } from "@/modules/auth/schema";
 import {
@@ -108,6 +115,7 @@ import {
   budgetMovements,
   budgets,
 } from "./budgets-schema";
+import { jobExecutions } from "./jobs-schema";
 
 export const schema = {
   ...betterAuthSchema,
@@ -136,6 +144,7 @@ export const schema = {
   budgets,
   budgetMovements,
   budgetAllocationRules,
+  jobExecutions,
 } as const;
 
 export default schema;

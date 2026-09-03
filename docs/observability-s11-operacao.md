@@ -74,6 +74,35 @@ permanece opaca (`toS11ErrorEnvelope`).
 Tentativas de retry do mesmo job correlacionam por `executionId` opaco e campo
 `attempt`.
 
+## Estado de execuções de jobs (T08)
+
+O runtime em [`src/modules/jobs/runtime.ts`](../src/modules/jobs/runtime.ts)
+persiste uma linha por janela lógica em `job_executions` (`job_name`,
+`logical_window` UTC `YYYY-MM-DD`, `execution_id`, `attempt`, `status`,
+`started_at`, `finished_at`, `error_code`, `correlation_id`). Não há payload
+financeiro, `household_id` nem segredo.
+
+Consulta mínima para o operador (psql, cliente SQL ou script interno com
+`DATABASE_URL`):
+
+```sql
+SELECT job_name, logical_window, status, attempt, started_at, finished_at, error_code
+  FROM job_executions
+ ORDER BY started_at DESC
+ LIMIT 50;
+```
+
+Na aplicação, use `listRecentJobExecutions(limit)` de
+[`src/modules/jobs/query.ts`](../src/modules/jobs/query.ts) ou
+`runS11JobHeartbeat()` de
+[`src/modules/jobs/heartbeat.ts`](../src/modules/jobs/heartbeat.ts) para
+exercitar o job operacional `s11.job.heartbeat`. Não há tela nem endpoint
+público novo; `/api/readiness` permanece inalterado.
+
+Status persistidos: `RUNNING`, `SUCCEEDED`, `FAILED`. Chamadas duplicadas na
+mesma janela já concluída retornam `SKIPPED_IDEMPOTENT` nos eventos sem
+repetir o efeito.
+
 ## API do adaptador (T06/T07/T08)
 
 - `createS11Operation(operation, options)` — metadados versionados + `requestId`.

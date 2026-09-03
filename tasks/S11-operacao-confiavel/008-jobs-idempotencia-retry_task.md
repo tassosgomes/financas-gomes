@@ -1,6 +1,6 @@
 # T08 — Runtime de jobs recorrentes: idempotência, retry e estado observável
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 2
 - Dependências: T01, T04
 - Paralelização: Com T07
@@ -36,34 +36,34 @@ execução é consultável sem inspeção manual casual.
 
 ## Subtarefas
 
-- [ ] Definir chave de idempotência e o modelo de registro de execução, com
+- [x] Definir chave de idempotência e o modelo de registro de execução, com
   migration versionada quando houver tabela.
-- [ ] Implementar o wrapper de execução com retry, backoff e classificação de
+- [x] Implementar o wrapper de execução com retry, backoff e classificação de
   erro.
-- [ ] Escrever testes de integração para execução dupla, execução concorrente e
+- [x] Escrever testes de integração para execução dupla, execução concorrente e
   retomada após falha.
-- [ ] Integrar a instrumentação de T04 e provar a correlação entre tentativas.
-- [ ] Documentar como o operador consulta o estado das execuções.
+- [x] Integrar a instrumentação de T04 e provar a correlação entre tentativas.
+- [x] Documentar como o operador consulta o estado das execuções.
 
 ## Critérios de aceite
 
-- [ ] Executar o mesmo job duas vezes na mesma janela lógica não duplica efeito,
+- [x] Executar o mesmo job duas vezes na mesma janela lógica não duplica efeito,
   comprovado por teste.
-- [ ] Uma falha transitória é repetida com backoff e uma falha determinística
+- [x] Uma falha transitória é repetida com backoff e uma falha determinística
   para com resultado registrado.
-- [ ] Toda execução deixa estado de sucesso ou falha consultável.
-- [ ] Falha de job chega ao Sentry com correlação e sem dado sensível.
-- [ ] O runtime não depende de Vercel, Neon ou de qualquer agendador
+- [x] Toda execução deixa estado de sucesso ou falha consultável.
+- [x] Falha de job chega ao Sentry com correlação e sem dado sensível.
+- [x] O runtime não depende de Vercel, Neon ou de qualquer agendador
   específico.
-- [ ] Nenhum registro de execução contém valor monetário, nome, descrição ou
+- [x] Nenhum registro de execução contém valor monetário, nome, descrição ou
   segredo.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Runtime de jobs com testes unitários e de integração PostgreSQL opt-in.
-- [ ] Migration versionada, se aplicável, com `db:check` aprovado.
-- [ ] Documentação do estado observável em `docs/observability-s11-operacao.md`.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] Runtime de jobs com testes unitários e de integração PostgreSQL opt-in.
+- [x] Migration versionada, se aplicável, com `db:check` aprovado.
+- [x] Documentação do estado observável em `docs/observability-s11-operacao.md`.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 
