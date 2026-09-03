@@ -69,4 +69,62 @@ describe("OverviewHome", () => {
     expect(html).toContain('data-testid="overview-alerts-error"');
     expect(html).not.toContain('data-testid="overview-alert-');
   });
+
+  it("keeps spendable usable when commitments fail", () => {
+    const html = renderToStaticMarkup(
+      <OverviewHome
+        model={{
+          ...emptyModel(),
+          spendable: {
+            state: "ready",
+            data: {
+              breakdown: {
+                contractVersion: "s08.v1",
+                ruleVersion: "spendable.v1",
+                period: {
+                  asOf: "2026-09-15",
+                  from: "2026-09-16",
+                  to: "2026-12-14",
+                  horizonDays: 90,
+                  scenario: "CONSERVATIVE",
+                  forecastContractVersion: "s07.v1",
+                },
+                openingBalanceCents: "10000",
+                openingAdjustmentsCents: "0",
+                openingProjectedBalanceCents: "10000",
+                closingProjectedBalanceCents: "10000",
+                minimumProjectedBalanceCents: "10000",
+                minimum: { projectedBalanceCents: "10000", points: [] },
+                operationalBuffer: {
+                  amountCents: "0",
+                  source: "ABSENT_DEFAULT_ZERO",
+                  effectiveFrom: null,
+                  revision: null,
+                },
+                reserve: {
+                  contractVersion: "s09.v1",
+                  status: "UNAVAILABLE",
+                  protectedCents: "0",
+                  appliedOpeningAdjustmentCents: "0",
+                  components: [],
+                },
+                rawSpendableCents: "10000",
+                displaySpendableCents: "10000",
+                deficitToPreserveReserveCents: "0",
+              },
+            },
+          },
+          upcomingCommitments: {
+            state: "error",
+            error: { code: "FORECAST_QUERY_FAILED", field: null },
+          },
+        }}
+      />,
+    );
+
+    expect(html).toContain('data-testid="home-spendable"');
+    expect(html).toContain("Pode gastar: R$ 100,00");
+    expect(html).toContain('data-testid="overview-commitments-error"');
+    expect(html).not.toContain("overview-commitments-empty");
+  });
 });
