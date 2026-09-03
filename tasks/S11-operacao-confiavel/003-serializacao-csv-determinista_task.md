@@ -1,6 +1,6 @@
 # T03 — Serialização CSV determinística e segura
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 1
 - Dependências: T01
 - Paralelização: Com T02, T04, T05 e T06
@@ -31,28 +31,28 @@ formato de dinheiro por conta própria.
 
 ## Subtarefas
 
-- [ ] Implementar o encoder e os formatadores de dinheiro e data.
-- [ ] Implementar a definição tipada de dataset (colunas × extrator de linha)
+- [x] Implementar o encoder e os formatadores de dinheiro e data.
+- [x] Implementar a definição tipada de dataset (colunas × extrator de linha)
   para que T06 declare dados e não formatação.
-- [ ] Escrever testes de propriedade e de tabela para escape, injeção de
+- [x] Escrever testes de propriedade e de tabela para escape, injeção de
   fórmula, unicode, campo vazio, valor negativo e valor alto.
-- [ ] Provar a estabilidade byte a byte com fixture versionada.
+- [x] Provar a estabilidade byte a byte com fixture versionada.
 
 ## Critérios de aceite
 
-- [ ] Qualquer conteúdo textual sobrevive ao round-trip de leitura em um parser
+- [x] Qualquer conteúdo textual sobrevive ao round-trip de leitura em um parser
   CSV padrão sem corromper colunas.
-- [ ] Nenhum valor monetário perde precisão nem ganha formatação de locale.
-- [ ] Campo com potencial de fórmula é neutralizado sem alterar o valor lido
+- [x] Nenhum valor monetário perde precisão nem ganha formatação de locale.
+- [x] Campo com potencial de fórmula é neutralizado sem alterar o valor lido
   pelo usuário.
-- [ ] A mesma entrada gera saída idêntica em execuções repetidas.
-- [ ] O encoder não importa nada de banco, sessão ou ambiente.
+- [x] A mesma entrada gera saída idêntica em execuções repetidas.
+- [x] O encoder não importa nada de banco, sessão ou ambiente.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/export/csv.ts` e `csv.test.ts`.
-- [ ] Fixtures em `tests/fixtures/s11-operacao-confiavel/`.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] `src/modules/export/csv.ts` e `csv.test.ts`.
+- [x] Fixtures em `tests/fixtures/s11-operacao-confiavel/`.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 
