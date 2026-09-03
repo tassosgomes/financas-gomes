@@ -58,6 +58,8 @@ on Vercel](https://vercel.com/docs/storage/vercel-postgres) (confirma que a
 Vercel não hospeda nem backupa PostgreSQL).
 
 Matriz completa da auditoria: [`docs/S11-backup-audit.md`](S11-backup-audit.md).
+T09 confirmou o caminho B: **não** configure chaves de object storage para
+backup da V1 (`BACKUP_*`, `S3_*`, `R2_*` não fazem parte do runtime).
 
 Use duas conexões quando possível:
 

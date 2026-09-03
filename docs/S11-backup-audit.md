@@ -92,6 +92,14 @@ Reabrir as decisões T02 se ocorrer qualquer um:
 | Troca de provedor PostgreSQL sem PITR equivalente | Backup externo |
 | Job cujo efeito não é idempotente sem orquestrador durável | Temporal / orquestrador |
 
+## Confirmação T09 — não implementação (2026-09-03)
+
+Caminho **B** selecionado. O slice **não** entrega job de `pg_dump`, cliente
+S3/R2, política de expurgo em object storage nem secrets de backup no
+`.env.example`. A cobertura automática da V1 é o PITR do provedor de
+PostgreSQL, desde que o operador confirme o checklist de
+[`production-deploy.md`](production-deploy.md). T13 descreve o restore nativo.
+
 ## Referências
 
 - [ADR-014 — Política e decisões T02](adr/014-s11-portabilidade-backup.md)

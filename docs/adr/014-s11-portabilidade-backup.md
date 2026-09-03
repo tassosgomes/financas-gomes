@@ -604,6 +604,17 @@ compensação obrigatória e janela > retry de T08).
 
 Nenhuma regra de domínio passa a depender de Vercel, Neon, R2 ou S3.
 
+## Confirmação T09 (2026-09-03) — caminho B
+
+T09 confirma a decisão 1 de T02: **não implementar** o job `pg_dump → S3/R2`
+na V1. Não há código de backup externo, não há bucket, não há variáveis
+`BACKUP_*` / `R2_*` / `S3_*` no runtime da aplicação.
+
+Cobertura vigente: PITR nativo do Neon (plano pago, janela ≥ 7 dias) +
+exportação CSV `s11.v1`. Restauração operacional é o runbook T13 (mecanismo
+nativo). Gatilhos de revisão permanecem os de T02 (retenção &lt; 7 dias, RPO
+medido &gt; 24 h, RTO &gt; 4 h, troca de provedor sem PITR).
+
 ## Consequências
 
 - T03 implementa um único encoder conforme esta tabela.
