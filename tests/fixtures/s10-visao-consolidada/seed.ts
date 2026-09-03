@@ -1,4 +1,4 @@
-import { inArray } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 
 import type { Database } from "@/db";
 import {
@@ -323,16 +323,22 @@ export async function cleanupS10VolumeFixtures(database: Database): Promise<void
   await database
     .delete(budgets)
     .where(inArray(budgets.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-  await database.transaction(async (transaction) => {
-    await transaction
-      .delete(installments)
-      .where(inArray(installments.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-    await transaction
-      .delete(installmentPlans)
-      .where(inArray(installmentPlans.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-    await transaction
+  await database
+    .delete(installments)
+    .where(inArray(installments.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+  // purchase ↔ plan is a circular FK pair. The compra→plano edge is
+  // DEFERRABLE INITIALLY DEFERRED; we SET CONSTRAINTS inside a transaction
+  // so both sides can be dropped without ordering issues.
+  await database.transaction(async (tx) => {
+    await tx.execute(
+      sql`SET CONSTRAINTS "credit_card_purchases_installment_plan_household_fkey" DEFERRED`,
+    );
+    await tx
       .delete(creditCardPurchases)
       .where(inArray(creditCardPurchases.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+    await tx
+      .delete(installmentPlans)
+      .where(inArray(installmentPlans.householdId, S10_VOLUME_HOUSEHOLD_IDS));
   });
   await database
     .delete(creditCardBillingRules)
