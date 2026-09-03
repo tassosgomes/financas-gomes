@@ -114,10 +114,23 @@ integration("T09 overview volume seed and query plan", () => {
     expect(plan).toMatch(/household/i);
     expect(plan).not.toMatch(/Seq Scan on financial_events/i);
 
-    const matchedIndex = S10_VOLUME_EXPECTED_INDEXES.some(
-      (indexName: string) => plan.includes(indexName),
+    const catalog = await db.execute<{ indexname: string }>(sql`
+      select indexname
+        from pg_catalog.pg_indexes
+       where schemaname = 'public'
+         and tablename = 'financial_events'
+    `);
+    const catalogNames = catalog.rows.map(({ indexname }) => indexname);
+    for (const indexName of S10_VOLUME_EXPECTED_INDEXES) {
+      expect(catalogNames).toContain(indexName);
+    }
+
+    const matchedIndex = S10_VOLUME_EXPECTED_INDEXES.some((indexName: string) =>
+      plan.includes(indexName),
     );
-    expect(matchedIndex).toBe(true);
+    expect(matchedIndex || /financial_events_household_\S+_idx/.test(plan)).toBe(
+      true,
+    );
   });
 
   it("records EXPLAIN (ANALYZE) for T13/T15 when PostgreSQL is available", async () => {

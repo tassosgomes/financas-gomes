@@ -37,6 +37,10 @@ A consulta de agregação de período deve usar índices tenant-aware em
 - `financial_events_household_occurred_on_idx` (`household_id`, `occurred_on`)
 - `financial_events_household_category_occurred_on_idx`
   (`household_id`, `category_id`, `occurred_on`)
+- `financial_events_household_origin_occurred_on_id_idx`
+  (`household_id`, `origin`, `occurred_on`, `id`)
+- `financial_events_household_category_occurred_on_id_idx`
+  (`household_id`, `category_id`, `occurred_on`, `id`)
 
 Nenhum cache V1 foi introduzido no módulo `overview`.
 

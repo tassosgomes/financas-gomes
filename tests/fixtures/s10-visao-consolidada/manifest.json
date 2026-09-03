@@ -11,7 +11,9 @@
   "asOf": "2026-09-15",
   "expectedIndexes": [
     "financial_events_household_occurred_on_idx",
-    "financial_events_household_category_occurred_on_idx"
+    "financial_events_household_category_occurred_on_idx",
+    "financial_events_household_origin_occurred_on_id_idx",
+    "financial_events_household_category_occurred_on_id_idx"
   ],
   "performanceBudget": {
     "slowQueryThresholdMs": 500,

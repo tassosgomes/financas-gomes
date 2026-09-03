@@ -5,6 +5,7 @@ import { applyMigrations } from "@/db/migrate";
 import {
   cleanupS10VolumeFixtures,
   createS10VolumeContexts,
+  expectedS10SeptemberCardGroupCents,
   S10_VOLUME_AS_OF,
   S10_VOLUME_IDS,
   seedS10VolumeFixtures,
@@ -78,8 +79,11 @@ integration("T10 overview period aggregation", () => {
     const cardGroup = result.groups.find(
       (group) => group.key === S10_VOLUME_IDS.categories.aCard,
     );
-    expect(cardGroup?.amountCents).toBe("48000");
+    expect(cardGroup?.amountCents).toBe(expectedS10SeptemberCardGroupCents());
     expect(cardGroup?.purchaseEventCount).toBe(1);
+    expect(cardGroup?.amountCents).not.toBe(
+      (BigInt(expectedS10SeptemberCardGroupCents()) + BigInt(16_000)).toString(10),
+    );
     expect(result.summary.expenseCents).toBe(result.totalExpenseCents);
     expect(JSON.stringify(result)).not.toContain(S10_VOLUME_IDS.events.transferA);
     assertGroupsReconcileWithTotal(result);

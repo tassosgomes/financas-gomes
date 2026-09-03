@@ -29,6 +29,8 @@ export const S10_VOLUME_AS_OF = "2026-09-15" as const;
 export const S10_VOLUME_EXPECTED_INDEXES = [
   "financial_events_household_occurred_on_idx",
   "financial_events_household_category_occurred_on_idx",
+  "financial_events_household_origin_occurred_on_id_idx",
+  "financial_events_household_category_occurred_on_id_idx",
 ] as const;
 
 export const S10_VOLUME_IDS = {
@@ -177,6 +179,19 @@ export function describeS10VolumeSeed(): S10VolumeSeedStats {
     categoryCount: Object.keys(S10_VOLUME_IDS.categories).length,
     months: S10_VOLUME_MONTHS,
   };
+}
+
+/**
+ * Household A, setembro: duas EXPENSE recorrentes em `aCard` + o PURCHASE
+ * de 48000. O TRANSFER de pagamento (16000) não entra.
+ */
+export function expectedS10SeptemberCardGroupCents(): string {
+  const septemberIndex = S10_VOLUME_MONTHS.indexOf("2026-09");
+  const cardCategoryIndex = EXPENSE_CATEGORY_KEYS.indexOf("aCard");
+  const recurring =
+    deterministicAmountCents(0, septemberIndex, cardCategoryIndex, 0) +
+    deterministicAmountCents(0, septemberIndex, cardCategoryIndex, 1);
+  return (recurring + BigInt(48_000)).toString(10);
 }
 
 function monthDay(month: string, day: number): string {
