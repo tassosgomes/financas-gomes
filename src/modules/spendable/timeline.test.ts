@@ -46,7 +46,7 @@ function itemsOf(timeline: NormalizedSpendableTimeline): ForecastItem[] {
   );
 }
 
-describe("S08 T02 normalized spendable timeline", () => {
+describe("T02 normalized spendable timeline", () => {
   it("recomputes an intraday aggregate before changing the balance", () => {
     const normalized = normalizeSpendableTimeline(sameDaySpendableFixture.timeline);
     const day = normalized.days[0];

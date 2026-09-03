@@ -9,9 +9,9 @@ import {
   type FinancialDate,
 } from "./dates";
 import {
-  S03DomainError,
-  S03_ERROR_CODES,
-  S03_ERROR_MESSAGES,
+  TransactionDomainError,
+  TRANSACTION_ERROR_CODES,
+  TRANSACTION_ERROR_MESSAGES,
   ACCOUNT_ENTRY_STATUSES,
   FINANCIAL_EVENT_KINDS,
   FINANCIAL_EVENT_ORIGINS,
@@ -24,10 +24,10 @@ import {
   type CreateExpenseCommand,
   type CreateIncomeCommand,
   type CreateManualTransactionCommand,
-  type S03Error,
-  type S03ErrorCode,
-  type S03ErrorField,
-  type S03Result,
+  type TransactionError,
+  type TransactionErrorCode,
+  type TransactionErrorField,
+  type TransactionResult,
   type UpdateManualTransactionCommand,
 } from "./contracts";
 import { canonicalAmountCents } from "./money";
@@ -83,12 +83,12 @@ function normalizeDescriptionValue(value: string): string | null {
 /** NFKC + edge trim + internal whitespace collapse for financial details. */
 export function normalizeDescription(value: unknown): string {
   if (typeof value !== "string") {
-    throw new S03DomainError("INVALID_DESCRIPTION", "description");
+    throw new TransactionDomainError("INVALID_DESCRIPTION", "description");
   }
 
   const normalized = normalizeDescriptionValue(value);
   if (normalized === null) {
-    throw new S03DomainError("INVALID_DESCRIPTION", "description");
+    throw new TransactionDomainError("INVALID_DESCRIPTION", "description");
   }
   return normalized;
 }
@@ -220,7 +220,7 @@ export const cancelManualTransactionFormSchema =
 
 function fieldForPath(
   path: readonly (string | number)[],
-): S03ErrorField | undefined {
+): TransactionErrorField | undefined {
   const field = path[0];
   switch (field) {
     case "commandId":
@@ -236,7 +236,7 @@ function fieldForPath(
   }
 }
 
-function codeForField(field: S03ErrorField | undefined): S03ErrorCode {
+function codeForField(field: TransactionErrorField | undefined): TransactionErrorCode {
   switch (field) {
     case "commandId":
       return "INVALID_COMMAND_ID";
@@ -251,7 +251,7 @@ function codeForField(field: S03ErrorField | undefined): S03ErrorCode {
   }
 }
 
-function codeForZodIssue(issue: z.ZodIssue): S03ErrorCode {
+function codeForZodIssue(issue: z.ZodIssue): TransactionErrorCode {
   if (issue.code === "unrecognized_keys") {
     const keys = "keys" in issue ? issue.keys : [];
     return keys.some((key) => PROTECTED_CLIENT_FIELDS.has(key))
@@ -263,11 +263,11 @@ function codeForZodIssue(issue: z.ZodIssue): S03ErrorCode {
 }
 
 /** Converts Zod and domain exceptions to the allow-listed S03 envelope. */
-export function toS03DomainError(
+export function toTransactionDomainError(
   error: unknown,
-  fallback: S03ErrorCode = "INVALID_COMMAND",
-): S03DomainError {
-  if (error instanceof S03DomainError) {
+  fallback: TransactionErrorCode = "INVALID_COMMAND",
+): TransactionDomainError {
+  if (error instanceof TransactionDomainError) {
     return error;
   }
 
@@ -275,16 +275,16 @@ export function toS03DomainError(
     const issue = error.issues[0];
     if (issue) {
       const field = fieldForPath(issue.path);
-      return new S03DomainError(codeForZodIssue(issue), field);
+      return new TransactionDomainError(codeForZodIssue(issue), field);
     }
-    return new S03DomainError(fallback);
+    return new TransactionDomainError(fallback);
   }
 
   if (typeof error === "object" && error !== null && "code" in error) {
     const candidate = (error as { code?: unknown }).code;
     if (
       typeof candidate === "string" &&
-      S03_ERROR_CODES.includes(candidate as S03ErrorCode)
+      TRANSACTION_ERROR_CODES.includes(candidate as TransactionErrorCode)
     ) {
       const candidateField =
         "field" in error ? (error as { field?: unknown }).field : undefined;
@@ -299,42 +299,42 @@ export function toS03DomainError(
           "categoryId",
           "financialEventId",
         ].includes(candidateField)
-          ? (candidateField as S03ErrorField)
+          ? (candidateField as TransactionErrorField)
           : undefined;
-      return new S03DomainError(candidate as S03ErrorCode, field);
+      return new TransactionDomainError(candidate as TransactionErrorCode, field);
     }
   }
 
-  return new S03DomainError(fallback);
+  return new TransactionDomainError(fallback);
 }
 
-export function toS03Error(
+export function toTransactionError(
   error: unknown,
-  fallback: S03ErrorCode = "INVALID_COMMAND",
-): S03Error {
-  return toS03DomainError(error, fallback).toError();
+  fallback: TransactionErrorCode = "INVALID_COMMAND",
+): TransactionError {
+  return toTransactionDomainError(error, fallback).toError();
 }
 
 /** Parses a schema while retaining the domain-only error envelope. */
-export function parseS03Command<T extends z.ZodTypeAny>(
+export function parseTransactionCommand<T extends z.ZodTypeAny>(
   schema: T,
   input: unknown,
 ): z.output<T> {
   const result = schema.safeParse(input);
   if (!result.success) {
-    throw toS03DomainError(result.error);
+    throw toTransactionDomainError(result.error);
   }
   return result.data;
 }
 
-export function safeParseS03Command<T extends z.ZodTypeAny>(
+export function safeParseTransactionCommand<T extends z.ZodTypeAny>(
   schema: T,
   input: unknown,
-): S03Result<z.output<T>> {
+): TransactionResult<z.output<T>> {
   const result = schema.safeParse(input);
   return result.success
     ? { ok: true, value: result.data }
-    : { ok: false, error: toS03Error(result.error) };
+    : { ok: false, error: toTransactionError(result.error) };
 }
 
 export interface PostingDateValidationOptions {
@@ -356,7 +356,7 @@ export function parseCreateExpenseCommand(
   options?: PostingDateValidationOptions,
 ): CreateExpenseCommand {
   return assertPostingDate(
-    parseS03Command(createExpenseCommandSchema, input),
+    parseTransactionCommand(createExpenseCommandSchema, input),
     options,
   ) as CreateExpenseCommand;
 }
@@ -366,7 +366,7 @@ export function parseCreateIncomeCommand(
   options?: PostingDateValidationOptions,
 ): CreateIncomeCommand {
   return assertPostingDate(
-    parseS03Command(createIncomeCommandSchema, input),
+    parseTransactionCommand(createIncomeCommandSchema, input),
     options,
   ) as CreateIncomeCommand;
 }
@@ -376,7 +376,7 @@ export function parseCreateManualTransactionCommand(
   options?: PostingDateValidationOptions,
 ): CreateManualTransactionCommand {
   return assertPostingDate(
-    parseS03Command(createManualTransactionCommandSchema, input),
+    parseTransactionCommand(createManualTransactionCommandSchema, input),
     options,
   ) as CreateManualTransactionCommand;
 }
@@ -384,7 +384,7 @@ export function parseCreateManualTransactionCommand(
 export function parseUpdateManualTransactionCommand(
   input: unknown,
 ): UpdateManualTransactionCommand {
-  return parseS03Command(
+  return parseTransactionCommand(
     updateManualTransactionCommandSchema,
     input,
   ) as UpdateManualTransactionCommand;
@@ -393,7 +393,7 @@ export function parseUpdateManualTransactionCommand(
 export function parseCancelManualTransactionCommand(
   input: unknown,
 ): CancelManualTransactionCommand {
-  return parseS03Command(
+  return parseTransactionCommand(
     cancelManualTransactionCommandSchema,
     input,
   ) as CancelManualTransactionCommand;
@@ -402,48 +402,48 @@ export function parseCancelManualTransactionCommand(
 export function safeParseCreateExpenseCommand(
   input: unknown,
   options?: PostingDateValidationOptions,
-): S03Result<CreateExpenseCommand> {
+): TransactionResult<CreateExpenseCommand> {
   try {
     return { ok: true, value: parseCreateExpenseCommand(input, options) };
   } catch (error) {
-    return { ok: false, error: toS03Error(error) };
+    return { ok: false, error: toTransactionError(error) };
   }
 }
 
 export function safeParseCreateIncomeCommand(
   input: unknown,
   options?: PostingDateValidationOptions,
-): S03Result<CreateIncomeCommand> {
+): TransactionResult<CreateIncomeCommand> {
   try {
     return { ok: true, value: parseCreateIncomeCommand(input, options) };
   } catch (error) {
-    return { ok: false, error: toS03Error(error) };
+    return { ok: false, error: toTransactionError(error) };
   }
 }
 
 export function safeParseUpdateManualTransactionCommand(
   input: unknown,
-): S03Result<UpdateManualTransactionCommand> {
+): TransactionResult<UpdateManualTransactionCommand> {
   try {
     return {
       ok: true,
       value: parseUpdateManualTransactionCommand(input),
     };
   } catch (error) {
-    return { ok: false, error: toS03Error(error) };
+    return { ok: false, error: toTransactionError(error) };
   }
 }
 
 export function safeParseCancelManualTransactionCommand(
   input: unknown,
-): S03Result<CancelManualTransactionCommand> {
+): TransactionResult<CancelManualTransactionCommand> {
   try {
     return {
       ok: true,
       value: parseCancelManualTransactionCommand(input),
     };
   } catch (error) {
-    return { ok: false, error: toS03Error(error) };
+    return { ok: false, error: toTransactionError(error) };
   }
 }
 
@@ -455,7 +455,7 @@ export const validateCancelManualTransactionCommand =
   safeParseCancelManualTransactionCommand;
 
 /** Generic aliases for adapters that select the operation separately. */
-export const parseCommand = parseS03Command;
-export const safeParseCommand = safeParseS03Command;
+export const parseCommand = parseTransactionCommand;
+export const safeParseCommand = safeParseTransactionCommand;
 
-export { S03_ERROR_MESSAGES };
+export { TRANSACTION_ERROR_MESSAGES };

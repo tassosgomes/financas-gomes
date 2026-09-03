@@ -18,7 +18,7 @@ import {
 } from "@/modules/households/contracts";
 import { assertFinancialContext } from "@/modules/households/tenant-scoped";
 import {
-  getForecast as readS07Forecast,
+  getForecast as readForecast,
   type ForecastServiceDependencies,
 } from "@/modules/forecast/service";
 import {
@@ -28,16 +28,16 @@ import {
   type GetForecastQuery,
 } from "@/modules/forecast/contracts";
 import {
-  createS08SpendableOperation,
-  measureS08Query,
-  toS08ErrorEnvelope,
-  withS08SpendableObservability,
-  type S08SpendableCompletionOptions,
-  type S08SpendableOperationContext,
-  type S08SpendableOperationOptions,
-  type S08SpendableQueryOptions,
-  type S08SpendableSafeErrorEnvelope,
-} from "@/modules/observability/s08";
+  createSpendableOperation,
+  measureSpendableQuery,
+  toSpendableErrorEnvelope,
+  withSpendableObservability,
+  type SpendableCompletionOptions,
+  type SpendableOperationContext,
+  type SpendableOperationOptions,
+  type SpendableQueryOptions as SpendableObservabilityQueryOptions,
+  type SpendableSafeErrorEnvelope,
+} from "@/modules/observability/spendable";
 
 import {
   normalizeSpendableTimeline,
@@ -82,6 +82,7 @@ export const DEFAULT_SPENDABLE_HORIZON_DAYS = 90;
 export const MAX_SPENDABLE_SERVICE_HORIZON_DAYS = ENGINE_MAX_SPENDABLE_HORIZON_DAYS;
 
 const SPENDABLE_MAX_HORIZON_ENV_NAMES = [
+  "SPENDABLE_MAX_HORIZON_DAYS",
   "S08_SPENDABLE_MAX_HORIZON_DAYS",
   "S08_MAX_HORIZON_DAYS",
 ] as const;
@@ -161,14 +162,14 @@ export interface SpendableServiceDependencies {
   readonly clock?: () => string | Temporal.PlainDate;
   readonly today?: string | Temporal.PlainDate;
   readonly maxHorizonDays?: number;
-  readonly observability?: S08SpendableCompletionOptions &
-    S08SpendableQueryOptions &
-    Partial<S08SpendableOperationOptions>;
+  readonly observability?: SpendableCompletionOptions &
+    SpendableObservabilityQueryOptions &
+    Partial<SpendableOperationOptions>;
 }
 
 export type SpendableResult<T> =
   | { readonly ok: true; readonly value: T }
-  | S08SpendableSafeErrorEnvelope;
+  | SpendableSafeErrorEnvelope;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -304,7 +305,7 @@ function safeObservation(
   dependencies: SpendableServiceDependencies,
   query: NormalizedGetSpendableInput,
   context?: FinancialContext,
-): S08SpendableCompletionOptions & S08SpendableQueryOptions {
+): SpendableCompletionOptions & SpendableObservabilityQueryOptions {
   const supplied = { ...(dependencies.observability ?? {}) };
   // Context authority is always resolved by this module. A caller-supplied
   // observability object cannot smuggle another tenant into telemetry.
@@ -322,21 +323,21 @@ function safeObservation(
 
 function operation(
   stage: "read" | "forecast" | "engine" | "serialization",
-  options: S08SpendableCompletionOptions & S08SpendableQueryOptions,
-): S08SpendableOperationContext {
-  return createS08SpendableOperation(stage, { ...options });
+  options: SpendableCompletionOptions & SpendableObservabilityQueryOptions,
+): SpendableOperationContext {
+  return createSpendableOperation(stage, { ...options });
 }
 
 async function observed<T>(
-  stageOperation: S08SpendableOperationContext,
+  stageOperation: SpendableOperationContext,
   work: () => Promise<T> | T,
-  options: S08SpendableCompletionOptions & S08SpendableQueryOptions,
+  options: SpendableCompletionOptions & SpendableObservabilityQueryOptions,
   technicalErrorCode: string,
 ): Promise<T> {
-  return withS08SpendableObservability(
+  return withSpendableObservability(
     stageOperation,
     () =>
-      measureS08Query(stageOperation, work, {
+      measureSpendableQuery(stageOperation, work, {
         ...options,
         technicalErrorCode,
       }),
@@ -425,7 +426,7 @@ function publicFailure<T>(
   value: unknown,
   fallback = "UNEXPECTED_ERROR",
 ): SpendableResult<T> {
-  return toS08ErrorEnvelope(mapError(value, fallback));
+  return toSpendableErrorEnvelope(mapError(value, fallback));
 }
 
 function queryOptions(
@@ -597,9 +598,9 @@ function resultState(value: SpendableBreakdown): "AVAILABLE" | "ZERO" | "DEFICIT
 }
 
 function stageOptions(
-  base: S08SpendableCompletionOptions & S08SpendableQueryOptions,
+  base: SpendableCompletionOptions & SpendableObservabilityQueryOptions,
   counts: Record<string, unknown> = {},
-): S08SpendableCompletionOptions & S08SpendableQueryOptions {
+): SpendableCompletionOptions & SpendableObservabilityQueryOptions {
   return { ...base, ...counts };
 }
 
@@ -627,7 +628,7 @@ async function runSpendable(
   query: NormalizedGetSpendableInput,
   context: FinancialContext,
   dependencies: SpendableServiceDependencies,
-  baseOptions: S08SpendableCompletionOptions & S08SpendableQueryOptions,
+  baseOptions: SpendableCompletionOptions & SpendableObservabilityQueryOptions,
 ): Promise<SpendableBreakdown> {
   const readOperation = operation("read", baseOptions);
   const openingReader = dependencies.readOpeningBalance ??
@@ -673,7 +674,7 @@ async function runSpendable(
   const forecastReader = dependencies.readForecast ??
     dependencies.forecastReader ??
     dependencies.getForecast ??
-    readS07Forecast;
+    readForecast;
   const forecast = await observed(
     forecastOperation,
     async () => {

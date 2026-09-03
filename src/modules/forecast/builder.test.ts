@@ -75,7 +75,7 @@ function expectCode(run: () => unknown, code: string): void {
   }
 }
 
-describe("S07 T04 ForecastTimelineBuilder", () => {
+describe("T04 ForecastTimelineBuilder", () => {
   it("normalizes an ordinary recurring source with a stable date and metadata", () => {
     const items = buildForecastItems(input({
       recurringRules: [

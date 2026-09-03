@@ -80,7 +80,7 @@ const timeline: ForecastTimeline = {
   minimumBalanceReferences: [sourceId],
 };
 
-describe("S07 T08 contracts and shared components", () => {
+describe("T08 contracts and shared components", () => {
   it("keeps read model serializable and formats cents/date only at the UI edge", () => {
     expect(parseForecastTimeline(JSON.parse(JSON.stringify(timeline)))).toEqual(
       timeline,

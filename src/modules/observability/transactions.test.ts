@@ -11,16 +11,16 @@ import {
   captureServerException,
 } from "@/modules/observability/server";
 import {
-  S03_ERROR_CODES,
-  S03_ERROR_MESSAGES,
-  createS03TransactionOperation,
-  isExpectedS03Error,
-  logS03TransactionOperation,
-  reportS03UnexpectedError,
-  s03TransactionEventName,
-  s03TransactionUseCaseName,
-  toS03Error,
-} from "./s03";
+  TRANSACTION_ERROR_CODES,
+  TRANSACTION_ERROR_MESSAGES,
+  createTransactionObservabilityOperation,
+  isExpectedTransactionError,
+  logTransactionObservabilityOperation,
+  reportTransactionUnexpectedError,
+  transactionObservabilityEventName,
+  transactionObservabilityUseCaseName,
+  toTransactionError,
+} from "./transactions";
 
 const context = {
   userId: "user-opaque",
@@ -29,31 +29,31 @@ const context = {
 
 const eventId = "018f4f26-7c1b-7abc-8a7f-56d2b1a89f0e";
 
-describe("S03 transaction observability", () => {
+describe("transaction observability", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.mocked(captureServerException).mockClear();
   });
 
   it("uses the ADR operation names and keeps only technical metadata", () => {
-    expect(s03TransactionUseCaseName("create", "EXPENSE")).toBe(
+    expect(transactionObservabilityUseCaseName("create", "EXPENSE")).toBe(
       "transactions.create.expense",
     );
-    expect(s03TransactionUseCaseName("create", "INCOME")).toBe(
+    expect(transactionObservabilityUseCaseName("create", "INCOME")).toBe(
       "transactions.create.income",
     );
-    expect(s03TransactionUseCaseName("update", "MANUAL")).toBe(
+    expect(transactionObservabilityUseCaseName("update", "MANUAL")).toBe(
       "transactions.update.manual",
     );
-    expect(s03TransactionUseCaseName("cancel", "MANUAL")).toBe(
+    expect(transactionObservabilityUseCaseName("cancel", "MANUAL")).toBe(
       "transactions.cancel.manual",
     );
-    expect(s03TransactionEventName("cancel", "MANUAL", "success")).toBe(
-      "s03_transaction_cancel_manual_success",
+    expect(transactionObservabilityEventName("cancel", "MANUAL", "success")).toBe(
+      "transaction_cancel_manual_success",
     );
 
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS03TransactionOperation("create", "EXPENSE", {
+    const operation = createTransactionObservabilityOperation("create", "EXPENSE", {
       requestId: "request-opaque",
       eventId,
       amount: 123456,
@@ -67,11 +67,11 @@ describe("S03 transaction observability", () => {
     expect(operation).not.toHaveProperty("description");
     expect(operation).not.toHaveProperty("payload");
 
-    logS03TransactionOperation(operation, "success", 42.4, context);
+    logTransactionObservabilityOperation(operation, "success", 42.4, context);
 
     expect(info).toHaveBeenCalledOnce();
     const serialized = String(info.mock.calls[0]?.[0]);
-    expect(serialized).toContain('"event":"s03_transaction_create_expense_success"');
+    expect(serialized).toContain('"event":"transaction_create_expense_success"');
     expect(serialized).toContain('"useCase":"transactions.create.expense"');
     expect(serialized).toContain('"transactionKind":"EXPENSE"');
     expect(serialized).toContain(`"eventId":"${eventId}"`);
@@ -100,17 +100,17 @@ describe("S03 transaction observability", () => {
       "insert failed: amount=123456 description=private account=checking",
     );
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const operation = createS03TransactionOperation("update", "MANUAL", {
+    const operation = createTransactionObservabilityOperation("update", "MANUAL", {
       eventId,
       requestId: "request-opaque",
     });
 
-    reportS03UnexpectedError(error, operation, 17.8, context);
+    reportTransactionUnexpectedError(error, operation, 17.8, context);
 
     expect(captureServerException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        event: "s03_transaction_update_manual_unexpected_error",
+        event: "transaction_update_manual_unexpected_error",
         useCase: "transactions.update.manual",
         operation: "update",
         entityType: "transaction",
@@ -145,30 +145,30 @@ describe("S03 transaction observability", () => {
   });
 
   it("maps every ADR error code to stable UI copy", () => {
-    for (const code of S03_ERROR_CODES) {
-      const result = toS03Error({
+    for (const code of TRANSACTION_ERROR_CODES) {
+      const result = toTransactionError({
         code,
         message: "SQLSTATE 23505 stack=private payload",
         field: "description",
       });
 
       expect(result.code).toBe(code);
-      expect(result.message).toBe(S03_ERROR_MESSAGES[code]);
+      expect(result.message).toBe(TRANSACTION_ERROR_MESSAGES[code]);
       expect(result.message).not.toMatch(/SQLSTATE|stack|payload|23505/iu);
       expect(result.field).toBe("description");
     }
   });
 
   it("recognizes context/domain failures as expected and leaves technical errors unexpected", () => {
-    expect(isExpectedS03Error(new FinancialContextError("UNAUTHENTICATED"))).toBe(
+    expect(isExpectedTransactionError(new FinancialContextError("UNAUTHENTICATED"))).toBe(
       true,
     );
-    expect(isExpectedS03Error({ code: "COMMAND_ID_REUSED" })).toBe(true);
-    expect(isExpectedS03Error(new Error("database unavailable"))).toBe(false);
+    expect(isExpectedTransactionError({ code: "COMMAND_ID_REUSED" })).toBe(true);
+    expect(isExpectedTransactionError(new Error("database unavailable"))).toBe(false);
 
-    expect(toS03Error(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
+    expect(toTransactionError(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
       code: "UNAUTHENTICATED",
-      message: S03_ERROR_MESSAGES.UNAUTHENTICATED,
+      message: TRANSACTION_ERROR_MESSAGES.UNAUTHENTICATED,
     });
   });
 });

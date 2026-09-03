@@ -46,7 +46,7 @@ function uniqueEmail(label: string): string {
   const suffix = `${Date.now().toString(36)}-${Math.random()
     .toString(36)
     .slice(2, 8)}`;
-  return `e2e-s08-${label}-${suffix}@example.test`;
+  return `e2e-spendable-${label}-${suffix}@example.test`;
 }
 
 async function fillMoney(page: Page, testId: string, cents: string): Promise<void> {

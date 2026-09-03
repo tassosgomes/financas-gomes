@@ -25,8 +25,8 @@ import type { FinancialContext } from "@/modules/households/contracts";
 import { createAccountsUseCases } from "@/modules/accounts/use-cases";
 import { createCategoriesUseCases } from "@/modules/categories/use-cases";
 import type {
-  S02ErrorCode,
-  S02Result,
+  AccountsCategoriesErrorCode,
+  AccountsCategoriesResult,
 } from "./contracts";
 
 /**
@@ -72,7 +72,7 @@ function databaseOrThrow(database: Database | undefined): Database {
   return database;
 }
 
-function resultValue<T>(result: S02Result<T>): T {
+function resultValue<T>(result: AccountsCategoriesResult<T>): T {
   if (!result.ok) {
     throw new Error(`Resultado S02 inesperado: ${result.error.code}`);
   }
@@ -80,8 +80,8 @@ function resultValue<T>(result: S02Result<T>): T {
 }
 
 function expectResultError<T>(
-  result: S02Result<T>,
-  code: S02ErrorCode,
+  result: AccountsCategoriesResult<T>,
+  code: AccountsCategoriesErrorCode,
 ): void {
   expect(result).toMatchObject({
     ok: false,

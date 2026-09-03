@@ -29,7 +29,7 @@ import {
   MANUAL_TRANSACTION_ORIGIN,
   ok,
   REVERSAL_EVENT_KIND,
-  S03DomainError,
+  TransactionDomainError,
   SYSTEM_REVERSAL_ORIGIN,
   UPDATE_MANUAL_TRANSACTION_OPERATION,
   type CancelManualTransactionCommand,
@@ -38,7 +38,7 @@ import {
   type FinancialEventKind,
   type ManualTransactionKind,
   type ManualTransactionReadModel,
-  type S03Result,
+  type TransactionResult,
   type TransactionOperation,
   type UpdateManualTransactionCommand,
 } from "./contracts";
@@ -81,31 +81,31 @@ export interface TransactionsCreateUseCases {
   createExpense(
     context: FinancialContext,
     command: CreateExpenseCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
   createIncome(
     context: FinancialContext,
     command: CreateIncomeCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
 }
 
 export interface TransactionsMaintenanceUseCases {
   updateManualTransaction(
     context: FinancialContext,
     command: UpdateManualTransactionCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
   cancelManualTransaction(
     context: FinancialContext,
     command: CancelManualTransactionCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
   /** Short aliases for adapters that expose generic transaction mutations. */
   update(
     context: FinancialContext,
     command: UpdateManualTransactionCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
   cancel(
     context: FinancialContext,
     command: CancelManualTransactionCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
 }
 
 /** Complete T05 + T07 port used by production composition. */
@@ -245,7 +245,7 @@ async function reserveCommand(
   }
 
   if (record.operation !== operation || record.payloadHash !== hash) {
-    throw new S03DomainError("COMMAND_ID_REUSED", "commandId");
+    throw new TransactionDomainError("COMMAND_ID_REUSED", "commandId");
   }
 
   if (!record.resourceId) {
@@ -490,7 +490,7 @@ async function findActiveCategoryForUpdate(
   const category = rows[0];
 
   if (!category) {
-    throw new S03DomainError("CATEGORY_NOT_FOUND", "categoryId");
+    throw new TransactionDomainError("CATEGORY_NOT_FOUND", "categoryId");
   }
 
   assertCategoryReference({
@@ -664,7 +664,7 @@ async function executeUpdateManualTransaction(
       command.financialEventId,
     );
     if (!event) {
-      throw new S03DomainError("EVENT_NOT_FOUND", "financialEventId");
+      throw new TransactionDomainError("EVENT_NOT_FOUND", "financialEventId");
     }
 
     assertManualEventCanUpdate({
@@ -715,7 +715,7 @@ async function executeUpdateManualTransaction(
       )
       .returning();
     if (!rows[0]) {
-      throw new S03DomainError("EVENT_NOT_FOUND", "financialEventId");
+      throw new TransactionDomainError("EVENT_NOT_FOUND", "financialEventId");
     }
 
     return readCreatedTransaction(transaction, context, event.id);
@@ -760,7 +760,7 @@ async function executeCancelManualTransaction(
       command.financialEventId,
     );
     if (!event) {
-      throw new S03DomainError("EVENT_NOT_FOUND", "financialEventId");
+      throw new TransactionDomainError("EVENT_NOT_FOUND", "financialEventId");
     }
 
     assertManualEventCanCancel({
@@ -822,7 +822,7 @@ async function executeCancelManualTransaction(
       )
       .returning();
     if (!updatedRows[0]) {
-      throw new S03DomainError("EVENT_ALREADY_CANCELLED", "financialEventId");
+      throw new TransactionDomainError("EVENT_ALREADY_CANCELLED", "financialEventId");
     }
 
     return readCreatedTransaction(transaction, context, event.id);
@@ -846,16 +846,16 @@ function toOptions(
     : databaseOrOptions ?? {};
 }
 
-async function toResult<T>(operation: () => Promise<T>): Promise<S03Result<T>> {
+async function toResult<T>(operation: () => Promise<T>): Promise<TransactionResult<T>> {
   try {
     return ok(await operation());
   } catch (error) {
-    if (error instanceof S03DomainError) {
+    if (error instanceof TransactionDomainError) {
       return failure(error.code, error.field);
     }
 
     // Technical errors intentionally escape. The T08 action adapter owns
-    // reportS03UnexpectedError and the generic response boundary.
+    // reportTransactionUnexpectedError and the generic response boundary.
     throw error;
   }
 }
@@ -891,7 +891,7 @@ export function createTransactionsUseCases(
   const updateManualTransaction = async (
     context: FinancialContext,
     command: UpdateManualTransactionCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>> => {
+  ): Promise<TransactionResult<ManualTransactionReadModel>> => {
     assertContext(context);
     return toResult(() =>
       executeUpdateManualTransaction(
@@ -905,7 +905,7 @@ export function createTransactionsUseCases(
   const cancelManualTransaction = async (
     context: FinancialContext,
     command: CancelManualTransactionCommand,
-  ): Promise<S03Result<ManualTransactionReadModel>> => {
+  ): Promise<TransactionResult<ManualTransactionReadModel>> => {
     assertContext(context);
     return toResult(() =>
       executeCancelManualTransaction(
@@ -966,7 +966,7 @@ export async function createExpense(
   context: FinancialContext,
   command: CreateExpenseCommand,
   databaseOrOptions?: Database | TransactionsUseCaseOptions,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createTransactionsUseCases(databaseOrOptions).createExpense(
     context,
     command,
@@ -977,7 +977,7 @@ export async function createIncome(
   context: FinancialContext,
   command: CreateIncomeCommand,
   databaseOrOptions?: Database | TransactionsUseCaseOptions,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createTransactionsUseCases(databaseOrOptions).createIncome(
     context,
     command,
@@ -988,7 +988,7 @@ export async function updateManualTransaction(
   context: FinancialContext,
   command: UpdateManualTransactionCommand,
   databaseOrOptions?: Database | TransactionsUseCaseOptions,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createTransactionsUseCases(databaseOrOptions).updateManualTransaction(
     context,
     command,
@@ -999,7 +999,7 @@ export async function cancelManualTransaction(
   context: FinancialContext,
   command: CancelManualTransactionCommand,
   databaseOrOptions?: Database | TransactionsUseCaseOptions,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createTransactionsUseCases(databaseOrOptions).cancelManualTransaction(
     context,
     command,

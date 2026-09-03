@@ -57,7 +57,7 @@ function expectDomainCode(run: () => unknown, code: string): void {
   }
 }
 
-describe("S06 installment allocation", () => {
+describe("installment allocation", () => {
   it("divides exact and non-exact totals with bigint precision", () => {
     expect(allocateInstallments("10000", 3)).toEqual([
       BigInt("3334"),
@@ -112,7 +112,7 @@ describe("S06 installment allocation", () => {
   });
 });
 
-describe("S06 installment schedule aggregate", () => {
+describe("installment schedule aggregate", () => {
   it("materializes one immutable plan with exactly N linked rows", () => {
     const plan = makePlan();
 
@@ -258,7 +258,7 @@ describe("S06 installment schedule aggregate", () => {
   });
 });
 
-describe("S06 aggregate state and future balance", () => {
+describe("aggregate state and future balance", () => {
   it("posts through the aggregate and cancels the whole plan atomically", () => {
     const plan = makePlan();
     const posted = postInstallment(plan, 1);

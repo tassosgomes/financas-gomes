@@ -104,7 +104,7 @@ export const NON_EDITABLE_TRANSACTION_FIELDS = [
 export type NonEditableTransactionField =
   (typeof NON_EDITABLE_TRANSACTION_FIELDS)[number];
 
-export type S03ErrorField =
+export type TransactionErrorField =
   | "commandId"
   | "amountCents"
   | "occurredOn"
@@ -114,7 +114,7 @@ export type S03ErrorField =
   | "financialEventId";
 
 /** Stable, database-independent error vocabulary for all S03 boundaries. */
-export const S03_ERROR_CODES = [
+export const TRANSACTION_ERROR_CODES = [
   "UNAUTHENTICATED",
   "INVALID_COMMAND",
   "INVALID_COMMAND_ID",
@@ -135,9 +135,9 @@ export const S03_ERROR_CODES = [
   "NON_EDITABLE_FIELD",
   "COMMAND_ID_REUSED",
 ] as const;
-export type S03ErrorCode = (typeof S03_ERROR_CODES)[number];
+export type TransactionErrorCode = (typeof TRANSACTION_ERROR_CODES)[number];
 
-export const S03_ERROR_MESSAGES: Record<S03ErrorCode, string> = {
+export const TRANSACTION_ERROR_MESSAGES: Record<TransactionErrorCode, string> = {
   UNAUTHENTICATED: "É necessário entrar para acessar este recurso.",
   INVALID_COMMAND: "Os dados da operação são inválidos.",
   INVALID_COMMAND_ID: "O identificador da operação é inválido.",
@@ -162,10 +162,10 @@ export const S03_ERROR_MESSAGES: Record<S03ErrorCode, string> = {
   COMMAND_ID_REUSED: "O identificador da operação já foi utilizado.",
 };
 
-export interface S03Error {
-  code: S03ErrorCode;
+export interface TransactionError {
+  code: TransactionErrorCode;
   message: string;
-  field?: S03ErrorField;
+  field?: TransactionErrorField;
 }
 
 /** Generic result used by server actions and use cases. */
@@ -173,7 +173,7 @@ export type Result<T, E> =
   | { ok: true; value: T }
   | { ok: false; error: E };
 
-export type S03Result<T> = Result<T, S03Error>;
+export type TransactionResult<T> = Result<T, TransactionError>;
 
 export interface ManualTransactionEntryReadModel {
   id: string;
@@ -348,7 +348,7 @@ export interface TransactionCategoryReference {
   kind: ManualTransactionKind;
 }
 
-function statusForS03Error(code: S03ErrorCode): number {
+function statusForTransactionError(code: TransactionErrorCode): number {
   switch (code) {
     case "UNAUTHENTICATED":
       return 401;
@@ -372,21 +372,21 @@ function statusForS03Error(code: S03ErrorCode): number {
 }
 
 /** Expected domain failure that can safely cross an application boundary. */
-export class S03DomainError extends Error {
-  readonly code: S03ErrorCode;
-  readonly field: S03ErrorField | undefined;
+export class TransactionDomainError extends Error {
+  readonly code: TransactionErrorCode;
+  readonly field: TransactionErrorField | undefined;
   readonly status: number;
   readonly expected = true;
 
-  constructor(code: S03ErrorCode, field?: S03ErrorField) {
-    super(S03_ERROR_MESSAGES[code]);
-    this.name = "S03DomainError";
+  constructor(code: TransactionErrorCode, field?: TransactionErrorField) {
+    super(TRANSACTION_ERROR_MESSAGES[code]);
+    this.name = "TransactionDomainError";
     this.code = code;
     this.field = field;
-    this.status = statusForS03Error(code);
+    this.status = statusForTransactionError(code);
   }
 
-  toError(): S03Error {
+  toError(): TransactionError {
     return {
       code: this.code,
       message: this.message,
@@ -394,21 +394,19 @@ export class S03DomainError extends Error {
     };
   }
 }
+export const DomainValidationError = TransactionDomainError;
 
-export const TransactionDomainError = S03DomainError;
-export const DomainValidationError = S03DomainError;
-
-export function ok<T>(value: T): S03Result<T> {
+export function ok<T>(value: T): TransactionResult<T> {
   return { ok: true, value };
 }
 
 export function failure<T = never>(
-  code: S03ErrorCode,
-  field?: S03ErrorField,
-): S03Result<T> {
+  code: TransactionErrorCode,
+  field?: TransactionErrorField,
+): TransactionResult<T> {
   return {
     ok: false,
-    error: new S03DomainError(code, field).toError(),
+    error: new TransactionDomainError(code, field).toError(),
   };
 }
 

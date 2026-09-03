@@ -29,7 +29,7 @@ import {
   assertManualTransactionReferences,
   type FinancialDate,
 } from "./domain";
-import { S03DomainError } from "./contracts";
+import { TransactionDomainError } from "./contracts";
 import type {
   ManualTransactionKind,
   TransactionAccountReference,
@@ -232,7 +232,7 @@ export async function getAccountForContext(
 ): Promise<AccountRecord> {
   const account = await findAccountForContext(database, context, accountId);
   if (!account) {
-    throw new S03DomainError("ACCOUNT_NOT_FOUND", "accountId");
+    throw new TransactionDomainError("ACCOUNT_NOT_FOUND", "accountId");
   }
   return account;
 }
@@ -245,7 +245,7 @@ export async function getCategoryForContext(
 ): Promise<CategoryRecord> {
   const category = await findCategoryForContext(database, context, categoryId);
   if (!category) {
-    throw new S03DomainError("CATEGORY_NOT_FOUND", "categoryId");
+    throw new TransactionDomainError("CATEGORY_NOT_FOUND", "categoryId");
   }
   return category;
 }
@@ -262,7 +262,7 @@ export async function getFinancialEventForContext(
     financialEventId,
   );
   if (!event) {
-    throw new S03DomainError("EVENT_NOT_FOUND", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_FOUND", "financialEventId");
   }
   return event;
 }
@@ -283,7 +283,7 @@ export async function getAccountEntryForContext(
     accountEntryId,
   );
   if (!entry) {
-    throw new S03DomainError("EVENT_NOT_FOUND", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_FOUND", "financialEventId");
   }
   return entry;
 }

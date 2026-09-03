@@ -30,7 +30,7 @@ function point(referenceId: string, items: readonly SpendableCausalItem[]): Spen
   };
 }
 
-describe("S08 T07 causal page", () => {
+describe("T07 causal page", () => {
   it("uses an opaque, versioned cursor without copying a financial reference", () => {
     const cursor = encodeSpendableCausalCursor({ offset: 2, limit: 1 });
     expect(cursor).toMatch(/^[A-Za-z0-9_-]+$/u);

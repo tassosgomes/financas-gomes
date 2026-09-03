@@ -42,11 +42,11 @@ import {
   type FinancialDate,
 } from "@/modules/transactions/dates";
 import {
-  createS06CreditCardOperation,
-  measureS06Query,
-  withS06CreditCardObservability,
-  type S06CreditCardOperation,
-} from "@/modules/observability/s06";
+  createCreditCardOperation,
+  measureCreditCardQuery,
+  withCreditCardObservability,
+  type CreditCardOperation,
+} from "@/modules/observability/credit-cards";
 
 import {
   CreditCardDomainError,
@@ -507,14 +507,14 @@ async function executeProjection(
 ): Promise<CreditCardProjectionReadModel> {
   assertFinancialContext(context);
   const query = normalizeProjectionQuery(input, today);
-  const operation: S06CreditCardOperation = "credit_card.statement.read";
-  const operationContext = createS06CreditCardOperation(operation, {
+  const operation: CreditCardOperation = "credit_card.statement.read";
+  const operationContext = createCreditCardOperation(operation, {
     householdId: context.householdId,
     userId: context.userId,
     cardId: query.cardId,
   });
 
-  const cardRows = await measureS06Query(
+  const cardRows = await measureCreditCardQuery(
     operationContext,
     () => database
       .select({ card: creditCards, account: accounts })
@@ -542,7 +542,7 @@ async function executeProjection(
   }
   assertCardAggregate(aggregate.card, aggregate.account, context);
 
-  const rows = await measureS06Query(
+  const rows = await measureCreditCardQuery(
     operationContext,
     () => database
       .select({
@@ -603,7 +603,7 @@ async function executeProjection(
   const projectionRows = rows as ProjectionRow[];
   const buckets = groupRows(projectionRows);
 
-  const payments = await measureS06Query(
+  const payments = await measureCreditCardQuery(
     operationContext,
     () => database
       .select({ event: financialEvents, entry: accountEntries })
@@ -650,7 +650,7 @@ async function executeProjection(
     paymentCredits += asBigInt(payment.entry.amountCents);
   }
 
-  const postedRows = await measureS06Query(
+  const postedRows = await measureCreditCardQuery(
     operationContext,
     () => database
       .select({
@@ -791,7 +791,7 @@ async function executeProjection(
   };
 }
 
-function projectionOperation(input: unknown): S06CreditCardOperation {
+function projectionOperation(input: unknown): CreditCardOperation {
   if (typeof input === "object" && input !== null &&
       typeof (input as { period?: unknown }).period === "string") {
     return "credit_card.statement.read";
@@ -800,7 +800,7 @@ function projectionOperation(input: unknown): S06CreditCardOperation {
 }
 
 function operationContext(
-  operation: S06CreditCardOperation,
+  operation: CreditCardOperation,
   context: FinancialContext,
   input: unknown,
 ) {
@@ -808,7 +808,7 @@ function operationContext(
     typeof (input as { cardId?: unknown }).cardId === "string"
     ? (input as { cardId: string }).cardId
     : undefined;
-  return createS06CreditCardOperation(operation, {
+  return createCreditCardOperation(operation, {
     householdId: context.householdId,
     userId: context.userId,
     ...(cardId ? { cardId } : {}),
@@ -833,7 +833,7 @@ export async function getCreditCardProjectionForContext(
   today?: FinancialDate | string,
 ): Promise<CreditCardProjectionReadModel> {
   const operation = projectionOperation(query);
-  return withS06CreditCardObservability(
+  return withCreditCardObservability(
     operationContext(operation, context, query),
     () => executeProjection(database, context, query, today),
     { technicalErrorCode: "PROJECTION_QUERY_FAILED" },

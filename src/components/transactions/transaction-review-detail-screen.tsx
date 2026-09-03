@@ -14,12 +14,12 @@ import type {
   AccountBalanceReadModel,
   CancelManualTransactionCommand,
   ManualTransactionReadModel,
-  S03Error,
-  S03Result,
+  TransactionError,
+  TransactionResult,
 } from "@/modules/transactions/contracts";
 import type {
-  S05Error,
-  S05Result,
+  TransactionReviewError,
+  TransactionReviewResult,
   TransactionDetailReadModel,
   UpdateReviewableTransactionCommand,
 } from "@/modules/transactions/review-contracts";
@@ -37,7 +37,7 @@ import { formatDetailCents, formatDetailDate } from "./transaction-detail-utils"
 /** The T06 action only accepts serializable editable metadata. */
 export type TransactionReviewUpdateAction = (
   command: UpdateReviewableTransactionCommand,
-) => Promise<S05Result<ReviewableTransactionUpdateReadModel>>;
+) => Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>>;
 
 export interface TransactionReviewDetailScreenProps {
   initialTransaction: TransactionDetailReadModel;
@@ -48,7 +48,7 @@ export interface TransactionReviewDetailScreenProps {
   updateAction: TransactionReviewUpdateAction;
   cancelAction?: (
     command: CancelManualTransactionCommand,
-  ) => Promise<S03Result<ManualTransactionReadModel>>;
+  ) => Promise<TransactionResult<ManualTransactionReadModel>>;
 }
 
 interface ReviewOperationError {
@@ -72,11 +72,11 @@ const ORIGIN_LABELS = {
   IMPORT: "Importado",
 } as const;
 
-function reviewError(error: S05Error): ReviewOperationError {
+function reviewError(error: TransactionReviewError): ReviewOperationError {
   return { code: error.code, field: error.field, message: error.message };
 }
 
-function toFormError(error: ReviewOperationError | null): S03Error | null {
+function toFormError(error: ReviewOperationError | null): TransactionError | null {
   if (!error) return null;
   const field = error.field === "description" || error.field === "categoryId"
     ? error.field
@@ -268,7 +268,7 @@ export function TransactionReviewDetailScreen({
   const updateAttempt = useRef<TransactionMaintenanceAttemptRef["current"]>(null);
   const cancelAttempt = useRef<TransactionMaintenanceAttemptRef["current"]>(null);
 
-  async function handleUpdate(values: ManualTransactionFormValues): Promise<S03Result<unknown>> {
+  async function handleUpdate(values: ManualTransactionFormValues): Promise<TransactionResult<unknown>> {
     setOperationError(null);
     setSuccessMessage(null);
     setIsUpdating(true);

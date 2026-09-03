@@ -24,7 +24,7 @@ import type { FinancialContext } from "@/modules/households/contracts";
 
 import type { AccountsUseCasePort } from "../accounts-categories/adapters";
 import {
-  S02DomainError,
+  AccountsCategoriesDomainError,
   failure,
   ok,
   type AccountReadModel,
@@ -32,8 +32,8 @@ import {
   type CreateAccountCommand,
   type ListAccountsQuery,
   type ListAccountsReadModel,
-  type S02Error,
-  type S02Result,
+  type AccountsCategoriesError,
+  type AccountsCategoriesResult,
   type UpdateAccountCommand,
 } from "../accounts-categories/contracts";
 import {
@@ -158,8 +158,8 @@ function unwrapConstraint(error: unknown): string | undefined {
   return undefined;
 }
 
-function mapAccountPersistenceError(error: unknown): S02DomainError | null {
-  if (error instanceof S02DomainError) {
+function mapAccountPersistenceError(error: unknown): AccountsCategoriesDomainError | null {
+  if (error instanceof AccountsCategoriesDomainError) {
     return error;
   }
 
@@ -170,13 +170,13 @@ function mapAccountPersistenceError(error: unknown): S02DomainError | null {
     unwrapErrorCode(error) === "23505" &&
     unwrapConstraint(error) === "accounts_household_name_ci_uq"
   ) {
-    return new S02DomainError("ACCOUNT_NAME_CONFLICT", "name");
+    return new AccountsCategoriesDomainError("ACCOUNT_NAME_CONFLICT", "name");
   }
 
   return null;
 }
 
-async function toResult<T>(operation: () => Promise<T>): Promise<S02Result<T>> {
+async function toResult<T>(operation: () => Promise<T>): Promise<AccountsCategoriesResult<T>> {
   try {
     return ok(await operation());
   } catch (error) {
@@ -354,7 +354,7 @@ async function reserveCommand(
   }
 
   if (record.operation !== operation || record.payloadHash !== payloadHash) {
-    throw new S02DomainError("COMMAND_ID_REUSED", "commandId");
+    throw new AccountsCategoriesDomainError("COMMAND_ID_REUSED", "commandId");
   }
 
   if (!record.resourceId) {
@@ -374,7 +374,7 @@ async function executeCreate(
   // the generic account path would leave it without credit_cards/billing-rule
   // rows, so callers must use the atomic S06 card command.
   if (parsed.type === "CREDIT_CARD") {
-    throw new S02DomainError("CREDIT_CARD_REQUIRES_CONFIGURATION", "type");
+    throw new AccountsCategoriesDomainError("CREDIT_CARD_REQUIRES_CONFIGURATION", "type");
   }
   const id = generateUuidV7();
   const payloadHash = hashPayload(accountCommandPayload(parsed));
@@ -404,7 +404,7 @@ async function executeCreate(
     if (
       await hasAccountNameConflict(transaction, context, parsed.name)
     ) {
-      throw new S02DomainError("ACCOUNT_NAME_CONFLICT", "name");
+      throw new AccountsCategoriesDomainError("ACCOUNT_NAME_CONFLICT", "name");
     }
 
     const rows = await transaction
@@ -480,7 +480,7 @@ async function executeUpdate(
         resourceIdFromCommand(reservation.record),
       );
       if (!existing) {
-        throw new S02DomainError("ACCOUNT_NOT_FOUND", "accountId");
+        throw new AccountsCategoriesDomainError("ACCOUNT_NOT_FOUND", "accountId");
       }
       return toAccountReadModel(existing);
     }
@@ -492,11 +492,11 @@ async function executeUpdate(
       true,
     );
     if (!current) {
-      throw new S02DomainError("ACCOUNT_NOT_FOUND", "accountId");
+      throw new AccountsCategoriesDomainError("ACCOUNT_NOT_FOUND", "accountId");
     }
 
     if (current.type === "CREDIT_CARD") {
-      throw new S02DomainError("CREDIT_CARD_REQUIRES_CONFIGURATION", "accountId");
+      throw new AccountsCategoriesDomainError("CREDIT_CARD_REQUIRES_CONFIGURATION", "accountId");
     }
 
     assertAccountCanArchive(current.status);
@@ -510,7 +510,7 @@ async function executeUpdate(
         current.id,
       ))
     ) {
-      throw new S02DomainError("ACCOUNT_NAME_CONFLICT", "name");
+      throw new AccountsCategoriesDomainError("ACCOUNT_NAME_CONFLICT", "name");
     }
 
     const rows = await transaction
@@ -538,7 +538,7 @@ async function executeUpdate(
     const row = rows[0];
 
     if (!row) {
-      throw new S02DomainError("ACCOUNT_NOT_FOUND", "accountId");
+      throw new AccountsCategoriesDomainError("ACCOUNT_NOT_FOUND", "accountId");
     }
 
     return toAccountReadModel(row);
@@ -570,7 +570,7 @@ async function executeArchive(
         resourceIdFromCommand(reservation.record),
       );
       if (!existing) {
-        throw new S02DomainError("ACCOUNT_NOT_FOUND", "accountId");
+        throw new AccountsCategoriesDomainError("ACCOUNT_NOT_FOUND", "accountId");
       }
       return toAccountReadModel(existing);
     }
@@ -582,11 +582,11 @@ async function executeArchive(
       true,
     );
     if (!current) {
-      throw new S02DomainError("ACCOUNT_NOT_FOUND", "accountId");
+      throw new AccountsCategoriesDomainError("ACCOUNT_NOT_FOUND", "accountId");
     }
 
     if (current.type === "CREDIT_CARD") {
-      throw new S02DomainError("CREDIT_CARD_REQUIRES_CONFIGURATION", "accountId");
+      throw new AccountsCategoriesDomainError("CREDIT_CARD_REQUIRES_CONFIGURATION", "accountId");
     }
 
     assertAccountCanArchive(current.status);
@@ -604,7 +604,7 @@ async function executeArchive(
     const row = rows[0];
 
     if (!row) {
-      throw new S02DomainError("ACCOUNT_NOT_FOUND", "accountId");
+      throw new AccountsCategoriesDomainError("ACCOUNT_NOT_FOUND", "accountId");
     }
 
     return toAccountReadModel(row);
@@ -705,7 +705,7 @@ export async function createAccount(
   context: FinancialContext,
   command: CreateAccountCommand,
   databaseOrOptions?: Database | AccountsUseCaseOptions,
-): Promise<S02Result<AccountReadModel>> {
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
   return createAccountsUseCases(databaseOrOptions).create(context, command);
 }
 
@@ -713,7 +713,7 @@ export async function listAccounts(
   context: FinancialContext,
   query: ListAccountsQuery = {},
   databaseOrOptions?: Database | AccountsUseCaseOptions,
-): Promise<S02Result<ListAccountsReadModel>> {
+): Promise<AccountsCategoriesResult<ListAccountsReadModel>> {
   return createAccountsUseCases(databaseOrOptions).list(context, query);
 }
 
@@ -721,7 +721,7 @@ export async function updateAccount(
   context: FinancialContext,
   command: UpdateAccountCommand,
   databaseOrOptions?: Database | AccountsUseCaseOptions,
-): Promise<S02Result<AccountReadModel>> {
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
   return createAccountsUseCases(databaseOrOptions).update(context, command);
 }
 
@@ -729,7 +729,7 @@ export async function archiveAccount(
   context: FinancialContext,
   command: ArchiveAccountCommand,
   databaseOrOptions?: Database | AccountsUseCaseOptions,
-): Promise<S02Result<AccountReadModel>> {
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
   return createAccountsUseCases(databaseOrOptions).archive(context, command);
 }
 
@@ -740,8 +740,8 @@ export const ArchiveAccount = archiveAccount;
 
 /** Type guard useful to consumers that only handle expected account errors. */
 export function isAccountResultError(
-  result: S02Result<unknown>,
-): result is { ok: false; error: S02Error } {
+  result: AccountsCategoriesResult<unknown>,
+): result is { ok: false; error: AccountsCategoriesError } {
   return !result.ok;
 }
 

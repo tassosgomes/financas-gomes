@@ -1,10 +1,9 @@
-/** Stable errors for the S03 transaction boundary. */
+/** Stable errors for the manual transaction boundary. */
 export {
   DomainValidationError,
-  S03DomainError,
-  S03_ERROR_CODES,
-  S03_ERROR_MESSAGES,
   TransactionDomainError,
+  TRANSACTION_ERROR_CODES,
+  TRANSACTION_ERROR_MESSAGES,
   errorResult,
   failure,
   ok,
@@ -12,10 +11,10 @@ export {
 } from "./contracts";
 export type {
   Result,
-  S03Error,
-  S03ErrorCode,
-  S03ErrorField,
-  S03Result,
+  TransactionError,
+  TransactionErrorCode,
+  TransactionErrorField,
+  TransactionResult,
 } from "./contracts";
-export { toS03DomainError, toS03Error } from "./validation";
+export { toTransactionDomainError, toTransactionError } from "./validation";
 

@@ -38,7 +38,7 @@ function metadata(table: DrizzleTable) {
   };
 }
 
-describe("S07 recurring persistence schema", () => {
+describe("recurring persistence schema", () => {
   it("declares only source data and exposes no forecast/saldo table", () => {
     expect(
       [recurringRules, recurringOccurrences, holidays, plannedEvents].map(

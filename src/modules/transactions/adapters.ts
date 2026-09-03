@@ -2,21 +2,21 @@ import { requireFinancialContext } from "@/modules/households/context";
 import type { FinancialContext } from "@/modules/households/contracts";
 import {
   createObservabilityRequestId,
-  createS03TransactionOperation,
-  isExpectedS03Error,
-  logS03TransactionOperation,
-  reportS03UnexpectedError,
-  toS03ActionError,
+  createTransactionObservabilityOperation,
+  isExpectedTransactionError,
+  logTransactionObservabilityOperation,
+  reportTransactionUnexpectedError,
+  toTransactionActionError,
 } from "@/modules/observability";
 
 import {
-  S03_ERROR_CODES,
+  TRANSACTION_ERROR_CODES,
   type CreateExpenseCommand,
   type CreateIncomeCommand,
   type CancelManualTransactionCommand,
   type ManualTransactionKind,
   type ManualTransactionReadModel,
-  type S03Result,
+  type TransactionResult,
   type UpdateManualTransactionCommand,
 } from "./contracts";
 import {
@@ -32,7 +32,7 @@ import {
 } from "./use-cases";
 
 /** Invalid result protection keeps malformed adapter ports out of the UI. */
-function isS03Result<T>(value: unknown): value is S03Result<T> {
+function isTransactionResult<T>(value: unknown): value is TransactionResult<T> {
   if (
     typeof value !== "object" ||
     value === null ||
@@ -54,7 +54,7 @@ function isS03Result<T>(value: unknown): value is S03Result<T> {
 
   return (
     typeof code === "string" &&
-    S03_ERROR_CODES.includes(code as (typeof S03_ERROR_CODES)[number])
+    TRANSACTION_ERROR_CODES.includes(code as (typeof TRANSACTION_ERROR_CODES)[number])
   );
 }
 
@@ -78,14 +78,14 @@ export interface TransactionCreateActionDependencies {
 }
 
 export interface TransactionCreateActionHandlers {
-  createExpense(input: unknown): Promise<S03Result<ManualTransactionReadModel>>;
-  createIncome(input: unknown): Promise<S03Result<ManualTransactionReadModel>>;
+  createExpense(input: unknown): Promise<TransactionResult<ManualTransactionReadModel>>;
+  createIncome(input: unknown): Promise<TransactionResult<ManualTransactionReadModel>>;
 }
 
 function parseCommand(
   kind: ManualTransactionKind,
   input: unknown,
-): S03Result<CreateExpenseCommand | CreateIncomeCommand> {
+): TransactionResult<CreateExpenseCommand | CreateIncomeCommand> {
   return kind === "EXPENSE"
     ? safeParseCreateExpenseCommand(input)
     : safeParseCreateIncomeCommand(input);
@@ -99,15 +99,15 @@ async function runCreate(
   kind: ManualTransactionKind,
   input: unknown,
   dependencies: TransactionCreateActionDependencies,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   const startedAt = monotonicNow();
-  const operation = createS03TransactionOperation("create", kind, {
+  const operation = createTransactionObservabilityOperation("create", kind, {
     requestId: createObservabilityRequestId(),
   });
 
   const parsed = parseCommand(kind, input);
   if (!parsed.ok) {
-    logS03TransactionOperation(
+    logTransactionObservabilityOperation(
       operation,
       "expected_error",
       elapsedMs(startedAt),
@@ -121,9 +121,9 @@ async function runCreate(
   try {
     context = await dependencies.resolveContext();
   } catch (error) {
-    if (isExpectedS03Error(error)) {
-      const safeError = toS03ActionError(error);
-      logS03TransactionOperation(
+    if (isExpectedTransactionError(error)) {
+      const safeError = toTransactionActionError(error);
+      logTransactionObservabilityOperation(
         operation,
         "expected_error",
         elapsedMs(startedAt),
@@ -133,7 +133,7 @@ async function runCreate(
       return { ok: false, error: safeError };
     }
 
-    reportS03UnexpectedError(error, operation, elapsedMs(startedAt));
+    reportTransactionUnexpectedError(error, operation, elapsedMs(startedAt));
     throw error;
   }
 
@@ -150,14 +150,14 @@ async function runCreate(
             parsed.value as CreateIncomeCommand,
           );
 
-    if (!isS03Result<ManualTransactionReadModel>(result)) {
+    if (!isTransactionResult<ManualTransactionReadModel>(result)) {
       const invalidResultError = new Error("invalid transaction create result");
       throw invalidResultError;
     }
 
     if (!result.ok) {
-      const safeError = toS03ActionError(result.error);
-      logS03TransactionOperation(
+      const safeError = toTransactionActionError(result.error);
+      logTransactionObservabilityOperation(
         operation,
         "expected_error",
         elapsedMs(startedAt),
@@ -167,7 +167,7 @@ async function runCreate(
       return { ok: false, error: safeError };
     }
 
-    const completedOperation = createS03TransactionOperation("create", kind, {
+    const completedOperation = createTransactionObservabilityOperation("create", kind, {
       requestId: operation.requestId,
       eventId: result.value.id,
     });
@@ -175,7 +175,7 @@ async function runCreate(
 
     await dependencies.revalidateTransactions?.();
 
-    logS03TransactionOperation(
+    logTransactionObservabilityOperation(
       completedOperation,
       "success",
       elapsedMs(startedAt),
@@ -183,9 +183,9 @@ async function runCreate(
     );
     return { ok: true, value: result.value };
   } catch (error) {
-    if (isExpectedS03Error(error)) {
-      const safeError = toS03ActionError(error);
-      logS03TransactionOperation(
+    if (isExpectedTransactionError(error)) {
+      const safeError = toTransactionActionError(error);
+      logTransactionObservabilityOperation(
         operation,
         "expected_error",
         elapsedMs(startedAt),
@@ -197,7 +197,7 @@ async function runCreate(
 
     // The port keeps technical failures outside Result so T08 can retain the
     // stack while this boundary exposes only a generic client failure.
-    reportS03UnexpectedError(
+    reportTransactionUnexpectedError(
       error,
       operationForError,
       elapsedMs(startedAt),
@@ -242,13 +242,13 @@ export interface TransactionMaintenanceActionDependencies {
 export interface TransactionMaintenanceActionHandlers {
   updateManualTransaction(
     input: unknown,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
   cancelManualTransaction(
     input: unknown,
-  ): Promise<S03Result<ManualTransactionReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionReadModel>>;
   /** Short aliases preserve the generic maintenance port vocabulary. */
-  update(input: unknown): Promise<S03Result<ManualTransactionReadModel>>;
-  cancel(input: unknown): Promise<S03Result<ManualTransactionReadModel>>;
+  update(input: unknown): Promise<TransactionResult<ManualTransactionReadModel>>;
+  cancel(input: unknown): Promise<TransactionResult<ManualTransactionReadModel>>;
 }
 
 type MaintenanceOperation = "update" | "cancel";
@@ -259,7 +259,7 @@ type MaintenanceCommand =
 function parseMaintenanceCommand(
   operation: MaintenanceOperation,
   input: unknown,
-): S03Result<MaintenanceCommand> {
+): TransactionResult<MaintenanceCommand> {
   return operation === "update"
     ? safeParseUpdateManualTransactionCommand(input)
     : safeParseCancelManualTransactionCommand(input);
@@ -273,19 +273,19 @@ async function runMaintenance(
   operation: MaintenanceOperation,
   input: unknown,
   dependencies: TransactionMaintenanceActionDependencies,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   const startedAt = monotonicNow();
   const requestId = createObservabilityRequestId();
-  let operationContext = createS03TransactionOperation(operation, "MANUAL", {
+  let operationContext = createTransactionObservabilityOperation(operation, "MANUAL", {
     requestId,
   });
 
   const parsed = parseMaintenanceCommand(operation, input);
   if (!parsed.ok) {
-    operationContext = createS03TransactionOperation(operation, "MANUAL", {
+    operationContext = createTransactionObservabilityOperation(operation, "MANUAL", {
       requestId,
     });
-    logS03TransactionOperation(
+    logTransactionObservabilityOperation(
       operationContext,
       "expected_error",
       elapsedMs(startedAt),
@@ -295,7 +295,7 @@ async function runMaintenance(
     return parsed;
   }
 
-  operationContext = createS03TransactionOperation(operation, "MANUAL", {
+  operationContext = createTransactionObservabilityOperation(operation, "MANUAL", {
     requestId,
     eventId: parsed.value.financialEventId,
   });
@@ -304,9 +304,9 @@ async function runMaintenance(
   try {
     context = await dependencies.resolveContext();
   } catch (error) {
-    if (isExpectedS03Error(error)) {
-      const safeError = toS03ActionError(error);
-      logS03TransactionOperation(
+    if (isExpectedTransactionError(error)) {
+      const safeError = toTransactionActionError(error);
+      logTransactionObservabilityOperation(
         operationContext,
         "expected_error",
         elapsedMs(startedAt),
@@ -316,7 +316,7 @@ async function runMaintenance(
       return { ok: false, error: safeError };
     }
 
-    reportS03UnexpectedError(error, operationContext, elapsedMs(startedAt));
+    reportTransactionUnexpectedError(error, operationContext, elapsedMs(startedAt));
     throw error;
   }
 
@@ -332,13 +332,13 @@ async function runMaintenance(
             parsed.value as CancelManualTransactionCommand,
           );
 
-    if (!isS03Result<ManualTransactionReadModel>(result)) {
+    if (!isTransactionResult<ManualTransactionReadModel>(result)) {
       throw new Error("invalid transaction maintenance result");
     }
 
     if (!result.ok) {
-      const safeError = toS03ActionError(result.error);
-      logS03TransactionOperation(
+      const safeError = toTransactionActionError(result.error);
+      logTransactionObservabilityOperation(
         operationContext,
         "expected_error",
         elapsedMs(startedAt),
@@ -349,7 +349,7 @@ async function runMaintenance(
     }
 
     await dependencies.revalidateTransactions?.(result.value);
-    logS03TransactionOperation(
+    logTransactionObservabilityOperation(
       operationContext,
       "success",
       elapsedMs(startedAt),
@@ -357,9 +357,9 @@ async function runMaintenance(
     );
     return { ok: true, value: result.value };
   } catch (error) {
-    if (isExpectedS03Error(error)) {
-      const safeError = toS03ActionError(error);
-      logS03TransactionOperation(
+    if (isExpectedTransactionError(error)) {
+      const safeError = toTransactionActionError(error);
+      logTransactionObservabilityOperation(
         operationContext,
         "expected_error",
         elapsedMs(startedAt),
@@ -369,7 +369,7 @@ async function runMaintenance(
       return { ok: false, error: safeError };
     }
 
-    reportS03UnexpectedError(
+    reportTransactionUnexpectedError(
       error,
       operationContext,
       elapsedMs(startedAt),

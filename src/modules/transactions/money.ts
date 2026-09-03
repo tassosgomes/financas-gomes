@@ -1,11 +1,11 @@
-import { S03DomainError } from "./contracts";
+import { TransactionDomainError } from "./contracts";
 
 const DECIMAL_INTEGER_PATTERN = /^\d+$/u;
 const ZERO_CENTS = BigInt(0);
 const ONE_HUNDRED_CENTS = BigInt(100);
 
 function invalidAmount(): never {
-  throw new S03DomainError("INVALID_AMOUNT", "amountCents");
+  throw new TransactionDomainError("INVALID_AMOUNT", "amountCents");
 }
 
 function assertBigInt(value: unknown): asserts value is bigint {

@@ -42,7 +42,7 @@ function expectDomainCode(run: () => unknown, code: string): void {
   }
 }
 
-describe("S07 recurrence/calendar domain", () => {
+describe("recurrence/calendar domain", () => {
   it("uses strict ISO dates and Temporal.PlainDate without timezone drift", () => {
     expect(formatRecurrenceDate(Temporal.PlainDate.from("2026-08-31"))).toBe(
       "2026-08-31",

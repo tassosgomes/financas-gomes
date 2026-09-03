@@ -26,8 +26,8 @@ import {
 import {
   MANUAL_TRANSACTION_KINDS,
   type ManualTransactionKind,
-  type S03Error,
-  type S03Result,
+  type TransactionError,
+  type TransactionResult,
 } from "@/modules/transactions/contracts";
 
 const INPUT_CLASS_NAME =
@@ -69,8 +69,8 @@ export interface TransactionFormTransaction {
 
 export type TransactionFormMode = "create" | "edit";
 
-export type TransactionFormError = Pick<S03Error, "code" | "message"> & {
-  field?: S03Error["field"];
+export type TransactionFormError = Pick<TransactionError, "code" | "message"> & {
+  field?: TransactionError["field"];
 };
 
 export interface TransactionFormProps {
@@ -85,7 +85,7 @@ export interface TransactionFormProps {
   categories?: readonly TransactionCategoryOption[];
   onSubmit: (
     values: ManualTransactionFormValues,
-  ) => Promise<S03Result<unknown> | void> | S03Result<unknown> | void;
+  ) => Promise<TransactionResult<unknown> | void> | TransactionResult<unknown> | void;
   onCancel?: () => void;
   /** Used while account/category options or the action are pending. */
   isLoading?: boolean;

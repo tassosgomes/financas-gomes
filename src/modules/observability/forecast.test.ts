@@ -16,22 +16,22 @@ import {
 } from "./sanitize";
 
 import {
-  S07_FORECAST_EXPECTED_ERROR_CODES,
-  classifyS07Error,
-  createS07ForecastOperation,
-  getS07QueryBudgetMs,
-  getS07SlowQueryThresholdMs,
-  logS07ForecastOperation,
-  measureS07Query,
-  reportS07UnexpectedError,
-  sanitizeS07ForecastCounts,
-  sanitizeS07ForecastLog,
-  toS07ErrorEnvelope,
-  toS07ObservabilityContext,
-  withS07ForecastObservability,
-} from "./s07";
+  FORECAST_EXPECTED_ERROR_CODES,
+  classifyForecastError,
+  createForecastOperation,
+  getForecastQueryBudgetMs,
+  getForecastSlowQueryThresholdMs,
+  logForecastOperation,
+  measureForecastQuery,
+  reportForecastUnexpectedError,
+  sanitizeForecastCounts,
+  sanitizeForecastLog,
+  toForecastErrorEnvelope,
+  toForecastObservabilityContext,
+  withForecastObservability,
+} from "./forecast";
 
-describe("S07 forecast observability", () => {
+describe("forecast observability", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.mocked(addBreadcrumbSafely).mockClear();
@@ -39,7 +39,7 @@ describe("S07 forecast observability", () => {
   });
 
   it("creates stage/query metadata and drops forecast payload fields", () => {
-    const operation = createS07ForecastOperation("builder", {
+    const operation = createForecastOperation("builder", {
       requestId: "request-opaque",
       householdId: "household-opaque",
       scenario: "EXPECTED",
@@ -87,7 +87,7 @@ describe("S07 forecast observability", () => {
   });
 
   it("derives code-owned names and retains only aggregate safe metadata", () => {
-    const safe = sanitizeS07ForecastLog({
+    const safe = sanitizeForecastLog({
       operation: "forecast.query.get",
       outcome: "success",
       requestId: "request-opaque",
@@ -123,7 +123,7 @@ describe("S07 forecast observability", () => {
     });
 
     expect(safe).toEqual({
-      event: "s07_forecast_query_get_success",
+      event: "forecast_query_get_success",
       useCase: "forecast.query.get",
       operation: "forecast.query.get",
       stage: "query",
@@ -166,7 +166,7 @@ describe("S07 forecast observability", () => {
 
   it("normalizes bounded counters and ignores arrays/amount-like values", () => {
     expect(
-      sanitizeS07ForecastCounts({
+      sanitizeForecastCounts({
         source_count: 3.4,
         recurring: 2,
         planned_events: -1,
@@ -184,21 +184,21 @@ describe("S07 forecast observability", () => {
   });
 
   it("classifies validation, authorization and absence as expected", () => {
-    for (const code of S07_FORECAST_EXPECTED_ERROR_CODES) {
-      expect(classifyS07Error({ code, message: "amount=999999 private" })).toEqual({
+    for (const code of FORECAST_EXPECTED_ERROR_CODES) {
+      expect(classifyForecastError({ code, message: "amount=999999 private" })).toEqual({
         outcome: "expected_error",
         errorCode: code,
       });
     }
-    expect(classifyS07Error(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
+    expect(classifyForecastError(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
       outcome: "expected_error",
       errorCode: "UNAUTHENTICATED",
     });
-    expect(classifyS07Error({ code: "FORECAST_INCONSISTENT", message: "private" })).toEqual({
+    expect(classifyForecastError({ code: "FORECAST_INCONSISTENT", message: "private" })).toEqual({
       outcome: "unexpected_error",
       errorCode: "FORECAST_INCONSISTENT",
     });
-    expect(classifyS07Error(new Error("database amount=999999"))).toEqual({
+    expect(classifyForecastError(new Error("database amount=999999"))).toEqual({
       outcome: "unexpected_error",
       errorCode: "UNEXPECTED_ERROR",
     });
@@ -206,7 +206,7 @@ describe("S07 forecast observability", () => {
 
   it("returns a public code/field-only error envelope", () => {
     expect(
-      toS07ErrorEnvelope({
+      toForecastErrorEnvelope({
         code: "INVALID_DATE",
         field: "from",
         message: "private date/value",
@@ -215,16 +215,16 @@ describe("S07 forecast observability", () => {
       ok: false,
       error: { code: "INVALID_DATE", field: "from" },
     });
-    expect(toS07ErrorEnvelope(new Error("private technical message"))).toEqual({
+    expect(toForecastErrorEnvelope(new Error("private technical message"))).toEqual({
       ok: false,
       error: { code: "FORECAST_QUERY_FAILED", field: null },
     });
-    expect(toS07ErrorEnvelope(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
+    expect(toForecastErrorEnvelope(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
       ok: false,
       error: { code: "FINANCIAL_CONTEXT_REQUIRED", field: null },
     });
     expect(
-      toS07ErrorEnvelope({ code: "INVALID_DATE", field: "amountCents" }),
+      toForecastErrorEnvelope({ code: "INVALID_DATE", field: "amountCents" }),
     ).toEqual({
       ok: false,
       error: { code: "INVALID_DATE", field: null },
@@ -234,7 +234,7 @@ describe("S07 forecast observability", () => {
   it("captures unexpected technical errors with safe Sentry context", () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const error = new Error("query failed amount=999999 description=private");
-    const operation = createS07ForecastOperation("engine", {
+    const operation = createForecastOperation("engine", {
       requestId: "request-opaque",
       householdId: "household-opaque",
       scenario: "CONSERVATIVE",
@@ -242,7 +242,7 @@ describe("S07 forecast observability", () => {
       itemCount: 3,
     });
 
-    const classification = reportS07UnexpectedError(error, operation, 27, {
+    const classification = reportForecastUnexpectedError(error, operation, 27, {
       technicalErrorCode: "FORECAST_ENGINE_FAILED",
     });
 
@@ -253,7 +253,7 @@ describe("S07 forecast observability", () => {
     expect(captureServerException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        event: "s07_forecast_engine_calculate_unexpected_error",
+        event: "forecast_engine_calculate_unexpected_error",
         useCase: "forecast.engine.calculate",
         operation: "forecast.engine.calculate",
         entityType: "forecast",
@@ -277,12 +277,12 @@ describe("S07 forecast observability", () => {
       ok: false as const,
       error: { code: "FORECAST_NOT_FOUND", field: null, message: "private" },
     };
-    const operation = createS07ForecastOperation("query", {
+    const operation = createForecastOperation("query", {
       requestId: "request-opaque",
     });
 
     await expect(
-      withS07ForecastObservability(operation, () => result, {
+      withForecastObservability(operation, () => result, {
         now: vi
           .fn<() => number>()
           .mockReturnValueOnce(100)
@@ -301,13 +301,13 @@ describe("S07 forecast observability", () => {
   it("captures thrown failures, preserves the throw and generates correlation", async () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const error = new Error("source amount=999999 description=private");
-    const operation = createS07ForecastOperation("source", {
+    const operation = createForecastOperation("source", {
       householdId: "household-opaque",
       sourceKind: "RECURRING",
     });
 
     await expect(
-      withS07ForecastObservability(
+      withForecastObservability(
         operation,
         () => {
           throw error;
@@ -342,7 +342,7 @@ describe("S07 forecast observability", () => {
     const stages = ["source", "builder", "engine", "query"] as const;
 
     for (const stage of stages) {
-      const operation = createS07ForecastOperation(stage, {
+      const operation = createForecastOperation(stage, {
         requestId: `request-${stage}`,
         scenario: "EXPECTED",
         sourceKind: "ALL",
@@ -353,7 +353,7 @@ describe("S07 forecast observability", () => {
         .mockReturnValueOnce(2_100);
 
       await expect(
-        measureS07Query(operation, () => ({ amountCents: "999999" }), {
+        measureForecastQuery(operation, () => ({ amountCents: "999999" }), {
           thresholdMs: 250,
           queryBudgetMs: 2_000,
           onSlowQuery,
@@ -375,12 +375,12 @@ describe("S07 forecast observability", () => {
   it("does not emit below threshold and bounds threshold/budget settings", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const onSlowQuery = vi.fn();
-    const operation = createS07ForecastOperation("query", {
+    const operation = createForecastOperation("query", {
       requestId: "request-opaque",
     });
 
     await expect(
-      measureS07Query(operation, () => "fast-result", {
+      measureForecastQuery(operation, () => "fast-result", {
         thresholdMs: 250,
         queryBudgetMs: 2_000,
         onSlowQuery,
@@ -392,18 +392,18 @@ describe("S07 forecast observability", () => {
     ).resolves.toBe("fast-result");
     expect(warn).not.toHaveBeenCalled();
     expect(onSlowQuery).not.toHaveBeenCalled();
-    expect(getS07SlowQueryThresholdMs("900")).toBe(900);
-    expect(getS07SlowQueryThresholdMs(-10)).toBe(0);
-    expect(getS07SlowQueryThresholdMs("999999")).toBe(60_000);
-    expect(getS07SlowQueryThresholdMs("not-a-number")).toBe(250);
-    expect(getS07QueryBudgetMs("900")).toBe(900);
-    expect(getS07QueryBudgetMs("999999")).toBe(60_000);
-    expect(getS07QueryBudgetMs("not-a-number")).toBe(2_000);
+    expect(getForecastSlowQueryThresholdMs("900")).toBe(900);
+    expect(getForecastSlowQueryThresholdMs(-10)).toBe(0);
+    expect(getForecastSlowQueryThresholdMs("999999")).toBe(60_000);
+    expect(getForecastSlowQueryThresholdMs("not-a-number")).toBe(250);
+    expect(getForecastQueryBudgetMs("900")).toBe(900);
+    expect(getForecastQueryBudgetMs("999999")).toBe(60_000);
+    expect(getForecastQueryBudgetMs("not-a-number")).toBe(2_000);
   });
 
   it("uses the same allow-list for breadcrumbs and Sentry context", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS07ForecastOperation("query", {
+    const operation = createForecastOperation("query", {
       requestId: "request-opaque",
       householdId: "household-opaque",
       scenario: "EXPECTED",
@@ -411,14 +411,14 @@ describe("S07 forecast observability", () => {
       periodBucket: "LONG",
       sourceCount: 10,
     });
-    const record = logS07ForecastOperation(operation, "success", {
+    const record = logForecastOperation(operation, "success", {
       durationMs: 12,
       description: "private description",
       amountCents: "999999",
     } as never);
 
     expect(record).toMatchObject({
-      event: "s07_forecast_query_get_success",
+      event: "forecast_query_get_success",
       stage: "query",
       queryCode: "forecast_query",
       scenario: "EXPECTED",
@@ -433,7 +433,7 @@ describe("S07 forecast observability", () => {
     expect(JSON.stringify(breadcrumb)).not.toContain("private");
     expect(JSON.stringify(breadcrumb)).not.toContain("999999");
 
-    const context = toS07ObservabilityContext(operation, "success", {
+    const context = toForecastObservabilityContext(operation, "success", {
       durationMs: 12,
       queryBudgetMs: 2_000,
       budgetExceeded: false,

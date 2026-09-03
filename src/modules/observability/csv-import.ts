@@ -7,50 +7,50 @@ import { getServerSentryConfig } from "./server-config";
  * The S04 pipeline has four observable boundaries.  `confirmation` is the
  * public stage name while its command/use-case name is `confirm`.
  */
-export const S04_IMPORT_STAGES = [
+export const CSV_IMPORT_STAGES = [
   "upload",
   "parse",
   "preview",
   "confirmation",
 ] as const;
 
-export type S04ImportStage = (typeof S04_IMPORT_STAGES)[number];
+export type CsvImportStage = (typeof CSV_IMPORT_STAGES)[number];
 
-export const S04_IMPORT_OPERATIONS = [
+export const CSV_IMPORT_OPERATIONS = [
   "upload",
   "parse",
   "preview",
   "confirm",
 ] as const;
 
-export type S04ImportOperation = (typeof S04_IMPORT_OPERATIONS)[number];
+export type CsvImportOperation = (typeof CSV_IMPORT_OPERATIONS)[number];
 
-export const S04_IMPORT_OUTCOMES = [
+export const CSV_IMPORT_OUTCOMES = [
   "success",
   "expected_error",
   "unexpected_error",
 ] as const;
 
-export type S04ImportOutcome = (typeof S04_IMPORT_OUTCOMES)[number];
+export type CsvImportOutcome = (typeof CSV_IMPORT_OUTCOMES)[number];
 
 /**
  * These are the domain errors from ADR-005 plus the expected financial
  * context errors.  They are outcomes of the import flow, not Sentry events.
  */
-export const S04_IMPORT_EXPECTED_ERROR_CODES = [
+export const CSV_IMPORT_EXPECTED_ERROR_CODES = [
   ...CSV_IMPORT_ERROR_CODES,
   "HOUSEHOLD_MEMBERSHIP_REQUIRED",
   "HOUSEHOLD_SELECTION_REQUIRED",
   "INVALID_FINANCIAL_CONTEXT",
 ] as const;
 
-export type S04ImportExpectedErrorCode =
-  (typeof S04_IMPORT_EXPECTED_ERROR_CODES)[number];
+export type CsvImportExpectedErrorCode =
+  (typeof CSV_IMPORT_EXPECTED_ERROR_CODES)[number];
 
-/** Alias used by adapters that call these simply the S04 error codes. */
-export const S04_ERROR_CODES = S04_IMPORT_EXPECTED_ERROR_CODES;
+/** Alias used by adapters that call these simply the CSV import error codes. */
+export const CSV_IMPORT_OBSERVABILITY_ERROR_CODES = CSV_IMPORT_EXPECTED_ERROR_CODES;
 
-export interface S04ImportCounts {
+export interface CsvImportObservabilityCounts {
   processed: number;
   valid: number;
   invalid: number;
@@ -59,8 +59,8 @@ export interface S04ImportCounts {
 }
 
 /** Accepts ADR names and the persistence column aliases. */
-export interface S04ImportCountsLike
-  extends Partial<S04ImportCounts> {
+export interface CsvImportObservabilityCountsLike
+  extends Partial<CsvImportObservabilityCounts> {
   processedRows?: number;
   validRows?: number;
   invalidRows?: number;
@@ -73,9 +73,9 @@ export interface S04ImportCountsLike
   imported_rows?: number;
 }
 
-export interface S04ImportObservabilityContext {
-  stage: S04ImportStage;
-  operation: S04ImportOperation;
+export interface CsvImportObservabilityContext {
+  stage: CsvImportStage;
+  operation: CsvImportOperation;
   requestId?: string;
   /** This is a staging row ID, never the bearer preview token. */
   previewId?: string;
@@ -90,26 +90,26 @@ export interface S04ImportObservabilityContext {
   environment?: string;
   release?: string;
   errorCode?: string;
-  counts?: S04ImportCounts;
+  counts?: CsvImportObservabilityCounts;
 }
 
 /** Input options intentionally have no CSV, filename, token or payload field. */
-export interface S04ImportObservabilityOptions
+export interface CsvImportObservabilityOptions
   extends Partial<
-    Omit<S04ImportObservabilityContext, "stage" | "operation" | "counts">
+    Omit<CsvImportObservabilityContext, "stage" | "operation" | "counts">
   > {
-  counts?: S04ImportCountsLike;
+  counts?: CsvImportObservabilityCountsLike;
   /** Unknown keys are accepted at this boundary only to prove they are dropped. */
   [key: string]: unknown;
 }
 
-export interface S04ImportLog extends Omit<
-  S04ImportObservabilityContext,
+export interface CsvImportLog extends Omit<
+  CsvImportObservabilityContext,
   "counts"
 > {
   event: string;
   useCase: string;
-  outcome: S04ImportOutcome;
+  outcome: CsvImportOutcome;
   processedRows?: number;
   validRows?: number;
   invalidRows?: number;
@@ -117,11 +117,11 @@ export interface S04ImportLog extends Omit<
   importedRows?: number;
 }
 
-export type S04ImportLogInput = Partial<S04ImportLog> & Record<string, unknown> & {
+export type CsvImportLogInput = Partial<CsvImportLog> & Record<string, unknown> & {
   stage?: string;
   operation?: string;
   outcome?: string;
-  counts?: S04ImportCountsLike;
+  counts?: CsvImportObservabilityCountsLike;
 };
 
 const COUNT_KEYS = [
@@ -186,7 +186,7 @@ function statusCode(value: unknown): number | undefined {
   return finiteInteger(value, 999);
 }
 
-function canonicalStage(value: unknown): S04ImportStage | undefined {
+function canonicalStage(value: unknown): CsvImportStage | undefined {
   switch (value) {
     case "upload":
       return "upload";
@@ -203,7 +203,7 @@ function canonicalStage(value: unknown): S04ImportStage | undefined {
   }
 }
 
-function canonicalOperation(value: unknown): S04ImportOperation | undefined {
+function canonicalOperation(value: unknown): CsvImportOperation | undefined {
   switch (value) {
     case "upload":
       return "upload";
@@ -220,17 +220,17 @@ function canonicalOperation(value: unknown): S04ImportOperation | undefined {
   }
 }
 
-function operationForStage(stage: S04ImportStage): S04ImportOperation {
+function operationForStage(stage: CsvImportStage): CsvImportOperation {
   return stage === "confirmation" ? "confirm" : stage;
 }
 
-function stageForOperation(operation: S04ImportOperation): S04ImportStage {
+function stageForOperation(operation: CsvImportOperation): CsvImportStage {
   return operation === "confirm" ? "confirmation" : operation;
 }
 
-function outcome(value: unknown): S04ImportOutcome | undefined {
-  return S04_IMPORT_OUTCOMES.includes(value as S04ImportOutcome)
-    ? (value as S04ImportOutcome)
+function outcome(value: unknown): CsvImportOutcome | undefined {
+  return CSV_IMPORT_OUTCOMES.includes(value as CsvImportOutcome)
+    ? (value as CsvImportOutcome)
     : undefined;
 }
 
@@ -248,9 +248,9 @@ function getCount(value: Record<string, unknown>, key: CountKey): number | undef
  * Converts parser/result counts to a complete, finite aggregate.  Missing
  * counters are zero; arbitrary nested objects and row data are ignored.
  */
-export function sanitizeS04ImportCounts(
+export function sanitizeCsvImportObservabilityCounts(
   value: unknown,
-): S04ImportCounts | undefined {
+): CsvImportObservabilityCounts | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
@@ -279,7 +279,7 @@ function configValue(
 
 /** Reads only Sentry environment/release; the DSN is never copied. */
 function configuredEnvironment(): Pick<
-  S04ImportObservabilityContext,
+  CsvImportObservabilityContext,
   "environment" | "release"
 > {
   try {
@@ -297,14 +297,14 @@ function configuredEnvironment(): Pick<
  * Creates server-side metadata for one import boundary.  The preview bearer
  * token is deliberately not part of this type or this function's allow-list.
  */
-export function createS04ImportOperation(
-  stage: S04ImportStage | S04ImportOperation,
-  options: S04ImportObservabilityOptions = {},
-): S04ImportObservabilityContext {
+export function createCsvImportOperation(
+  stage: CsvImportStage | CsvImportOperation,
+  options: CsvImportObservabilityOptions = {},
+): CsvImportObservabilityContext {
   const normalizedStage =
     canonicalStage(stage) ?? stageForOperation(canonicalOperation(stage) ?? "upload");
   const configured = configuredEnvironment();
-  const counts = sanitizeS04ImportCounts(options.counts);
+  const counts = sanitizeCsvImportObservabilityCounts(options.counts);
 
   return {
     stage: normalizedStage,
@@ -325,8 +325,8 @@ export function createS04ImportOperation(
 }
 
 /** Canonical operation/use-case name consumed by Sentry and log queries. */
-export function s04ImportUseCaseName(
-  stageOrOperation: S04ImportStage | S04ImportOperation,
+export function csvImportUseCaseName(
+  stageOrOperation: CsvImportStage | CsvImportOperation,
 ): string {
   const operation =
     canonicalOperation(stageOrOperation) ??
@@ -334,23 +334,23 @@ export function s04ImportUseCaseName(
   return `transactions.import.${operation}`;
 }
 
-export function s04ImportEventName(
-  stageOrOperation: S04ImportStage | S04ImportOperation,
-  result: S04ImportOutcome,
+export function csvImportEventName(
+  stageOrOperation: CsvImportStage | CsvImportOperation,
+  result: CsvImportOutcome,
 ): string {
   const operation =
     canonicalOperation(stageOrOperation) ??
     operationForStage(canonicalStage(stageOrOperation) ?? "upload");
-  return `s04_import_${operation}_${result}`;
+  return `csv_import_${operation}_${result}`;
 }
 
 function normalizedOperationContext(
-  value: S04ImportObservabilityContext,
+  value: CsvImportObservabilityContext,
   durationMs?: number,
-  counts?: S04ImportCountsLike,
+  counts?: CsvImportObservabilityCountsLike,
   error?: string,
-): S04ImportObservabilityContext {
-  const safeCounts = sanitizeS04ImportCounts(counts) ?? value.counts;
+): CsvImportObservabilityContext {
+  const safeCounts = sanitizeCsvImportObservabilityCounts(counts) ?? value.counts;
   return {
     ...value,
     durationMs:
@@ -360,8 +360,8 @@ function normalizedOperationContext(
   };
 }
 
-function flattenedCounts(value: unknown): Partial<S04ImportLog> {
-  const counts = sanitizeS04ImportCounts(value);
+function flattenedCounts(value: unknown): Partial<CsvImportLog> {
+  const counts = sanitizeCsvImportObservabilityCounts(value);
   if (!counts) {
     return {};
   }
@@ -379,9 +379,9 @@ function flattenedCounts(value: unknown): Partial<S04ImportLog> {
  * Final structured-log boundary.  It builds the event/use-case names from
  * the stage and operation instead of trusting caller-provided display text.
  */
-export function sanitizeS04ImportLog(
-  value: S04ImportLogInput,
-): S04ImportLog | undefined {
+export function sanitizeCsvImportImportLog(
+  value: CsvImportLogInput,
+): CsvImportLog | undefined {
   const suppliedStage =
     value.stage === undefined ? undefined : canonicalStage(value.stage);
   const suppliedOperation =
@@ -412,9 +412,9 @@ export function sanitizeS04ImportLog(
   }
 
   const counts = flattenedCounts(value.counts ?? value);
-  const safe: S04ImportLog = {
-    event: s04ImportEventName(operation, result),
-    useCase: s04ImportUseCaseName(operation),
+  const safe: CsvImportLog = {
+    event: csvImportEventName(operation, result),
+    useCase: csvImportUseCaseName(operation),
     stage,
     operation,
     outcome: result,
@@ -466,14 +466,14 @@ export function sanitizeS04ImportLog(
 }
 
 /** Converts S04 metadata to the shared Sentry context allow-list. */
-export function toS04ObservabilityContext(
-  operation: S04ImportObservabilityContext,
-  result: S04ImportOutcome = "unexpected_error",
-  counts?: S04ImportCountsLike,
+export function toCsvImportObservabilityContext(
+  operation: CsvImportObservabilityContext,
+  result: CsvImportOutcome = "unexpected_error",
+  counts?: CsvImportObservabilityCountsLike,
   error?: string,
 ): ObservabilityContext {
   const context = normalizedOperationContext(operation, operation.durationMs, counts, error);
-  const safe = sanitizeS04ImportLog({
+  const safe = sanitizeCsvImportImportLog({
     ...context,
     stage: context.stage,
     operation: context.operation,
@@ -482,8 +482,8 @@ export function toS04ObservabilityContext(
   });
 
   return {
-    event: s04ImportEventName(context.operation, result),
-    useCase: s04ImportUseCaseName(context.operation),
+    event: csvImportEventName(context.operation, result),
+    useCase: csvImportUseCaseName(context.operation),
     operation: context.operation,
     entityType: "transaction_import",
     stage: context.stage,
@@ -507,15 +507,15 @@ export function toS04ObservabilityContext(
 }
 
 /** Adds one technical breadcrumb for a stage; raw messages/data are omitted. */
-export function addS04ImportBreadcrumb(
-  operation: S04ImportObservabilityContext,
-  result: S04ImportOutcome,
+export function addCsvImportBreadcrumb(
+  operation: CsvImportObservabilityContext,
+  result: CsvImportOutcome,
   durationMs?: number,
   error?: string,
-  counts?: S04ImportCountsLike,
+  counts?: CsvImportObservabilityCountsLike,
 ): void {
   const context = normalizedOperationContext(operation, durationMs, counts, error);
-  const safe = sanitizeS04ImportLog({
+  const safe = sanitizeCsvImportImportLog({
     ...context,
     stage: context.stage,
     operation: context.operation,
@@ -552,15 +552,15 @@ export function addS04ImportBreadcrumb(
 }
 
 /** Emits one aggregate JSON line; no result, row, request or error object is serialized. */
-export function logS04ImportOperation(
-  operation: S04ImportObservabilityContext,
-  result: S04ImportOutcome,
+export function logCsvImportOperation(
+  operation: CsvImportObservabilityContext,
+  result: CsvImportOutcome,
   durationMs?: number,
-  counts?: S04ImportCountsLike,
+  counts?: CsvImportObservabilityCountsLike,
   error?: string,
 ): void {
   const context = normalizedOperationContext(operation, durationMs, counts, error);
-  const safe = sanitizeS04ImportLog({
+  const safe = sanitizeCsvImportImportLog({
     ...context,
     stage: context.stage,
     operation: context.operation,
@@ -572,7 +572,7 @@ export function logS04ImportOperation(
   }
 
   try {
-    addS04ImportBreadcrumb(operation, result, durationMs, error, counts);
+    addCsvImportBreadcrumb(operation, result, durationMs, error, counts);
   } catch {
     // A breadcrumb failure must not change an import response.
   }
@@ -593,20 +593,20 @@ export function logS04ImportOperation(
  * Reports an unexpected technical failure.  Expected parser/domain errors
  * are downgraded to an aggregate `expected_error` log and never captured.
  */
-export function reportS04UnexpectedError(
+export function reportCsvImportUnexpectedError(
   error: unknown,
-  operation: S04ImportObservabilityContext,
+  operation: CsvImportObservabilityContext,
   durationMs?: number,
-  counts?: S04ImportCountsLike,
+  counts?: CsvImportObservabilityCountsLike,
   technicalErrorCode?: string,
 ): void {
-  if (isExpectedS04Error(error)) {
-    logS04ImportOperation(
+  if (isExpectedCsvImportError(error)) {
+    logCsvImportOperation(
       operation,
       "expected_error",
       durationMs,
       counts,
-      expectedS04ErrorCode(error),
+      expectedCsvImportErrorCode(error),
     );
     return;
   }
@@ -620,7 +620,7 @@ export function reportS04UnexpectedError(
     safeTechnicalCode,
   );
 
-  logS04ImportOperation(
+  logCsvImportOperation(
     context,
     "unexpected_error",
     context.durationMs,
@@ -631,7 +631,7 @@ export function reportS04UnexpectedError(
   try {
     captureServerException(
       error,
-      toS04ObservabilityContext(
+      toCsvImportObservabilityContext(
         context,
         "unexpected_error",
         context.counts,
@@ -650,31 +650,31 @@ function readErrorCode(error: unknown): unknown {
   return error.code;
 }
 
-function isExpectedS04Code(code: string): boolean {
-  return S04_IMPORT_EXPECTED_ERROR_CODES.includes(
-    code as S04ImportExpectedErrorCode,
+function isExpectedCsvImportCode(code: string): boolean {
+  return CSV_IMPORT_EXPECTED_ERROR_CODES.includes(
+    code as CsvImportExpectedErrorCode,
   );
 }
 
 /** Extracts only a stable code; messages/stacks are never inspected. */
-export function expectedS04ErrorCode(error: unknown): string | undefined {
-  const code = expectedS04ErrorCodeInternal(error);
+export function expectedCsvImportErrorCode(error: unknown): string | undefined {
+  const code = expectedCsvImportErrorCodeInternal(error);
   return code;
 }
 
-function expectedS04ErrorCodeInternal(error: unknown): string | undefined {
+function expectedCsvImportErrorCodeInternal(error: unknown): string | undefined {
   if (!isRecord(error)) {
     return undefined;
   }
 
   const direct = errorCode(error.code);
-  if (direct && isExpectedS04Code(direct)) {
+  if (direct && isExpectedCsvImportCode(direct)) {
     return direct;
   }
 
   if (isRecord(error.error)) {
     const nested = errorCode(error.error.code);
-    if (nested && isExpectedS04Code(nested)) {
+    if (nested && isExpectedCsvImportCode(nested)) {
       return nested;
     }
   }
@@ -683,13 +683,13 @@ function expectedS04ErrorCodeInternal(error: unknown): string | undefined {
 }
 
 /** Validation/domain results are expected and must not create Sentry noise. */
-export function isExpectedS04Error(error: unknown): boolean {
-  return expectedS04ErrorCodeInternal(error) !== undefined;
+export function isExpectedCsvImportError(error: unknown): boolean {
+  return expectedCsvImportErrorCodeInternal(error) !== undefined;
 }
 
 /** A generic alias useful to adapters that only need a stable outcome. */
-export function s04OutcomeForError(error: unknown): S04ImportOutcome {
-  return isExpectedS04Error(error) ? "expected_error" : "unexpected_error";
+export function csvImportOutcomeForError(error: unknown): CsvImportOutcome {
+  return isExpectedCsvImportError(error) ? "expected_error" : "unexpected_error";
 }
 
 /**
@@ -697,11 +697,11 @@ export function s04OutcomeForError(error: unknown): S04ImportOutcome {
  * classification and best-effort Sentry capture while preserving the caller's
  * original return/throw behavior.
  */
-export async function withS04ImportObservability<T>(
-  operation: S04ImportObservabilityContext,
+export async function withCsvImportObservability<T>(
+  operation: CsvImportObservabilityContext,
   work: () => Promise<T> | T,
   options: {
-    counts?: S04ImportCountsLike;
+    counts?: CsvImportObservabilityCountsLike;
     errorCode?: string;
   } = {},
 ): Promise<T> {
@@ -719,7 +719,7 @@ export async function withS04ImportObservability<T>(
 
   try {
     const value = await work();
-    logS04ImportOperation(
+    logCsvImportOperation(
       operation,
       "success",
       elapsed(),
@@ -727,18 +727,18 @@ export async function withS04ImportObservability<T>(
     );
     return value;
   } catch (error) {
-    if (isExpectedS04Error(error)) {
-      logS04ImportOperation(
+    if (isExpectedCsvImportError(error)) {
+      logCsvImportOperation(
         operation,
         "expected_error",
         elapsed(),
         options.counts,
-        expectedS04ErrorCode(error),
+        expectedCsvImportErrorCode(error),
       );
       throw error;
     }
 
-    reportS04UnexpectedError(
+    reportCsvImportUnexpectedError(
       error,
       operation,
       elapsed(),
@@ -750,7 +750,7 @@ export async function withS04ImportObservability<T>(
 }
 
 /** Naming aliases keep the helper discoverable in stage adapters. */
-export const observeS04ImportStage = withS04ImportObservability;
-export const captureS04UnexpectedError = reportS04UnexpectedError;
-export const logS04ImportResult = logS04ImportOperation;
-export const createS04ImportContext = createS04ImportOperation;
+export const observeCsvImportImportStage = withCsvImportObservability;
+export const captureCsvImportUnexpectedError = reportCsvImportUnexpectedError;
+export const logCsvImportResult = logCsvImportOperation;
+export const createCsvImportContext = createCsvImportOperation;

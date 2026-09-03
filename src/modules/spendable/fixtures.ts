@@ -478,13 +478,12 @@ export const SPENDABLE_FIXTURES: readonly SpendableFixture[] = Object.freeze([
 ]);
 
 export const spendableFixtures = SPENDABLE_FIXTURES;
-export const S08_FIXTURES = SPENDABLE_FIXTURES;
 
 const byId = new Map(SPENDABLE_FIXTURES.map((fixture) => [fixture.id, fixture]));
 
 export function getSpendableFixture(id: string): SpendableFixture {
   const fixture = byId.get(id);
-  if (!fixture) throw new Error(`Unknown S08 fixture: ${id}`);
+  if (!fixture) throw new Error(`Unknown spendable fixture: ${id}`);
   return fixture;
 }
 

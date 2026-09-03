@@ -28,7 +28,7 @@ import {
   TransactionReviewDetailScreen,
 } from "./transaction-review-detail-screen";
 import type {
-  S05Result,
+  TransactionReviewResult,
   TransactionDetailReadModel,
 } from "@/modules/transactions/review-contracts";
 import type { ReviewableTransactionUpdateReadModel } from "@/modules/transactions/review-use-cases";
@@ -90,7 +90,7 @@ function updateValue(
   };
 }
 
-describe("S05 category quick-edit interactions", () => {
+describe("category quick-edit interactions", () => {
   it("ignores a second submit while pending and emits one command id", async () => {
     const pending = deferred<CategoryQuickEditActionResult>();
     const action = vi.fn<CategoryQuickEditAction>().mockReturnValue(pending.promise);
@@ -237,9 +237,9 @@ const importedTransaction: TransactionDetailReadModel = {
   reversal: null,
 };
 
-describe("S05 review detail interactions", () => {
+describe("review detail interactions", () => {
   it("generates one commandId and blocks duplicate detail submits while pending", async () => {
-    const pending = deferred<S05Result<ReviewableTransactionUpdateReadModel>>();
+    const pending = deferred<TransactionReviewResult<ReviewableTransactionUpdateReadModel>>();
     const action = vi.fn().mockReturnValue(pending.promise);
 
     render(

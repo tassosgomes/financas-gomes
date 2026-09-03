@@ -54,7 +54,7 @@ function dependencies(
   };
 }
 
-describe("S08 T06 availability service", () => {
+describe("T06 availability service", () => {
   beforeEach(() => {
     vi.spyOn(console, "info").mockImplementation(() => undefined);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);

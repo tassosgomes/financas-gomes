@@ -11,7 +11,7 @@ import {
 const context = { userId: "user-a", householdId: "household-a" } as const;
 const noDatabase = {} as ForecastReadExecutor;
 
-describe("S07 T04 source read boundaries", () => {
+describe("T04 source read boundaries", () => {
   it("rejects malformed opening dates before touching the executor", async () => {
     await expect(
       readForecastOpeningBalanceForContext(context, "2026-02-30", {

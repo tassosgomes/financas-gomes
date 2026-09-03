@@ -83,7 +83,7 @@ function makeBreakdown(
   };
 }
 
-describe("S08 T04 UI contracts and shared components", () => {
+describe("T04 UI contracts and shared components", () => {
   it("formats serialized cents and dates without Number or floating point", () => {
     expect(formatSpendableMoney("9223372036854775807")).toBe(
       "R$ 92.233.720.368.547.758,07",

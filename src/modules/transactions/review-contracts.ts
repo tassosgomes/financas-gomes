@@ -123,12 +123,12 @@ function normalizeReviewDescriptionValue(value: string): string | null {
 /** Uses the same NFKC/whitespace rules as S03 for the editable field. */
 export function normalizeReviewDescription(value: unknown): string {
   if (typeof value !== "string") {
-    throw new S05DomainError("INVALID_COMMAND", "description");
+    throw new TransactionReviewDomainError("INVALID_COMMAND", "description");
   }
 
   const normalized = normalizeReviewDescriptionValue(value);
   if (normalized === null) {
-    throw new S05DomainError("INVALID_COMMAND", "description");
+    throw new TransactionReviewDomainError("INVALID_COMMAND", "description");
   }
   return normalized;
 }
@@ -136,7 +136,7 @@ export function normalizeReviewDescription(value: unknown): string {
 /** Search is a literal description substring; SQL wildcard characters stay literal. */
 export function normalizeReviewSearch(value: unknown): string {
   if (typeof value !== "string") {
-    throw new S05DomainError("INVALID_QUERY", "search");
+    throw new TransactionReviewDomainError("INVALID_QUERY", "search");
   }
 
   const normalized = value.normalize("NFKC").trim();
@@ -145,7 +145,7 @@ export function normalizeReviewSearch(value: unknown): string {
     CONTROL_OR_FORMAT_CHARACTER.test(normalized) ||
     codePointLength(normalized) > REVIEW_SEARCH_MAX_CODE_POINTS
   ) {
-    throw new S05DomainError("INVALID_QUERY", "search");
+    throw new TransactionReviewDomainError("INVALID_QUERY", "search");
   }
 
   return normalized;
@@ -161,7 +161,7 @@ function isValidIsoTimestamp(value: string): boolean {
 
 function normalizeCommandId(value: unknown): string {
   if (typeof value !== "string") {
-    throw new S05DomainError("INVALID_COMMAND_ID", "commandId");
+    throw new TransactionReviewDomainError("INVALID_COMMAND_ID", "commandId");
   }
 
   const normalized = value.trim();
@@ -170,26 +170,26 @@ function normalizeCommandId(value: unknown): string {
     normalized.length > REVIEW_COMMAND_ID_MAX_LENGTH ||
     CONTROL_OR_FORMAT_CHARACTER.test(normalized)
   ) {
-    throw new S05DomainError("INVALID_COMMAND_ID", "commandId");
+    throw new TransactionReviewDomainError("INVALID_COMMAND_ID", "commandId");
   }
   return normalized;
 }
 
-function normalizeUuid(value: unknown, field: S05ErrorField): string {
+function normalizeUuid(value: unknown, field: TransactionReviewErrorField): string {
   if (typeof value !== "string") {
-    throw new S05DomainError("INVALID_COMMAND", field);
+    throw new TransactionReviewDomainError("INVALID_COMMAND", field);
   }
 
   const normalized = value.trim();
   if (!isUuidV7(normalized)) {
-    throw new S05DomainError("INVALID_COMMAND", field);
+    throw new TransactionReviewDomainError("INVALID_COMMAND", field);
   }
   return normalized;
 }
 
-function normalizeIsoDate(value: unknown, field: S05ErrorField): string {
+function normalizeIsoDate(value: unknown, field: TransactionReviewErrorField): string {
   if (typeof value !== "string" || !isValidCivilDateString(value)) {
-    throw new S05DomainError("INVALID_QUERY", field);
+    throw new TransactionReviewDomainError("INVALID_QUERY", field);
   }
   return value;
 }
@@ -256,7 +256,7 @@ export const reviewableTransactionSourceSchema = transactionSourceSchema;
 export function parseTransactionSource(input: unknown): TransactionSource {
   const result = transactionSourceSchema.safeParse(input);
   if (!result.success) {
-    throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+    throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
   }
   return result.data as TransactionSource;
 }
@@ -480,7 +480,7 @@ const PROTECTED_REVIEW_COMMAND_FIELDS = new Set([
   "updatedAt",
 ]);
 
-export type S05ErrorField =
+export type TransactionReviewErrorField =
   | "commandId"
   | "financialEventId"
   | "description"
@@ -496,7 +496,7 @@ export type S05ErrorField =
   | "limit"
   | "cursor";
 
-export const S05_ERROR_CODES = [
+export const TRANSACTION_REVIEW_ERROR_CODES = [
   "UNAUTHENTICATED",
   "HOUSEHOLD_MEMBERSHIP_REQUIRED",
   "HOUSEHOLD_SELECTION_REQUIRED",
@@ -515,9 +515,9 @@ export const S05_ERROR_CODES = [
   "NON_EDITABLE_FIELD",
   "COMMAND_ID_REUSED",
 ] as const;
-export type S05ErrorCode = (typeof S05_ERROR_CODES)[number];
+export type TransactionReviewErrorCode = (typeof TRANSACTION_REVIEW_ERROR_CODES)[number];
 
-export const S05_ERROR_MESSAGES: Readonly<Record<S05ErrorCode, string>> = {
+export const TRANSACTION_REVIEW_ERROR_MESSAGES: Readonly<Record<TransactionReviewErrorCode, string>> = {
   UNAUTHENTICATED: "É necessário entrar para acessar este recurso.",
   HOUSEHOLD_MEMBERSHIP_REQUIRED:
     "Não foi possível acessar o espaço financeiro atual.",
@@ -541,17 +541,17 @@ export const S05_ERROR_MESSAGES: Readonly<Record<S05ErrorCode, string>> = {
   COMMAND_ID_REUSED: "O identificador da operação já foi utilizado.",
 };
 
-export interface S05Error {
-  code: S05ErrorCode;
+export interface TransactionReviewError {
+  code: TransactionReviewErrorCode;
   message: string;
-  field?: S05ErrorField;
+  field?: TransactionReviewErrorField;
 }
 
-export type S05Result<T> =
+export type TransactionReviewResult<T> =
   | { ok: true; value: T }
-  | { ok: false; error: S05Error };
+  | { ok: false; error: TransactionReviewError };
 
-function statusForS05Error(code: S05ErrorCode): number {
+function statusForTransactionReviewError(code: TransactionReviewErrorCode): number {
   switch (code) {
     case "UNAUTHENTICATED":
       return 401;
@@ -575,21 +575,21 @@ function statusForS05Error(code: S05ErrorCode): number {
   }
 }
 
-export class S05DomainError extends Error {
-  readonly code: S05ErrorCode;
-  readonly field: S05ErrorField | undefined;
+export class TransactionReviewDomainError extends Error {
+  readonly code: TransactionReviewErrorCode;
+  readonly field: TransactionReviewErrorField | undefined;
   readonly status: number;
   readonly expected = true;
 
-  constructor(code: S05ErrorCode, field?: S05ErrorField) {
-    super(S05_ERROR_MESSAGES[code]);
-    this.name = "S05DomainError";
+  constructor(code: TransactionReviewErrorCode, field?: TransactionReviewErrorField) {
+    super(TRANSACTION_REVIEW_ERROR_MESSAGES[code]);
+    this.name = "TransactionReviewDomainError";
     this.code = code;
     this.field = field;
-    this.status = statusForS05Error(code);
+    this.status = statusForTransactionReviewError(code);
   }
 
-  toError(): S05Error {
+  toError(): TransactionReviewError {
     return {
       code: this.code,
       message: this.message,
@@ -598,24 +598,24 @@ export class S05DomainError extends Error {
   }
 }
 
-export const ReviewContractError = S05DomainError;
+export const ReviewContractError = TransactionReviewDomainError;
 
-export function ok<T>(value: T): S05Result<T> {
+export function ok<T>(value: T): TransactionReviewResult<T> {
   return { ok: true, value };
 }
 
 export function failure<T = never>(
-  code: S05ErrorCode,
-  field?: S05ErrorField,
-): S05Result<T> {
-  return { ok: false, error: new S05DomainError(code, field).toError() };
+  code: TransactionReviewErrorCode,
+  field?: TransactionReviewErrorField,
+): TransactionReviewResult<T> {
+  return { ok: false, error: new TransactionReviewDomainError(code, field).toError() };
 }
 
 export const success = ok;
 export const errorResult = failure;
 
 function fieldFromPath(path: readonly (string | number)[]):
-  | S05ErrorField
+  | TransactionReviewErrorField
   | undefined {
   const field = path[0];
   switch (field) {
@@ -639,18 +639,18 @@ function fieldFromPath(path: readonly (string | number)[]):
   }
 }
 
-function isS05ErrorCode(value: unknown): value is S05ErrorCode {
+function isTransactionReviewErrorCode(value: unknown): value is TransactionReviewErrorCode {
   return (
     typeof value === "string" &&
-    S05_ERROR_CODES.includes(value as S05ErrorCode)
+    TRANSACTION_REVIEW_ERROR_CODES.includes(value as TransactionReviewErrorCode)
   );
 }
 
-export function toS05DomainError(
+export function toTransactionReviewDomainError(
   error: unknown,
-  fallback: S05ErrorCode = "INVALID_COMMAND",
-): S05DomainError {
-  if (error instanceof S05DomainError) {
+  fallback: TransactionReviewErrorCode = "INVALID_COMMAND",
+): TransactionReviewDomainError {
+  if (error instanceof TransactionReviewDomainError) {
     return error;
   }
 
@@ -658,7 +658,7 @@ export function toS05DomainError(
     const issue = error.issues[0];
     if (issue?.code === "unrecognized_keys") {
       const keys = "keys" in issue ? issue.keys : [];
-      return new S05DomainError(
+      return new TransactionReviewDomainError(
         keys.some((key) => PROTECTED_REVIEW_COMMAND_FIELDS.has(key))
           ? "NON_EDITABLE_FIELD"
           : fallback,
@@ -667,27 +667,27 @@ export function toS05DomainError(
     const field = issue ? fieldFromPath(issue.path) : undefined;
     const code =
       field === "commandId" &&
-      issue?.message === S05_ERROR_MESSAGES.INVALID_COMMAND_ID
+      issue?.message === TRANSACTION_REVIEW_ERROR_MESSAGES.INVALID_COMMAND_ID
         ? "INVALID_COMMAND_ID"
         : fallback;
-    return new S05DomainError(code, field);
+    return new TransactionReviewDomainError(code, field);
   }
 
-  if (isPlainObject(error) && isS05ErrorCode(error.code)) {
+  if (isPlainObject(error) && isTransactionReviewErrorCode(error.code)) {
     const field = fieldFromPath(
       typeof error.field === "string" ? [error.field] : [],
     );
-    return new S05DomainError(error.code, field);
+    return new TransactionReviewDomainError(error.code, field);
   }
 
-  return new S05DomainError(fallback);
+  return new TransactionReviewDomainError(fallback);
 }
 
-export function toS05Error(
+export function toTransactionReviewError(
   error: unknown,
-  fallback: S05ErrorCode = "INVALID_COMMAND",
-): S05Error {
-  return toS05DomainError(error, fallback).toError();
+  fallback: TransactionReviewErrorCode = "INVALID_COMMAND",
+): TransactionReviewError {
+  return toTransactionReviewDomainError(error, fallback).toError();
 }
 
 export interface UpdateReviewableTransactionCommand {
@@ -713,7 +713,7 @@ const commandIdSchema = z.string().transform((value, context) => {
   } catch {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: S05_ERROR_MESSAGES.INVALID_COMMAND_ID,
+      message: TRANSACTION_REVIEW_ERROR_MESSAGES.INVALID_COMMAND_ID,
     });
     return z.NEVER;
   }
@@ -724,7 +724,7 @@ const descriptionCommandSchema = z.string().transform((value, context) => {
   if (normalized === null) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: S05_ERROR_MESSAGES.INVALID_COMMAND,
+      message: TRANSACTION_REVIEW_ERROR_MESSAGES.INVALID_COMMAND,
     });
     return z.NEVER;
   }
@@ -736,7 +736,7 @@ const resourceUuidCommandSchema = z.string().transform((value, context) => {
   if (!isUuidV7(normalized)) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
-      message: S05_ERROR_MESSAGES.INVALID_COMMAND,
+      message: TRANSACTION_REVIEW_ERROR_MESSAGES.INVALID_COMMAND,
     });
     return z.NEVER;
   }
@@ -770,18 +770,18 @@ export function parseUpdateReviewableTransactionCommand(
 ): UpdateReviewableTransactionCommand {
   const result = updateReviewableTransactionCommandSchema.safeParse(input);
   if (!result.success) {
-    throw toS05DomainError(result.error);
+    throw toTransactionReviewDomainError(result.error);
   }
   return result.data as UpdateReviewableTransactionCommand;
 }
 
 export function safeParseUpdateReviewableTransactionCommand(
   input: unknown,
-): S05Result<UpdateReviewableTransactionCommand> {
+): TransactionReviewResult<UpdateReviewableTransactionCommand> {
   try {
     return ok(parseUpdateReviewableTransactionCommand(input));
   } catch (error) {
-    return { ok: false, error: toS05Error(error) };
+    return { ok: false, error: toTransactionReviewError(error) };
   }
 }
 
@@ -791,14 +791,14 @@ export const validateUpdateReviewableTransactionCommand =
 function scalarQueryValue(
   values: Record<string, unknown>,
   key: string,
-  field: S05ErrorField = key as S05ErrorField,
+  field: TransactionReviewErrorField = key as TransactionReviewErrorField,
 ): unknown {
   const value = values[key];
   if (
     Array.isArray(value) ||
     (typeof value === "object" && value !== null && key !== "period")
   ) {
-    throw new S05DomainError("INVALID_QUERY", field);
+    throw new TransactionReviewDomainError("INVALID_QUERY", field);
   }
   return value;
 }
@@ -843,7 +843,7 @@ function normalizeDateAliases(
 
   const first = normalizedValues[0];
   if (normalizedValues.some((value) => value !== first)) {
-    throw new S05DomainError("INVALID_QUERY", canonicalKey);
+    throw new TransactionReviewDomainError("INVALID_QUERY", canonicalKey);
   }
   return first;
 }
@@ -854,12 +854,12 @@ function addPeriodAliases(values: Record<string, unknown>): Record<string, unkno
     return values;
   }
   if (!isPlainObject(rawPeriod)) {
-    throw new S05DomainError("INVALID_QUERY");
+    throw new TransactionReviewDomainError("INVALID_QUERY");
   }
 
   for (const key of Object.keys(rawPeriod)) {
     if (key !== "from" && key !== "to") {
-      throw new S05DomainError("INVALID_QUERY");
+      throw new TransactionReviewDomainError("INVALID_QUERY");
     }
   }
 
@@ -882,7 +882,7 @@ function normalizeOptionalQueryId(
     return null;
   }
   if (typeof value !== "string") {
-    throw new S05DomainError("INVALID_QUERY", key);
+    throw new TransactionReviewDomainError("INVALID_QUERY", key);
   }
 
   const normalized = value.trim();
@@ -890,17 +890,17 @@ function normalizeOptionalQueryId(
     return null;
   }
   if (normalized.length === 0 || normalized === "null") {
-    throw new S05DomainError("INVALID_QUERY", key);
+    throw new TransactionReviewDomainError("INVALID_QUERY", key);
   }
   if (!isUuidV7(normalized)) {
-    throw new S05DomainError("INVALID_QUERY", key);
+    throw new TransactionReviewDomainError("INVALID_QUERY", key);
   }
   return normalized;
 }
 
 function normalizeEnumFilter<T extends string>(
   values: Record<string, unknown>,
-  key: S05ErrorField,
+  key: TransactionReviewErrorField,
   allowed: readonly T[],
 ): T | undefined {
   const value = scalarQueryValue(values, key, key);
@@ -908,7 +908,7 @@ function normalizeEnumFilter<T extends string>(
     return undefined;
   }
   if (typeof value !== "string" || !allowed.includes(value as T)) {
-    throw new S05DomainError("INVALID_QUERY", key);
+    throw new TransactionReviewDomainError("INVALID_QUERY", key);
   }
   return value as T;
 }
@@ -921,7 +921,7 @@ function normalizeReviewFilter(
     return undefined;
   }
   if (value !== "NEEDS_REVIEW" && value !== "ORGANIZED") {
-    throw new S05DomainError("INVALID_QUERY", "review");
+    throw new TransactionReviewDomainError("INVALID_QUERY", "review");
   }
   return value;
 }
@@ -937,7 +937,7 @@ function normalizeLimitValue(value: unknown): number {
   } else if (typeof value === "string" && /^\d+$/u.test(value)) {
     candidate = Number(value);
   } else {
-    throw new S05DomainError("INVALID_QUERY", "limit");
+    throw new TransactionReviewDomainError("INVALID_QUERY", "limit");
   }
 
   if (
@@ -945,19 +945,19 @@ function normalizeLimitValue(value: unknown): number {
     candidate < 1 ||
     candidate > MAX_REVIEW_PAGE_LIMIT
   ) {
-    throw new S05DomainError("INVALID_QUERY", "limit");
+    throw new TransactionReviewDomainError("INVALID_QUERY", "limit");
   }
   return candidate;
 }
 
 function normalizeQueryObject(input: unknown): Record<string, unknown> {
   if (!isPlainObject(input)) {
-    throw new S05DomainError("INVALID_QUERY");
+    throw new TransactionReviewDomainError("INVALID_QUERY");
   }
   const values = input;
   for (const key of Object.keys(values)) {
     if (!REVIEW_QUERY_KEYS.has(key)) {
-      throw new S05DomainError("INVALID_QUERY");
+      throw new TransactionReviewDomainError("INVALID_QUERY");
     }
   }
   return values;
@@ -978,12 +978,12 @@ function normalizeQuery(
   const to = normalizeDateAliases(values, "to");
 
   if (from !== undefined && to !== undefined && from > to) {
-    throw new S05DomainError("INVALID_QUERY");
+    throw new TransactionReviewDomainError("INVALID_QUERY");
   }
 
   const accountIdValue = normalizeOptionalQueryId(values, "accountId");
   if (accountIdValue === null) {
-    throw new S05DomainError("INVALID_QUERY", "accountId");
+    throw new TransactionReviewDomainError("INVALID_QUERY", "accountId");
   }
   const accountId = accountIdValue;
   const categoryId = normalizeOptionalQueryId(values, "categoryId");
@@ -1017,7 +1017,7 @@ function normalizeQuery(
   let cursor: string | undefined;
   if (options.includePagination && rawCursor !== undefined) {
     if (typeof rawCursor !== "string" || rawCursor.length === 0) {
-      throw new S05DomainError("INVALID_CURSOR", "cursor");
+      throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
     }
     cursor = rawCursor;
   } else if (options.includePagination && rawCursor === undefined) {
@@ -1066,11 +1066,11 @@ export const parseReviewableTransactionsQuery =
 
 export function safeParseListReviewableTransactionsQuery(
   input: unknown = {},
-): S05Result<NormalizedListReviewableTransactionsQuery> {
+): TransactionReviewResult<NormalizedListReviewableTransactionsQuery> {
   try {
     return ok(parseListReviewableTransactionsQuery(input));
   } catch (error) {
-    return { ok: false, error: toS05Error(error, "INVALID_QUERY") };
+    return { ok: false, error: toTransactionReviewError(error, "INVALID_QUERY") };
   }
 }
 
@@ -1099,11 +1099,11 @@ export const normalizeTransactionReviewSummaryQuery =
 
 export function safeParseTransactionReviewSummaryQuery(
   input: unknown = {},
-): S05Result<NormalizedTransactionReviewSummaryQuery> {
+): TransactionReviewResult<NormalizedTransactionReviewSummaryQuery> {
   try {
     return ok(parseTransactionReviewSummaryQuery(input));
   } catch (error) {
-    return { ok: false, error: toS05Error(error, "INVALID_QUERY") };
+    return { ok: false, error: toTransactionReviewError(error, "INVALID_QUERY") };
   }
 }
 
@@ -1336,7 +1336,7 @@ function validateCursorPayload(
   requireCanonicalKeyOrder = false,
 ): ReviewCursorV1 {
   if (!isPlainObject(input)) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
 
   const expectedKeys = ["v", "occurredOn", "id", "filterHash", "limit"];
@@ -1347,11 +1347,11 @@ function validateCursorPayload(
     (requireCanonicalKeyOrder &&
       expectedKeys.some((key, index) => keys[index] !== key))
   ) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
 
   if (input.v !== REVIEW_CURSOR_VERSION) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
   const occurredOn = normalizeIsoDate(input.occurredOn, "cursor");
   const id = normalizeUuid(input.id, "cursor");
@@ -1359,7 +1359,7 @@ function validateCursorPayload(
     typeof input.filterHash !== "string" ||
     !FILTER_HASH_PATTERN.test(input.filterHash)
   ) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
   if (
     typeof input.limit !== "number" ||
@@ -1367,7 +1367,7 @@ function validateCursorPayload(
     input.limit < 1 ||
     input.limit > MAX_REVIEW_PAGE_LIMIT
   ) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
 
   return {
@@ -1407,7 +1407,7 @@ function decodeBase64Url(value: string): Uint8Array {
     value.length % 4 === 1 ||
     !/^[A-Za-z0-9_-]+$/u.test(value)
   ) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
 
   const output: number[] = [];
@@ -1423,7 +1423,7 @@ function decodeBase64Url(value: string): Uint8Array {
   }
 
   if (bits > 0 && (buffer & ((1 << bits) - 1)) !== 0) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
   return new Uint8Array(output);
 }
@@ -1432,7 +1432,7 @@ function decodeUtf8(bytes: Uint8Array): string {
   try {
     return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
 }
 
@@ -1441,7 +1441,7 @@ export function encodeReviewCursor(input: ReviewCursorV1): string {
   const json = JSON.stringify(payload);
   const encoded = encodeBase64Url(new TextEncoder().encode(json));
   if (encoded.length > MAX_REVIEW_CURSOR_BYTES) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
   return encoded;
 }
@@ -1451,17 +1451,17 @@ export function decodeReviewCursor(
   expectation?: ReviewCursorExpectedQuery,
 ): ReviewCursorV1 {
   if (typeof value !== "string") {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
 
   let payload: unknown;
   try {
     payload = JSON.parse(decodeUtf8(decodeBase64Url(value))) as unknown;
   } catch (error) {
-    if (error instanceof S05DomainError) {
+    if (error instanceof TransactionReviewDomainError) {
       throw error;
     }
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
   const cursor = validateCursorPayload(payload, true);
   const expected = normalizeCursorExpectation(expectation);
@@ -1469,13 +1469,13 @@ export function decodeReviewCursor(
     expected?.expectedFilterHash !== undefined &&
     cursor.filterHash !== expected.expectedFilterHash
   ) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
   if (
     expected?.expectedLimit !== undefined &&
     cursor.limit !== expected.expectedLimit
   ) {
-    throw new S05DomainError("INVALID_CURSOR", "cursor");
+    throw new TransactionReviewDomainError("INVALID_CURSOR", "cursor");
   }
   return cursor;
 }
@@ -1709,11 +1709,11 @@ export function parseReviewCursorV1(input: unknown): ReviewCursorV1 {
 
 export function safeParseReviewCursorV1(
   input: unknown,
-): S05Result<ReviewCursorV1> {
+): TransactionReviewResult<ReviewCursorV1> {
   try {
     return ok(parseReviewCursorV1(input));
   } catch (error) {
-    return { ok: false, error: toS05Error(error, "INVALID_CURSOR") };
+    return { ok: false, error: toTransactionReviewError(error, "INVALID_CURSOR") };
   }
 }
 
@@ -1740,7 +1740,7 @@ export const listReviewableTransactionsQuerySchema = z
     try {
       return parseListReviewableTransactionsQuery(input);
     } catch (error) {
-      const safe = toS05Error(error, "INVALID_QUERY");
+      const safe = toTransactionReviewError(error, "INVALID_QUERY");
       context.addIssue({
         code: z.ZodIssueCode.custom,
         message: safe.message,
@@ -1758,7 +1758,7 @@ export function parseReviewReadModel<T>(
 ): T {
   const result = schema.safeParse(input);
   if (!result.success) {
-    throw new S05DomainError("INVALID_COMMAND");
+    throw new TransactionReviewDomainError("INVALID_COMMAND");
   }
   return result.data;
 }

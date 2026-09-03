@@ -9,38 +9,35 @@ import { addBreadcrumbSafely, captureServerException } from "./server";
  * record so an incident can be correlated with the exact public contract and
  * formula without serializing the result or its inputs.
  */
-export const S08_SPENDABLE_CONTRACT_VERSION = "s08.v1" as const;
-export const S08_SPENDABLE_RULE_VERSION = "spendable.v1" as const;
-/** Short aliases match the public S08 contract vocabulary. */
-export const SPENDABLE_CONTRACT_VERSION = S08_SPENDABLE_CONTRACT_VERSION;
-export const SPENDABLE_RULE_VERSION = S08_SPENDABLE_RULE_VERSION;
+export const SPENDABLE_CONTRACT_VERSION = "s08.v1" as const;
+export const SPENDABLE_RULE_VERSION = "spendable.v1" as const;
 
-export const S08_SPENDABLE_STAGES = [
+export const SPENDABLE_STAGES = [
   "read",
   "forecast",
   "engine",
   "serialization",
 ] as const;
 
-export type S08SpendableStage = (typeof S08_SPENDABLE_STAGES)[number];
+export type SpendableStage = (typeof SPENDABLE_STAGES)[number];
 
 /** Closed operation names for all S08 server-side boundaries. */
-export const S08_SPENDABLE_OPERATIONS = [
+export const SPENDABLE_OPERATIONS = [
   "spendable.read",
   "spendable.forecast.build",
   "spendable.engine.calculate",
   "spendable.serialize",
 ] as const;
 
-export type S08SpendableOperation =
-  (typeof S08_SPENDABLE_OPERATIONS)[number];
+export type SpendableOperation =
+  (typeof SPENDABLE_OPERATIONS)[number];
 
 /**
  * Adapters may use the older stage/query vocabulary; it is normalized to the
  * operation vocabulary above before it can reach logs, metrics or Sentry.
  */
-export const S08_SPENDABLE_OPERATION_ALIASES = [
-  ...S08_SPENDABLE_OPERATIONS,
+export const SPENDABLE_OPERATION_ALIASES = [
+  ...SPENDABLE_OPERATIONS,
   "spendable.query.read",
   "spendable.query.get",
   "spendable.read.query",
@@ -61,49 +58,49 @@ export const S08_SPENDABLE_OPERATION_ALIASES = [
   "serialize",
 ] as const;
 
-export type S08SpendableOperationInput =
-  | S08SpendableOperation
-  | S08SpendableStage
-  | (typeof S08_SPENDABLE_OPERATION_ALIASES)[number];
+export type SpendableOperationInput =
+  | SpendableOperation
+  | SpendableStage
+  | (typeof SPENDABLE_OPERATION_ALIASES)[number];
 
 /** Stable operation/query codes; these are not SQL identifiers. */
-export const S08_SPENDABLE_QUERY_CODES = {
+export const SPENDABLE_QUERY_CODES = {
   read: "spendable_read",
   forecast: "spendable_forecast",
   engine: "spendable_engine",
   serialization: "spendable_serialization",
-} as const satisfies Record<S08SpendableStage, string>;
+} as const satisfies Record<SpendableStage, string>;
 
-export type S08SpendableQueryCode =
-  (typeof S08_SPENDABLE_QUERY_CODES)[S08SpendableStage];
+export type SpendableQueryCode =
+  (typeof SPENDABLE_QUERY_CODES)[SpendableStage];
 
-export const S08_SPENDABLE_OUTCOMES = [
+export const SPENDABLE_OUTCOMES = [
   "success",
   "expected_error",
   "unexpected_error",
 ] as const;
 
-export type S08SpendableOutcome = (typeof S08_SPENDABLE_OUTCOMES)[number];
+export type SpendableOutcome = (typeof SPENDABLE_OUTCOMES)[number];
 
 /** Result states are categories only; no monetary result crosses this API. */
-export const S08_SPENDABLE_RESULTS = [
+export const SPENDABLE_RESULTS = [
   "AVAILABLE",
   "ZERO",
   "DEFICIT",
   "UNAVAILABLE",
 ] as const;
 
-export type S08SpendableResult = (typeof S08_SPENDABLE_RESULTS)[number];
+export type SpendableResult = (typeof SPENDABLE_RESULTS)[number];
 
-export const S08_SPENDABLE_BUFFER_SOURCES = [
+export const SPENDABLE_BUFFER_SOURCES = [
   "CONFIGURED",
   "ABSENT_DEFAULT_ZERO",
 ] as const;
 
-export type S08SpendableBufferSource =
-  (typeof S08_SPENDABLE_BUFFER_SOURCES)[number];
+export type SpendableBufferSource =
+  (typeof SPENDABLE_BUFFER_SOURCES)[number];
 
-export const S08_SPENDABLE_SOURCE_KINDS = [
+export const SPENDABLE_SOURCE_KINDS = [
   "RECURRING",
   "PLANNED_EVENT",
   "INSTALLMENT",
@@ -112,14 +109,14 @@ export const S08_SPENDABLE_SOURCE_KINDS = [
   "ALL",
 ] as const;
 
-export type S08SpendableSourceKind =
-  (typeof S08_SPENDABLE_SOURCE_KINDS)[number];
+export type SpendableSourceKind =
+  (typeof SPENDABLE_SOURCE_KINDS)[number];
 
 /**
  * Only aggregate counters are represented here.  Deliberately absent are
  * cents, balances, dates, references, descriptions, rows and timelines.
  */
-export interface S08SpendableAggregateCounts {
+export interface SpendableAggregateCounts {
   sourceCount?: number;
   recurringCount?: number;
   plannedEventCount?: number;
@@ -139,8 +136,8 @@ export interface S08SpendableAggregateCounts {
   serializedFieldCount?: number;
 }
 
-export interface S08SpendableOperationOptions
-  extends S08SpendableAggregateCounts {
+export interface SpendableOperationOptions
+  extends SpendableAggregateCounts {
   requestId?: string;
   /** Alias accepted from a transport boundary; emitted as requestId. */
   correlationId?: string;
@@ -160,30 +157,30 @@ export interface S08SpendableOperationOptions
   [key: string]: unknown;
 }
 
-export interface S08SpendableOperationContext
-  extends S08SpendableAggregateCounts {
-  operation: S08SpendableOperation;
-  stage: S08SpendableStage;
-  queryCode: S08SpendableQueryCode;
-  contractVersion: typeof S08_SPENDABLE_CONTRACT_VERSION;
-  ruleVersion: typeof S08_SPENDABLE_RULE_VERSION;
+export interface SpendableOperationContext
+  extends SpendableAggregateCounts {
+  operation: SpendableOperation;
+  stage: SpendableStage;
+  queryCode: SpendableQueryCode;
+  contractVersion: typeof SPENDABLE_CONTRACT_VERSION;
+  ruleVersion: typeof SPENDABLE_RULE_VERSION;
   requestId?: string;
   userId?: string;
   householdId?: string;
   scenario?: "CONSERVATIVE" | "EXPECTED";
   horizonDays?: number;
-  result?: S08SpendableResult;
-  bufferSource?: S08SpendableBufferSource;
-  sourceKind?: S08SpendableSourceKind;
+  result?: SpendableResult;
+  bufferSource?: SpendableBufferSource;
+  sourceKind?: SpendableSourceKind;
   durationMs?: number;
   statusCode?: number;
 }
 
-export interface S08SpendableLog extends S08SpendableOperationContext {
+export interface SpendableLog extends SpendableOperationContext {
   event: string;
-  useCase: S08SpendableOperation;
-  outcome: S08SpendableOutcome;
-  errorCode?: S08SpendableErrorCode;
+  useCase: SpendableOperation;
+  outcome: SpendableOutcome;
+  errorCode?: SpendableErrorCode;
   slowQuery?: boolean;
   slowQueryThresholdMs?: number;
   queryBudgetMs?: number;
@@ -191,8 +188,8 @@ export interface S08SpendableLog extends S08SpendableOperationContext {
 }
 
 /** Unknown fields are accepted solely to prove the sanitizer drops them. */
-export type S08SpendableLogInput = Omit<
-  Partial<S08SpendableLog>,
+export type SpendableLogInput = Omit<
+  Partial<SpendableLog>,
   | "event"
   | "useCase"
   | "operation"
@@ -223,18 +220,18 @@ export type S08SpendableLogInput = Omit<
   sourceKind?: unknown;
 } & Record<string, unknown>;
 
-export interface S08SpendableObservabilityHooks {
+export interface SpendableObservabilityHooks {
   /** Receives an already allow-listed record for logs/metrics. */
-  onRecord?: (record: S08SpendableLog) => void;
+  onRecord?: (record: SpendableLog) => void;
   /** Alias for metric adapters that do not emit application logs. */
-  onMetric?: (record: S08SpendableLog) => void;
+  onMetric?: (record: SpendableLog) => void;
   /** Receives only records that exceeded the configured threshold/budget. */
-  onSlowQuery?: (record: S08SpendableLog) => void;
+  onSlowQuery?: (record: SpendableLog) => void;
 }
 
-export interface S08SpendableCompletionOptions
-  extends S08SpendableAggregateCounts,
-    S08SpendableObservabilityHooks {
+export interface SpendableCompletionOptions
+  extends SpendableAggregateCounts,
+    SpendableObservabilityHooks {
   durationMs?: number;
   errorCode?: string;
   technicalErrorCode?: string;
@@ -251,12 +248,12 @@ export interface S08SpendableCompletionOptions
   now?: () => number;
 }
 
-export interface S08SpendableQueryOptions
-  extends S08SpendableAggregateCounts,
-    S08SpendableObservabilityHooks {
-  /** Per-call override, bounded by MAX_S08_SLOW_QUERY_THRESHOLD_MS. */
+export interface SpendableQueryOptions
+  extends SpendableAggregateCounts,
+    SpendableObservabilityHooks {
+  /** Per-call override, bounded by MAX_SPENDABLE_SLOW_QUERY_THRESHOLD_MS. */
   thresholdMs?: number;
-  /** Per-call budget override, bounded by MAX_S08_QUERY_BUDGET_MS. */
+  /** Per-call budget override, bounded by MAX_SPENDABLE_QUERY_BUDGET_MS. */
   queryBudgetMs?: number;
   technicalErrorCode?: string;
   now?: () => number;
@@ -268,7 +265,7 @@ export interface S08SpendableQueryOptions
   sourceKind?: unknown;
 }
 
-export const S08_SPENDABLE_EXPECTED_ERROR_CODES = [
+export const SPENDABLE_EXPECTED_ERROR_CODES = [
   "INVALID_DATE",
   "INVALID_DATE_RANGE",
   "INVALID_AMOUNT",
@@ -291,11 +288,11 @@ export const S08_SPENDABLE_EXPECTED_ERROR_CODES = [
   "INVALID_FINANCIAL_CONTEXT",
 ] as const;
 
-export type S08SpendableExpectedErrorCode =
-  (typeof S08_SPENDABLE_EXPECTED_ERROR_CODES)[number];
+export type SpendableExpectedErrorCode =
+  (typeof SPENDABLE_EXPECTED_ERROR_CODES)[number];
 
 /** Technical labels are closed so provider/database text never becomes code. */
-export const S08_SPENDABLE_TECHNICAL_ERROR_CODES = [
+export const SPENDABLE_TECHNICAL_ERROR_CODES = [
   "SPENDABLE_READ_FAILED",
   "SPENDABLE_QUERY_FAILED",
   "SPENDABLE_QUERY_TIMEOUT",
@@ -308,35 +305,35 @@ export const S08_SPENDABLE_TECHNICAL_ERROR_CODES = [
   "UNEXPECTED_ERROR",
 ] as const;
 
-export type S08SpendableTechnicalErrorCode =
-  (typeof S08_SPENDABLE_TECHNICAL_ERROR_CODES)[number];
+export type SpendableTechnicalErrorCode =
+  (typeof SPENDABLE_TECHNICAL_ERROR_CODES)[number];
 
-export type S08SpendableErrorCode =
-  | S08SpendableExpectedErrorCode
-  | S08SpendableTechnicalErrorCode;
+export type SpendableErrorCode =
+  | SpendableExpectedErrorCode
+  | SpendableTechnicalErrorCode;
 
-export interface S08SpendableErrorClassification {
+export interface SpendableErrorClassification {
   outcome: "expected_error" | "unexpected_error";
-  errorCode: S08SpendableErrorCode;
+  errorCode: SpendableErrorCode;
 }
 
-export interface S08SpendableSafeErrorEnvelope {
+export interface SpendableSafeErrorEnvelope {
   ok: false;
   error: {
-    code: S08SpendableErrorCode;
+    code: SpendableErrorCode;
     field: "asOf" | "horizon" | "scenario" | "buffer" | null;
   };
 }
 
-export const DEFAULT_S08_SLOW_QUERY_THRESHOLD_MS = 250;
-export const MAX_S08_SLOW_QUERY_THRESHOLD_MS = 60_000;
-export const DEFAULT_S08_QUERY_BUDGET_MS = 2_000;
-export const MAX_S08_QUERY_BUDGET_MS = 60_000;
-export const MAX_S08_AGGREGATE_COUNT = 1_000_000_000;
-export const MIN_S08_HORIZON_DAYS = 1;
-export const MAX_S08_HORIZON_DAYS = 3_660;
+export const DEFAULT_SPENDABLE_SLOW_QUERY_THRESHOLD_MS = 250;
+export const MAX_SPENDABLE_SLOW_QUERY_THRESHOLD_MS = 60_000;
+export const DEFAULT_SPENDABLE_QUERY_BUDGET_MS = 2_000;
+export const MAX_SPENDABLE_QUERY_BUDGET_MS = 60_000;
+export const MAX_SPENDABLE_AGGREGATE_COUNT = 1_000_000_000;
+export const MIN_SPENDABLE_HORIZON_DAYS = 1;
+export const MAX_SPENDABLE_HORIZON_DAYS = 3_660;
 
-const OPERATION_ALIASES: Readonly<Record<string, S08SpendableOperation>> = {
+const OPERATION_ALIASES: Readonly<Record<string, SpendableOperation>> = {
   "spendable.read": "spendable.read",
   "spendable.query.read": "spendable.read",
   "spendable.query.get": "spendable.read",
@@ -361,16 +358,16 @@ const OPERATION_ALIASES: Readonly<Record<string, S08SpendableOperation>> = {
   serialize: "spendable.serialize",
 };
 
-const OPERATION_SET = new Set<string>(S08_SPENDABLE_OPERATIONS);
-const STAGE_SET = new Set<string>(S08_SPENDABLE_STAGES);
-const RESULT_SET = new Set<string>(S08_SPENDABLE_RESULTS);
-const BUFFER_SOURCE_SET = new Set<string>(S08_SPENDABLE_BUFFER_SOURCES);
-const SOURCE_KIND_SET = new Set<string>(S08_SPENDABLE_SOURCE_KINDS);
+const OPERATION_SET = new Set<string>(SPENDABLE_OPERATIONS);
+const STAGE_SET = new Set<string>(SPENDABLE_STAGES);
+const RESULT_SET = new Set<string>(SPENDABLE_RESULTS);
+const BUFFER_SOURCE_SET = new Set<string>(SPENDABLE_BUFFER_SOURCES);
+const SOURCE_KIND_SET = new Set<string>(SPENDABLE_SOURCE_KINDS);
 const EXPECTED_ERROR_SET = new Set<string>(
-  S08_SPENDABLE_EXPECTED_ERROR_CODES,
+  SPENDABLE_EXPECTED_ERROR_CODES,
 );
 const TECHNICAL_ERROR_SET = new Set<string>(
-  S08_SPENDABLE_TECHNICAL_ERROR_CODES,
+  SPENDABLE_TECHNICAL_ERROR_CODES,
 );
 const ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/u;
 const OPAQUE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}$/u;
@@ -395,7 +392,7 @@ function opaqueId(value: unknown): string | undefined {
 
 function finiteInteger(
   value: unknown,
-  maximum = MAX_S08_AGGREGATE_COUNT,
+  maximum = MAX_SPENDABLE_AGGREGATE_COUNT,
 ): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return undefined;
@@ -416,8 +413,8 @@ function horizon(value: unknown): number | undefined {
   if (
     typeof value !== "number" ||
     !Number.isInteger(value) ||
-    value < MIN_S08_HORIZON_DAYS ||
-    value > MAX_S08_HORIZON_DAYS
+    value < MIN_SPENDABLE_HORIZON_DAYS ||
+    value > MAX_SPENDABLE_HORIZON_DAYS
   ) {
     return undefined;
   }
@@ -434,7 +431,7 @@ function enumValue<T extends readonly string[]>(
     : undefined;
 }
 
-function operationValue(value: unknown): S08SpendableOperation | undefined {
+function operationValue(value: unknown): SpendableOperation | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
@@ -443,12 +440,12 @@ function operationValue(value: unknown): S08SpendableOperation | undefined {
   return operation && OPERATION_SET.has(operation) ? operation : undefined;
 }
 
-function stageValue(value: unknown): S08SpendableStage | undefined {
+function stageValue(value: unknown): SpendableStage | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
 
-  const aliases: Readonly<Record<string, S08SpendableStage>> = {
+  const aliases: Readonly<Record<string, SpendableStage>> = {
     read: "read",
     query: "read",
     forecast: "forecast",
@@ -462,8 +459,8 @@ function stageValue(value: unknown): S08SpendableStage | undefined {
   return stage && STAGE_SET.has(stage) ? stage : undefined;
 }
 
-function outcomeValue(value: unknown): S08SpendableOutcome | undefined {
-  return enumValue(S08_SPENDABLE_OUTCOMES, value);
+function outcomeValue(value: unknown): SpendableOutcome | undefined {
+  return enumValue(SPENDABLE_OUTCOMES, value);
 }
 
 function scenarioValue(value: unknown): "CONSERVATIVE" | "EXPECTED" | undefined {
@@ -472,12 +469,12 @@ function scenarioValue(value: unknown): "CONSERVATIVE" | "EXPECTED" | undefined 
     : undefined;
 }
 
-function resultValue(value: unknown): S08SpendableResult | undefined {
+function resultValue(value: unknown): SpendableResult | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
 
-  const aliases: Readonly<Record<string, S08SpendableResult>> = {
+  const aliases: Readonly<Record<string, SpendableResult>> = {
     AVAILABLE: "AVAILABLE",
     available: "AVAILABLE",
     POSITIVE: "AVAILABLE",
@@ -495,12 +492,12 @@ function resultValue(value: unknown): S08SpendableResult | undefined {
   return result && RESULT_SET.has(result) ? result : undefined;
 }
 
-function bufferSourceValue(value: unknown): S08SpendableBufferSource | undefined {
+function bufferSourceValue(value: unknown): SpendableBufferSource | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
 
-  const aliases: Readonly<Record<string, S08SpendableBufferSource>> = {
+  const aliases: Readonly<Record<string, SpendableBufferSource>> = {
     CONFIGURED: "CONFIGURED",
     configured: "CONFIGURED",
     ABSENT_DEFAULT_ZERO: "ABSENT_DEFAULT_ZERO",
@@ -512,13 +509,13 @@ function bufferSourceValue(value: unknown): S08SpendableBufferSource | undefined
   return source && BUFFER_SOURCE_SET.has(source) ? source : undefined;
 }
 
-function sourceKindValue(value: unknown): S08SpendableSourceKind | undefined {
+function sourceKindValue(value: unknown): SpendableSourceKind | undefined {
   return typeof value === "string" && SOURCE_KIND_SET.has(value)
-    ? (value as S08SpendableSourceKind)
+    ? (value as SpendableSourceKind)
     : undefined;
 }
 
-function stageForOperation(operation: S08SpendableOperation): S08SpendableStage {
+function stageForOperation(operation: SpendableOperation): SpendableStage {
   if (operation === "spendable.read") {
     return "read";
   }
@@ -531,7 +528,7 @@ function stageForOperation(operation: S08SpendableOperation): S08SpendableStage 
   return "serialization";
 }
 
-function operationForStage(stage: S08SpendableStage): S08SpendableOperation {
+function operationForStage(stage: SpendableStage): SpendableOperation {
   return stage === "read"
     ? "spendable.read"
     : stage === "forecast"
@@ -541,18 +538,18 @@ function operationForStage(stage: S08SpendableStage): S08SpendableOperation {
         : "spendable.serialize";
 }
 
-function queryCodeForStage(stage: S08SpendableStage): S08SpendableQueryCode {
-  return S08_SPENDABLE_QUERY_CODES[stage];
+function queryCodeForStage(stage: SpendableStage): SpendableQueryCode {
+  return SPENDABLE_QUERY_CODES[stage];
 }
 
 function eventName(
-  operation: S08SpendableOperation,
-  outcome: S08SpendableOutcome,
+  operation: SpendableOperation,
+  outcome: SpendableOutcome,
 ): string {
-  return `s08_${operation.replaceAll(".", "_")}_${outcome}`;
+  return `${operation.replaceAll(".", "_")}_${outcome}`;
 }
 
-function safeErrorCode(value: unknown): S08SpendableErrorCode | undefined {
+function safeErrorCode(value: unknown): SpendableErrorCode | undefined {
   if (
     typeof value !== "string" ||
     !ERROR_CODE_PATTERN.test(value) ||
@@ -561,12 +558,12 @@ function safeErrorCode(value: unknown): S08SpendableErrorCode | undefined {
     return undefined;
   }
 
-  return value as S08SpendableErrorCode;
+  return value as SpendableErrorCode;
 }
 
-function safeTechnicalErrorCode(value: unknown): S08SpendableTechnicalErrorCode {
+function safeTechnicalErrorCode(value: unknown): SpendableTechnicalErrorCode {
   return TECHNICAL_ERROR_SET.has(value as string)
-    ? (value as S08SpendableTechnicalErrorCode)
+    ? (value as SpendableTechnicalErrorCode)
     : "UNEXPECTED_ERROR";
 }
 
@@ -584,16 +581,16 @@ function countValue(
 }
 
 /** Keeps bounded aggregate counters and never traverses rows or timelines. */
-export function sanitizeS08SpendableCounts(
+export function sanitizeSpendableCounts(
   value: unknown,
-): S08SpendableAggregateCounts | undefined {
+): SpendableAggregateCounts | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
 
   const source = isRecord(value.counts) ? value.counts : value;
   const aliases: Record<
-    keyof S08SpendableAggregateCounts,
+    keyof SpendableAggregateCounts,
     readonly string[]
   > = {
     sourceCount: ["sourceCount", "source_count", "sources"],
@@ -668,9 +665,9 @@ export function sanitizeS08SpendableCounts(
     ],
   };
 
-  const result: S08SpendableAggregateCounts = {};
+  const result: SpendableAggregateCounts = {};
   for (const key of Object.keys(aliases) as Array<
-    keyof S08SpendableAggregateCounts
+    keyof SpendableAggregateCounts
   >) {
     const count = countValue(source, aliases[key]);
     if (count !== undefined) {
@@ -681,12 +678,12 @@ export function sanitizeS08SpendableCounts(
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-function aggregateInput(value: Record<string, unknown>): S08SpendableAggregateCounts {
-  return sanitizeS08SpendableCounts(value) ?? {};
+function aggregateInput(value: Record<string, unknown>): SpendableAggregateCounts {
+  return sanitizeSpendableCounts(value) ?? {};
 }
 
 function addSafeId(
-  target: S08SpendableOperationContext,
+  target: SpendableOperationContext,
   key: "requestId" | "userId" | "householdId",
   value: unknown,
 ): void {
@@ -700,10 +697,10 @@ function addSafeId(
  * Creates technical operation metadata and a request correlation ID.  It
  * never copies a result, amount, balance, source reference or payload.
  */
-export function createS08SpendableOperation(
-  operationInput: S08SpendableOperationInput,
-  options: S08SpendableOperationOptions = {},
-): S08SpendableOperationContext {
+export function createSpendableOperation(
+  operationInput: SpendableOperationInput,
+  options: SpendableOperationOptions = {},
+): SpendableOperationContext {
   const suppliedOperation = operationValue(operationInput);
   const suppliedStage = stageValue(operationInput);
   const operation =
@@ -720,12 +717,12 @@ export function createS08SpendableOperation(
     }
   }
 
-  const result: S08SpendableOperationContext = {
+  const result: SpendableOperationContext = {
     operation,
     stage,
     queryCode: queryCodeForStage(stage),
-    contractVersion: S08_SPENDABLE_CONTRACT_VERSION,
-    ruleVersion: S08_SPENDABLE_RULE_VERSION,
+    contractVersion: SPENDABLE_CONTRACT_VERSION,
+    ruleVersion: SPENDABLE_RULE_VERSION,
     ...aggregateInput(options),
     scenario: scenarioValue(options.scenario),
     horizonDays: horizon(options.horizonDays),
@@ -743,16 +740,16 @@ export function createS08SpendableOperation(
 }
 
 /** Canonical operation/use-case identifier for service adapters. */
-export function s08SpendableUseCaseName(
-  operation: S08SpendableOperationInput,
-): S08SpendableOperation {
+export function spendableUseCaseName(
+  operation: SpendableOperationInput,
+): SpendableOperation {
   return operationValue(operation)
     ?? operationForStage(stageValue(operation) ?? "read");
 }
 
-export function s08SpendableEventName(
-  operation: S08SpendableOperationInput,
-  outcome: S08SpendableOutcome,
+export function spendableEventName(
+  operation: SpendableOperationInput,
+  outcome: SpendableOutcome,
 ): string {
   return eventName(
     operationValue(operation) ??
@@ -763,7 +760,7 @@ export function s08SpendableEventName(
 
 function optionalLogFields(
   value: Record<string, unknown>,
-  result: S08SpendableLog,
+  result: SpendableLog,
 ): boolean {
   const addId = (key: "requestId" | "userId" | "householdId") => {
     const id = opaqueId(value[key]);
@@ -779,16 +776,16 @@ function optionalLogFields(
   const suppliedContract = value.contractVersion;
   if (
     suppliedContract !== undefined &&
-    suppliedContract !== S08_SPENDABLE_CONTRACT_VERSION
+    suppliedContract !== SPENDABLE_CONTRACT_VERSION
   ) {
     return false;
   }
   const suppliedRule = value.ruleVersion;
-  if (suppliedRule !== undefined && suppliedRule !== S08_SPENDABLE_RULE_VERSION) {
+  if (suppliedRule !== undefined && suppliedRule !== SPENDABLE_RULE_VERSION) {
     return false;
   }
-  result.contractVersion = S08_SPENDABLE_CONTRACT_VERSION;
-  result.ruleVersion = S08_SPENDABLE_RULE_VERSION;
+  result.contractVersion = SPENDABLE_CONTRACT_VERSION;
+  result.ruleVersion = SPENDABLE_RULE_VERSION;
 
   const scenario = scenarioValue(value.scenario);
   if (value.scenario !== undefined && !scenario) {
@@ -854,7 +851,7 @@ function optionalLogFields(
 
   const threshold = finiteInteger(
     value.slowQueryThresholdMs,
-    MAX_S08_SLOW_QUERY_THRESHOLD_MS,
+    MAX_SPENDABLE_SLOW_QUERY_THRESHOLD_MS,
   );
   if (threshold !== undefined) {
     result.slowQueryThresholdMs = threshold;
@@ -862,7 +859,7 @@ function optionalLogFields(
 
   const queryBudget = finiteInteger(
     value.queryBudgetMs,
-    MAX_S08_QUERY_BUDGET_MS,
+    MAX_SPENDABLE_QUERY_BUDGET_MS,
   );
   if (queryBudget !== undefined) {
     result.queryBudgetMs = queryBudget;
@@ -880,9 +877,9 @@ function optionalLogFields(
  * values; amounts, balances, dates, descriptions, IDs and payloads are not
  * read or traversed.
  */
-export function sanitizeS08SpendableLog(
-  value: S08SpendableLogInput,
-): S08SpendableLog | undefined {
+export function sanitizeSpendableLog(
+  value: SpendableLogInput,
+): SpendableLog | undefined {
   try {
     const suppliedOperation =
       value.operation === undefined ? undefined : operationValue(value.operation);
@@ -910,14 +907,14 @@ export function sanitizeS08SpendableLog(
       return undefined;
     }
 
-    const safe: S08SpendableLog = {
+    const safe: SpendableLog = {
       event: eventName(operation, outcome),
       useCase: operation,
       operation,
       stage,
       queryCode: queryCodeForStage(stage),
-      contractVersion: S08_SPENDABLE_CONTRACT_VERSION,
-      ruleVersion: S08_SPENDABLE_RULE_VERSION,
+      contractVersion: SPENDABLE_CONTRACT_VERSION,
+      ruleVersion: SPENDABLE_RULE_VERSION,
       outcome,
       ...aggregateInput(value),
     };
@@ -929,11 +926,11 @@ export function sanitizeS08SpendableLog(
 }
 
 function primaryContext(
-  operation: S08SpendableOperationContext,
-  outcome: S08SpendableOutcome,
-  options: S08SpendableCompletionOptions = {},
-): S08SpendableLog | undefined {
-  return sanitizeS08SpendableLog({
+  operation: SpendableOperationContext,
+  outcome: SpendableOutcome,
+  options: SpendableCompletionOptions = {},
+): SpendableLog | undefined {
+  return sanitizeSpendableLog({
     ...operation,
     ...options,
     operation: operation.operation,
@@ -943,10 +940,10 @@ function primaryContext(
 }
 
 /** Converts only S08 technical metadata to the shared Sentry context shape. */
-export function toS08ObservabilityContext(
-  operation: S08SpendableOperationContext,
-  outcome: S08SpendableOutcome = "unexpected_error",
-  options: S08SpendableCompletionOptions = {},
+export function toSpendableObservabilityContext(
+  operation: SpendableOperationContext,
+  outcome: SpendableOutcome = "unexpected_error",
+  options: SpendableCompletionOptions = {},
 ): ObservabilityContext {
   const safe = primaryContext(operation, outcome, options);
   const fallbackOperation =
@@ -968,8 +965,8 @@ export function toS08ObservabilityContext(
     spendableStage: safe?.stage ?? fallbackStage,
     spendableQueryCode: safe?.queryCode ?? queryCodeForStage(fallbackStage),
     spendableContractVersion:
-      safe?.contractVersion ?? S08_SPENDABLE_CONTRACT_VERSION,
-    spendableRuleVersion: safe?.ruleVersion ?? S08_SPENDABLE_RULE_VERSION,
+      safe?.contractVersion ?? SPENDABLE_CONTRACT_VERSION,
+    spendableRuleVersion: safe?.ruleVersion ?? SPENDABLE_RULE_VERSION,
     spendableScenario: safe?.scenario,
     spendableHorizonDays: safe?.horizonDays,
     spendableResult: safe?.result,
@@ -999,10 +996,10 @@ export function toS08ObservabilityContext(
 }
 
 /** Adds a technical breadcrumb through the same allow-list as Sentry. */
-export function addS08SpendableBreadcrumb(
-  operation: S08SpendableOperationContext,
-  outcome: S08SpendableOutcome,
-  options: S08SpendableCompletionOptions = {},
+export function addSpendableBreadcrumb(
+  operation: SpendableOperationContext,
+  outcome: SpendableOutcome,
+  options: SpendableCompletionOptions = {},
 ): void {
   const safe = primaryContext(operation, outcome, options);
   if (!safe) {
@@ -1056,13 +1053,13 @@ export function addS08SpendableBreadcrumb(
 }
 
 function emitRecord(
-  safe: S08SpendableLog,
-  hooks: S08SpendableObservabilityHooks = {},
+  safe: SpendableLog,
+  hooks: SpendableObservabilityHooks = {},
   level: "info" | "warn" | "error" =
     safe.outcome === "unexpected_error" ? "error" : "info",
 ): void {
   try {
-    addS08SpendableBreadcrumb(safe, safe.outcome, safe);
+    addSpendableBreadcrumb(safe, safe.outcome, safe);
   } catch {
     // Observability is best effort and never changes the spendable response.
   }
@@ -1089,11 +1086,11 @@ function emitRecord(
 }
 
 /** Emits a completed allow-listed S08 record. */
-export function logS08SpendableOperation(
-  operation: S08SpendableOperationContext,
-  outcome: S08SpendableOutcome,
-  options: S08SpendableCompletionOptions = {},
-): S08SpendableLog | undefined {
+export function logSpendableOperation(
+  operation: SpendableOperationContext,
+  outcome: SpendableOutcome,
+  options: SpendableCompletionOptions = {},
+): SpendableLog | undefined {
   const safe = primaryContext(operation, outcome, options);
   if (!safe) {
     return undefined;
@@ -1118,26 +1115,26 @@ function codeFromError(error: unknown): unknown {
 }
 
 /** Returns a known validation/auth/configuration code without reading text. */
-export function expectedS08ErrorCode(
+export function expectedSpendableErrorCode(
   error: unknown,
-): S08SpendableExpectedErrorCode | undefined {
+): SpendableExpectedErrorCode | undefined {
   if (error instanceof FinancialContextError) {
     return EXPECTED_ERROR_SET.has(error.code)
-      ? (error.code as S08SpendableExpectedErrorCode)
+      ? (error.code as SpendableExpectedErrorCode)
       : undefined;
   }
 
   const code = codeFromError(error);
   return typeof code === "string" && EXPECTED_ERROR_SET.has(code)
-    ? (code as S08SpendableExpectedErrorCode)
+    ? (code as SpendableExpectedErrorCode)
     : undefined;
 }
 
 /** Classifies only the closed expected vocabulary; all other errors are technical. */
-export function classifyS08Error(
+export function classifySpendableError(
   error: unknown,
-): S08SpendableErrorClassification {
-  const expectedCode = expectedS08ErrorCode(error);
+): SpendableErrorClassification {
+  const expectedCode = expectedSpendableErrorCode(error);
   if (expectedCode) {
     return { outcome: "expected_error", errorCode: expectedCode };
   }
@@ -1148,8 +1145,8 @@ export function classifyS08Error(
   };
 }
 
-export function isExpectedS08Error(error: unknown): boolean {
-  return expectedS08ErrorCode(error) !== undefined;
+export function isExpectedSpendableError(error: unknown): boolean {
+  return expectedSpendableErrorCode(error) !== undefined;
 }
 
 function safeSpendableField(
@@ -1178,10 +1175,10 @@ function fieldFromError(
 }
 
 /** Converts an error to a public code/field-only envelope. */
-export function toS08ErrorEnvelope(
+export function toSpendableErrorEnvelope(
   error: unknown,
-): S08SpendableSafeErrorEnvelope {
-  const classification = classifyS08Error(error);
+): SpendableSafeErrorEnvelope {
+  const classification = classifySpendableError(error);
   const code =
     classification.errorCode === "UNAUTHENTICATED" ||
     classification.errorCode === "HOUSEHOLD_MEMBERSHIP_REQUIRED" ||
@@ -1217,12 +1214,12 @@ function resultFailure(value: unknown): { failed: boolean; error?: unknown } {
 }
 
 function completionLog(
-  operation: S08SpendableOperationContext,
-  outcome: S08SpendableOutcome,
+  operation: SpendableOperationContext,
+  outcome: SpendableOutcome,
   durationMs: number,
-  options: S08SpendableCompletionOptions,
-): S08SpendableLog | undefined {
-  return logS08SpendableOperation(operation, outcome, {
+  options: SpendableCompletionOptions,
+): SpendableLog | undefined {
+  return logSpendableOperation(operation, outcome, {
     ...options,
     durationMs,
     errorCode: options.errorCode,
@@ -1234,10 +1231,10 @@ function completionLog(
  * errors remain ordinary outcomes; technical exceptions are captured with a
  * sanitized context and rethrown for the HTTP boundary.
  */
-export async function withS08SpendableObservability<T>(
-  operation: S08SpendableOperationContext,
+export async function withSpendableObservability<T>(
+  operation: SpendableOperationContext,
   work: () => Promise<T> | T,
-  options: S08SpendableCompletionOptions = {},
+  options: SpendableCompletionOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -1246,7 +1243,7 @@ export async function withS08SpendableObservability<T>(
     const value = await work();
     const failure = resultFailure(value);
     if (failure.failed) {
-      const classification = classifyS08Error(failure.error);
+      const classification = classifySpendableError(failure.error);
       const durationMs = elapsedMs(startedAt, now);
       if (classification.outcome === "expected_error") {
         completionLog(operation, classification.outcome, durationMs, {
@@ -1254,7 +1251,7 @@ export async function withS08SpendableObservability<T>(
           errorCode: classification.errorCode,
         });
       } else {
-        reportS08UnexpectedError(failure.error, operation, durationMs, options);
+        reportSpendableUnexpectedError(failure.error, operation, durationMs, options);
       }
       return value;
     }
@@ -1263,7 +1260,7 @@ export async function withS08SpendableObservability<T>(
     return value;
   } catch (error) {
     const durationMs = elapsedMs(startedAt, now);
-    const classification = classifyS08Error(error);
+    const classification = classifySpendableError(error);
     if (classification.outcome === "expected_error") {
       completionLog(operation, classification.outcome, durationMs, {
         ...options,
@@ -1272,7 +1269,7 @@ export async function withS08SpendableObservability<T>(
       throw error;
     }
 
-    reportS08UnexpectedError(error, operation, durationMs, options);
+    reportSpendableUnexpectedError(error, operation, durationMs, options);
     throw error;
   }
 }
@@ -1288,54 +1285,56 @@ function safeThreshold(value: unknown, maximum: number): number | undefined {
 }
 
 /** Reads the bounded S08 slow-operation threshold. */
-export function getS08SlowQueryThresholdMs(value?: unknown): number {
+export function getSpendableSlowQueryThresholdMs(value?: unknown): number {
   return (
-    safeThreshold(value, MAX_S08_SLOW_QUERY_THRESHOLD_MS) ??
+    safeThreshold(value, MAX_SPENDABLE_SLOW_QUERY_THRESHOLD_MS) ??
     safeThreshold(
       typeof process !== "undefined"
-        ? process.env.S08_SLOW_QUERY_THRESHOLD_MS ??
+        ? process.env.SPENDABLE_SLOW_QUERY_THRESHOLD_MS ??
+          process.env.S08_SLOW_QUERY_THRESHOLD_MS ??
           process.env.S08_SPENDABLE_SLOW_QUERY_THRESHOLD_MS
         : undefined,
-      MAX_S08_SLOW_QUERY_THRESHOLD_MS,
-    ) ?? DEFAULT_S08_SLOW_QUERY_THRESHOLD_MS
+      MAX_SPENDABLE_SLOW_QUERY_THRESHOLD_MS,
+    ) ?? DEFAULT_SPENDABLE_SLOW_QUERY_THRESHOLD_MS
   );
 }
 
 /** Reads the bounded S08 query budget. */
-export function getS08QueryBudgetMs(value?: unknown): number {
+export function getSpendableQueryBudgetMs(value?: unknown): number {
   return (
-    safeThreshold(value, MAX_S08_QUERY_BUDGET_MS) ??
+    safeThreshold(value, MAX_SPENDABLE_QUERY_BUDGET_MS) ??
     safeThreshold(
       typeof process !== "undefined"
-        ? process.env.S08_QUERY_BUDGET_MS ??
+        ? process.env.SPENDABLE_QUERY_BUDGET_MS ??
+          process.env.S08_QUERY_BUDGET_MS ??
           process.env.S08_SPENDABLE_QUERY_BUDGET_MS
         : undefined,
-      MAX_S08_QUERY_BUDGET_MS,
-    ) ?? DEFAULT_S08_QUERY_BUDGET_MS
+      MAX_SPENDABLE_QUERY_BUDGET_MS,
+    ) ?? DEFAULT_SPENDABLE_QUERY_BUDGET_MS
   );
 }
 
 /** Reports expected failures and captures only unexpected technical failures. */
-export function reportS08UnexpectedError(
+export function reportSpendableUnexpectedError(
   error: unknown,
-  operation: S08SpendableOperationContext,
-  durationOrOptions: number | S08SpendableCompletionOptions = 0,
-  options: S08SpendableCompletionOptions = {},
-): S08SpendableErrorClassification {
+  operation: SpendableOperationContext,
+  durationOrOptions: number | SpendableCompletionOptions = 0,
+  options: SpendableCompletionOptions = {},
+): SpendableErrorClassification {
   const durationMs =
     typeof durationOrOptions === "number"
       ? durationOrOptions
       : durationOrOptions.durationMs ?? 0;
   const completionOptions =
     typeof durationOrOptions === "number" ? options : durationOrOptions;
-  const classification = classifyS08Error(error);
+  const classification = classifySpendableError(error);
   const code =
     classification.outcome === "expected_error"
       ? classification.errorCode
       : safeTechnicalErrorCode(
           completionOptions.technicalErrorCode ?? codeFromError(error),
         );
-  const safeOptions: S08SpendableCompletionOptions = {
+  const safeOptions: SpendableCompletionOptions = {
     ...completionOptions,
     durationMs,
     errorCode: code,
@@ -1347,7 +1346,7 @@ export function reportS08UnexpectedError(
     try {
       captureServerException(
         error,
-        toS08ObservabilityContext(operation, "unexpected_error", safeOptions),
+        toSpendableObservabilityContext(operation, "unexpected_error", safeOptions),
       );
     } catch {
       // Sentry is best effort and never changes the response path.
@@ -1358,10 +1357,10 @@ export function reportS08UnexpectedError(
 }
 
 /** Measures one S08 operation without accepting SQL or a result payload. */
-export async function measureS08Query<T>(
-  operation: S08SpendableOperationContext,
+export async function measureSpendableQuery<T>(
+  operation: SpendableOperationContext,
   work: () => Promise<T> | T,
-  options: S08SpendableQueryOptions = {},
+  options: SpendableQueryOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -1378,19 +1377,19 @@ export async function measureS08Query<T>(
     throw error;
   } finally {
     const durationMs = elapsedMs(startedAt, now);
-    const thresholdMs = getS08SlowQueryThresholdMs(options.thresholdMs);
-    const queryBudgetMs = getS08QueryBudgetMs(options.queryBudgetMs);
+    const thresholdMs = getSpendableSlowQueryThresholdMs(options.thresholdMs);
+    const queryBudgetMs = getSpendableQueryBudgetMs(options.queryBudgetMs);
     const budgetExceeded = durationMs >= queryBudgetMs;
     const slowQuery = durationMs >= thresholdMs || budgetExceeded;
 
     if (slowQuery) {
       const returnedFailure = resultFailure(returnedValue);
       const classification = failed
-        ? classifyS08Error(thrownError)
+        ? classifySpendableError(thrownError)
         : returnedFailure.failed
-          ? classifyS08Error(returnedFailure.error)
+          ? classifySpendableError(returnedFailure.error)
           : undefined;
-      const safe = sanitizeS08SpendableLog({
+      const safe = sanitizeSpendableLog({
         ...operation,
         ...options,
         operation: operation.operation,
@@ -1411,7 +1410,7 @@ export async function measureS08Query<T>(
 
       if (safe) {
         try {
-          addS08SpendableBreadcrumb(safe, safe.outcome, safe);
+          addSpendableBreadcrumb(safe, safe.outcome, safe);
         } catch {
           // Best effort only.
         }
@@ -1435,19 +1434,13 @@ export async function measureS08Query<T>(
 }
 
 /** Naming aliases keep the adapter surface discoverable to T06/T07/T09. */
-export const createS08SpendableContext = createS08SpendableOperation;
-export const withS08SpendableOperation = withS08SpendableObservability;
-export const observeS08Spendable = withS08SpendableObservability;
-export const measureS08SpendableStage = measureS08Query;
-export const observeS08Query = measureS08Query;
-export const measureS08Operation = measureS08Query;
-export const measureS08SpendableQuery = measureS08Query;
-export const logS08SpendableResult = logS08SpendableOperation;
-export const captureS08UnexpectedError = reportS08UnexpectedError;
-export const createS08Operation = createS08SpendableOperation;
-export const withS08Operation = withS08SpendableObservability;
-export const logS08Operation = logS08SpendableOperation;
-export const toS08Context = toS08ObservabilityContext;
-export const sanitizeS08Log = sanitizeS08SpendableLog;
-export const classifyS08SpendableError = classifyS08Error;
-export const getS08SlowOperationThresholdMs = getS08SlowQueryThresholdMs;
+export const createSpendableContext = createSpendableOperation;
+export const withSpendableOperation = withSpendableObservability;
+export const observeSpendable = withSpendableObservability;
+export const measureSpendableStage = measureSpendableQuery;
+export const observeSpendableQuery = measureSpendableQuery;
+export const measureSpendableOperation = measureSpendableQuery;
+export const logSpendableResult = logSpendableOperation;
+export const captureSpendableUnexpectedError = reportSpendableUnexpectedError;
+export const toSpendableContext = toSpendableObservabilityContext;
+export const getSpendableSlowOperationThresholdMs = getSpendableSlowQueryThresholdMs;

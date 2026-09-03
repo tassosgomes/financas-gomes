@@ -65,7 +65,7 @@ function expectCode(run: () => unknown, code: string): void {
   }
 }
 
-describe("S06 credit-card CRUD contracts", () => {
+describe("credit-card CRUD contracts", () => {
   it("normalizes a serializable create command without trusting server fields", () => {
     const parsed = parseCreateCreditCardCommand(createCommand);
 
@@ -191,7 +191,7 @@ describe("S06 credit-card CRUD contracts", () => {
   });
 });
 
-describe("S06 credit-card pure guards", () => {
+describe("credit-card pure guards", () => {
   it("hides cross-household cards as not found and blocks archived writes", () => {
     expectCode(
       () => assertCreditCardIsActive({ card, householdId: OTHER_HOUSEHOLD_ID }),

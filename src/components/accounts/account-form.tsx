@@ -4,12 +4,12 @@ import { X } from "lucide-react";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { S02Form, S02FormField } from "@/components/ui/form";
+import { DomainForm, FormField } from "@/components/ui/form";
 import type {
   AccountReadModel,
   AccountType,
   Liquidity,
-  S02Result,
+  AccountsCategoriesResult,
   Spendability,
 } from "@/modules/accounts-categories/contracts";
 import {
@@ -34,7 +34,7 @@ export interface AccountFormProps {
   onCancel: () => void;
   onSubmit: (
     values: AccountFormValues,
-  ) => Promise<S02Result<AccountReadModel>> | S02Result<AccountReadModel>;
+  ) => Promise<AccountsCategoriesResult<AccountReadModel>> | AccountsCategoriesResult<AccountReadModel>;
 }
 
 const ACCOUNT_TYPE_OPTIONS: ReadonlyArray<{
@@ -110,7 +110,7 @@ export function AccountForm({ account, onCancel, onSubmit }: AccountFormProps) {
         </Button>
       </div>
 
-      <S02Form<AccountFormValues>
+      <DomainForm<AccountFormValues>
         className="mt-6 space-y-5"
         defaultValues={{
           name: account?.name ?? "",
@@ -127,7 +127,7 @@ export function AccountForm({ account, onCancel, onSubmit }: AccountFormProps) {
       >
         {(form) => (
           <>
-            <S02FormField form={form} label="Nome da conta" name="name">
+            <FormField form={form} label="Nome da conta" name="name">
               {(field) => (
                 <input
                   aria-describedby="name-error"
@@ -138,10 +138,10 @@ export function AccountForm({ account, onCancel, onSubmit }: AccountFormProps) {
                   {...field}
                 />
               )}
-            </S02FormField>
+            </FormField>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <S02FormField
+              <FormField
                 description={isEditing ? "O tipo é definido no cadastro e não pode ser alterado." : undefined}
                 form={form}
                 label="Tipo"
@@ -165,9 +165,9 @@ export function AccountForm({ account, onCancel, onSubmit }: AccountFormProps) {
                     ))}
                   </select>
                 )}
-              </S02FormField>
+              </FormField>
 
-              <S02FormField
+              <FormField
                 description="Como os próximos fluxos devem considerar este recurso."
                 form={form}
                 label="Disponibilidade"
@@ -190,9 +190,9 @@ export function AccountForm({ account, onCancel, onSubmit }: AccountFormProps) {
                     ))}
                   </select>
                 )}
-              </S02FormField>
+              </FormField>
 
-              <S02FormField
+              <FormField
                 description="Indica a facilidade de uso do recurso."
                 form={form}
                 label="Liquidez"
@@ -215,10 +215,10 @@ export function AccountForm({ account, onCancel, onSubmit }: AccountFormProps) {
                     ))}
                   </select>
                 )}
-              </S02FormField>
+              </FormField>
             </div>
 
-            <S02FormField
+            <FormField
               description="A conta poderá compor o patrimônio quando esse cálculo existir."
               form={form}
               label="Patrimônio"
@@ -239,10 +239,10 @@ export function AccountForm({ account, onCancel, onSubmit }: AccountFormProps) {
                   <span>Incluir esta conta no patrimônio</span>
                 </label>
               )}
-            </S02FormField>
+            </FormField>
           </>
         )}
-      </S02Form>
+      </DomainForm>
     </section>
   );
 }

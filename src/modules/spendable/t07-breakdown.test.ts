@@ -48,7 +48,7 @@ function timeline(items: readonly ForecastItem[]) {
   );
 }
 
-describe("S08 T07 breakdown/origin invariants", () => {
+describe("T07 breakdown/origin invariants", () => {
   it("keeps all arithmetic while exposing a bounded causal page", () => {
     const normalized = timeline([
       item("cause-c", "10"),

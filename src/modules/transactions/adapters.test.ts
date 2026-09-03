@@ -8,7 +8,7 @@ import {
 } from "./adapters";
 import type {
   ManualTransactionReadModel,
-  S03Result,
+  TransactionResult,
 } from "./contracts";
 
 const context = {
@@ -48,7 +48,7 @@ const value: ManualTransactionReadModel = {
 };
 
 function dependencies(
-  result: S03Result<ManualTransactionReadModel> = { ok: true, value },
+  result: TransactionResult<ManualTransactionReadModel> = { ok: true, value },
 ): TransactionCreateActionDependencies & {
   resolveContext: ReturnType<typeof vi.fn>;
   revalidateTransactions: ReturnType<typeof vi.fn>;

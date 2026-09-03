@@ -103,7 +103,6 @@ export type SpendableForecastItem = NormalizedSpendableForecastItem;
 export type DomainForecastItem = NormalizedSpendableForecastItem;
 export type NormalizedForecastItem = NormalizedSpendableForecastItem;
 export type InternalForecastItem = NormalizedSpendableForecastItem;
-export type S07ForecastItem = ForecastItem;
 
 export type SpendableBalanceComponentKind =
   | "OPENING"

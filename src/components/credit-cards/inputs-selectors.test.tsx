@@ -10,7 +10,7 @@ import {
 const activeId = "018f47b7-6c3a-7abc-8def-1234567890ab";
 const archivedId = "018f47b7-6c3a-7abc-8def-1234567890ac";
 
-describe("S06 reusable input and selector islands", () => {
+describe("reusable input and selector islands", () => {
   it("associates billing fields with labels/errors and requests focus on error", () => {
     const html = renderToStaticMarkup(
       <>

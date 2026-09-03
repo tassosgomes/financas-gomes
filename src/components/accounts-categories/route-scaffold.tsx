@@ -1,7 +1,7 @@
 import { EmptyState } from "@/components/ui/async-state";
 import { PageHeader } from "@/components/ui/page-header";
 
-export interface S02RouteScaffoldProps {
+export interface FeatureRouteScaffoldProps {
   eyebrow: string;
   title: string;
   description: string;
@@ -15,14 +15,14 @@ export interface S02RouteScaffoldProps {
  * It keeps the authenticated route and shared states stable for the real
  * collection components that will replace the empty state.
  */
-export function S02RouteScaffold({
+export function FeatureRouteScaffold({
   eyebrow,
   title,
   description,
   emptyTitle,
   emptyDescription,
   testId,
-}: S02RouteScaffoldProps) {
+}: FeatureRouteScaffoldProps) {
   return (
     <section className="space-y-6" data-testid={testId}>
       <PageHeader eyebrow={eyebrow} title={title} description={description} />

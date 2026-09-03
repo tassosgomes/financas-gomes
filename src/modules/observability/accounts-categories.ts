@@ -22,13 +22,13 @@ export function createObservabilityRequestId(): string | undefined {
   }
 }
 
-export interface S02CrudOperation extends CrudObservabilityContext {
+export interface CrudOperation extends CrudObservabilityContext {
   operation: ObservabilityOperation;
   entityType: ObservabilityEntityType;
 }
 
 function contextFor(
-  operation: S02CrudOperation,
+  operation: CrudOperation,
   durationMs: number,
   financialContext?: FinancialContext,
 ): CrudObservabilityContext {
@@ -43,8 +43,8 @@ function contextFor(
 }
 
 /** Logs a completed CRUD operation without logging its result or input. */
-export function logS02CrudOperation(
-  operation: S02CrudOperation,
+export function logCrudOperation(
+  operation: CrudOperation,
   outcome: ObservabilityOutcome,
   durationMs: number,
   financialContext?: FinancialContext,
@@ -65,9 +65,9 @@ export function logS02CrudOperation(
  * log line. The original exception is retained for its technical stack; the
  * Sentry beforeSend allow-list removes its message, request and payload data.
  */
-export function reportS02UnexpectedError(
+export function reportCrudUnexpectedError(
   error: unknown,
-  operation: S02CrudOperation,
+  operation: CrudOperation,
   durationMs: number,
   financialContext?: FinancialContext,
 ): void {

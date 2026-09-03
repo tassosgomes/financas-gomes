@@ -13,11 +13,11 @@ export * from "./server-config";
 export * from "./client";
 export * from "./server";
 export * from "./logger";
-export * from "./s02";
-export * from "./s03";
-export * from "./s04";
-export * from "./s07";
-export * from "./s08";
+export * from "./accounts-categories";
+export * from "./transactions";
+export * from "./csv-import";
+export * from "./forecast";
+export * from "./spendable";
 
 import { getClientSentryConfig } from "./client-config";
 import {

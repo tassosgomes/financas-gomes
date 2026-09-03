@@ -12,7 +12,7 @@ import {
 } from "@/modules/transactions/routes";
 import type {
   ManualTransactionReadModel,
-  S03Result,
+  TransactionResult,
 } from "@/modules/transactions/contracts";
 import {
   getReviewableTransactionDetailAction as getReviewableTransactionDetail,
@@ -48,77 +48,77 @@ function productionMaintenanceHandlers() {
 /** Receives only the serializable CreateExpense command. */
 export async function createExpenseAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return productionHandlers().createExpense(input);
 }
 
 /** Receives only the serializable CreateIncome command. */
 export async function createIncomeAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return productionHandlers().createIncome(input);
 }
 
 /** Short aliases preserve the naming used by the use-case port. */
 export async function createExpense(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createExpenseAction(input);
 }
 
 export async function createIncome(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createIncomeAction(input);
 }
 
 export async function createExpenseServerAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createExpenseAction(input);
 }
 
 export async function createIncomeServerAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return createIncomeAction(input);
 }
 
 /** Receives only the serializable T07 metadata-update command. */
 export async function updateManualTransactionAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return productionMaintenanceHandlers().updateManualTransaction(input);
 }
 
 /** Receives only the serializable T07 cancellation command. */
 export async function cancelManualTransactionAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return productionMaintenanceHandlers().cancelManualTransaction(input);
 }
 
 export async function updateManualTransaction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return updateManualTransactionAction(input);
 }
 
 export async function cancelManualTransaction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return cancelManualTransactionAction(input);
 }
 
 export async function updateManualTransactionServerAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return updateManualTransactionAction(input);
 }
 
 export async function cancelManualTransactionServerAction(
   input: unknown,
-): Promise<S03Result<ManualTransactionReadModel>> {
+): Promise<TransactionResult<ManualTransactionReadModel>> {
   return cancelManualTransactionAction(input);
 }
 

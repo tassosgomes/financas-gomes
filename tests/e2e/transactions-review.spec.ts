@@ -307,7 +307,7 @@ async function openReviewList(
   );
 }
 
-test.describe("S05 revisão de transações", () => {
+test.describe("revisão de transações", () => {
   test("importa, revisa, preserva linhagem, mantém filtros e funciona no mobile", async ({
     page,
   }) => {

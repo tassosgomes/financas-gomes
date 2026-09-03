@@ -24,7 +24,7 @@ function expectBillingError(run: () => unknown, code: string): void {
   }
 }
 
-describe("S06 billing cycle domain", () => {
+describe("billing cycle domain", () => {
   it("classifies dates before, on and after closing without timezone input", () => {
     expect(
       resolveBillingCycle({ occurredOn: "2026-08-09", rule }),

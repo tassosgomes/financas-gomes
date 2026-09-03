@@ -14,7 +14,7 @@ import type { ManualTransactionFormValues } from "@/modules/transactions/form-co
 import type {
   ManualTransactionKind,
   ManualTransactionReadModel,
-  S03Result,
+  TransactionResult,
 } from "@/modules/transactions/contracts";
 import {
   TRANSACTIONS_ROUTE,
@@ -66,7 +66,7 @@ export function TransactionCreateScreen({
 
   async function handleSubmit(
     values: ManualTransactionFormValues,
-  ): Promise<S03Result<unknown>> {
+  ): Promise<TransactionResult<unknown>> {
     setCreated(null);
     const command = commandForTransactionAttempt(values, attempt);
     const result =

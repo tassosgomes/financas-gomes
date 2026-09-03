@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { S03DomainError } from "./contracts";
+import { TransactionDomainError } from "./contracts";
 import {
   parseListAccountMovementsQuery,
   parseListManualTransactionsQuery,
@@ -60,11 +60,11 @@ describe("transaction read query contracts", () => {
         from: "2026-09-01",
         to: "2026-08-31",
       }),
-    ).toThrowError(S03DomainError);
+    ).toThrowError(TransactionDomainError);
 
     expect(() =>
       parseListManualTransactionsQuery({ accountId: "not-a-uuid" }),
-    ).toThrowError(S03DomainError);
+    ).toThrowError(TransactionDomainError);
   });
 });
 

@@ -1,19 +1,18 @@
-/** Stable, database-independent S02 expected errors. */
+/** Stable, database-independent expected errors for accounts and categories. */
 export {
   AccountsCategoriesDomainError,
   DomainValidationError,
-  S02DomainError,
-  S02_ERROR_CODES,
-  S02_ERROR_MESSAGES,
+  ACCOUNTS_CATEGORIES_ERROR_CODES,
+  ACCOUNTS_CATEGORIES_ERROR_MESSAGES,
   failure,
   errorResult,
   ok,
   success,
 } from "./contracts";
 export type {
-  S02Error,
-  S02ErrorCode,
-  S02ErrorField,
-  S02Result,
+  AccountsCategoriesError,
+  AccountsCategoriesErrorCode,
+  AccountsCategoriesErrorField,
+  AccountsCategoriesResult,
 } from "./contracts";
-export { toS02DomainError, toS02Error } from "./validation";
+export { toAccountsCategoriesDomainError, toAccountsCategoriesError } from "./validation";

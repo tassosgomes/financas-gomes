@@ -10,17 +10,17 @@ import {
   captureServerException,
 } from "@/modules/observability/server";
 import {
-  S04_IMPORT_EXPECTED_ERROR_CODES,
-  createS04ImportOperation,
-  expectedS04ErrorCode,
-  isExpectedS04Error,
-  logS04ImportOperation,
-  reportS04UnexpectedError,
-  sanitizeS04ImportCounts,
-  sanitizeS04ImportLog,
-  toS04ObservabilityContext,
-  withS04ImportObservability,
-} from "./s04";
+  CSV_IMPORT_EXPECTED_ERROR_CODES,
+  createCsvImportOperation,
+  expectedCsvImportErrorCode,
+  isExpectedCsvImportError,
+  logCsvImportOperation,
+  reportCsvImportUnexpectedError,
+  sanitizeCsvImportObservabilityCounts,
+  sanitizeCsvImportImportLog,
+  toCsvImportObservabilityContext,
+  withCsvImportObservability,
+} from "./csv-import";
 
 const previewId = "018f4f26-7c1b-7abc-8a7f-56d2b1a89f0e";
 const importId = "018f4f26-7c1b-7abc-8a7f-56d2b1a89f0f";
@@ -32,7 +32,7 @@ const counts = {
   imported: 2,
 };
 
-describe("S04 import observability", () => {
+describe("import observability", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.mocked(addBreadcrumbSafely).mockClear();
@@ -40,7 +40,7 @@ describe("S04 import observability", () => {
   });
 
   it("normalizes stages and keeps only technical context", () => {
-    const operation = createS04ImportOperation("confirmation", {
+    const operation = createCsvImportOperation("confirmation", {
       requestId: "request-opaque",
       previewId,
       importId,
@@ -72,12 +72,12 @@ describe("S04 import observability", () => {
 
   it("emits aggregate logs and breadcrumbs without financial payload", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS04ImportOperation("preview", {
+    const operation = createCsvImportOperation("preview", {
       requestId: "request-opaque",
       previewId,
     });
 
-    logS04ImportOperation(operation, "success", 42.4, counts);
+    logCsvImportOperation(operation, "success", 42.4, counts);
 
     expect(info).toHaveBeenCalledOnce();
     const serialized = String(info.mock.calls[0]?.[0]);
@@ -114,13 +114,13 @@ describe("S04 import observability", () => {
       new Error("insert failed amount=123456 description=private"),
       { code: "IMPORT_PERSISTENCE_FAILED" },
     );
-    const operation = createS04ImportOperation("confirmation", {
+    const operation = createCsvImportOperation("confirmation", {
       requestId: "request-opaque",
       previewId,
       importId,
     });
 
-    reportS04UnexpectedError(error, operation, 17.8, counts);
+    reportCsvImportUnexpectedError(error, operation, 17.8, counts);
 
     expect(captureServerException).toHaveBeenCalledWith(
       error,
@@ -145,12 +145,12 @@ describe("S04 import observability", () => {
 
   it("classifies all ADR validation errors as expected and never captures them", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS04ImportOperation("parse");
+    const operation = createCsvImportOperation("parse");
 
-    for (const code of S04_IMPORT_EXPECTED_ERROR_CODES) {
-      expect(isExpectedS04Error({ code })).toBe(true);
-      expect(expectedS04ErrorCode({ code })).toBe(code);
-      reportS04UnexpectedError(
+    for (const code of CSV_IMPORT_EXPECTED_ERROR_CODES) {
+      expect(isExpectedCsvImportError({ code })).toBe(true);
+      expect(expectedCsvImportErrorCode({ code })).toBe(code);
+      reportCsvImportUnexpectedError(
         { code, message: "raw amount=123456 description=private" },
         operation,
         5,
@@ -159,14 +159,14 @@ describe("S04 import observability", () => {
     }
 
     expect(captureServerException).not.toHaveBeenCalled();
-    expect(info).toHaveBeenCalledTimes(S04_IMPORT_EXPECTED_ERROR_CODES.length);
+    expect(info).toHaveBeenCalledTimes(CSV_IMPORT_EXPECTED_ERROR_CODES.length);
     const serialized = info.mock.calls.map(([value]) => String(value)).join("\n");
     expect(serialized).not.toContain("123456");
     expect(serialized).not.toContain("private");
   });
 
   it("does not forward request/body-like keys into Sentry context", () => {
-    const operation = createS04ImportOperation("upload", {
+    const operation = createCsvImportOperation("upload", {
       requestId: "request-opaque",
       accountId: "account-opaque",
       previewToken: "raw-token",
@@ -174,7 +174,7 @@ describe("S04 import observability", () => {
       csv: "occurred_on,description,amount_cents",
       body: { description: "private", amount: 1234 },
     });
-    const context = toS04ObservabilityContext(operation, "unexpected_error", {
+    const context = toCsvImportObservabilityContext(operation, "unexpected_error", {
       ...counts,
       payload: { description: "private", amount: "1234" },
     } as never);
@@ -192,7 +192,7 @@ describe("S04 import observability", () => {
   it("normalizes counters and logs expected errors through the wrapper", async () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
     expect(
-      sanitizeS04ImportCounts({
+      sanitizeCsvImportObservabilityCounts({
         processedRows: 3.4,
         valid_rows: 2,
         invalid: -1,
@@ -208,10 +208,10 @@ describe("S04 import observability", () => {
       imported: 2,
     });
 
-    const operation = createS04ImportOperation("parse");
+    const operation = createCsvImportOperation("parse");
     const expectedError = { code: "CSV_INVALID_UTF8" };
     await expect(
-      withS04ImportObservability(operation, () => {
+      withCsvImportObservability(operation, () => {
         throw expectedError;
       }, { counts }),
     ).rejects.toBe(expectedError);
@@ -223,7 +223,7 @@ describe("S04 import observability", () => {
 
   it("rejects an unrecognized stage/operation rather than logging arbitrary input", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const safe = sanitizeS04ImportLog({
+    const safe = sanitizeCsvImportImportLog({
       stage: "preview",
       operation: "delete" as never,
       outcome: "success",

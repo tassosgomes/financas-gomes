@@ -7,7 +7,7 @@ import type { FinancialContext } from "@/modules/households/contracts";
  * removed safely from a shared disposable PostgreSQL database later. The
  * database uses ARCHIVED as the inactive state for accounts/categories.
  */
-export const S03_FIXTURES = {
+export const TRANSACTION_FIXTURES = {
   users: {
     a: {
       id: "00000000-0000-7000-8000-000000131101",
@@ -86,24 +86,24 @@ export const S03_FIXTURES = {
   },
 } as const;
 
-export const S03_CONTEXTS = {
+export const TRANSACTION_CONTEXTS = {
   a: {
-    userId: S03_FIXTURES.users.a.id,
-    householdId: S03_FIXTURES.households.a,
+    userId: TRANSACTION_FIXTURES.users.a.id,
+    householdId: TRANSACTION_FIXTURES.households.a,
   },
   b: {
-    userId: S03_FIXTURES.users.b.id,
-    householdId: S03_FIXTURES.households.b,
+    userId: TRANSACTION_FIXTURES.users.b.id,
+    householdId: TRANSACTION_FIXTURES.households.b,
   },
 } as const satisfies Record<"a" | "b", FinancialContext>;
 
-export const S03_HOUSEHOLD_IDS = [
-  S03_FIXTURES.households.a,
-  S03_FIXTURES.households.b,
+export const TRANSACTION_HOUSEHOLD_IDS = [
+  TRANSACTION_FIXTURES.households.a,
+  TRANSACTION_FIXTURES.households.b,
 ] as const;
 
-export const S03_USER_IDS = [
-  S03_FIXTURES.users.a.id,
-  S03_FIXTURES.users.b.id,
+export const TRANSACTION_USER_IDS = [
+  TRANSACTION_FIXTURES.users.a.id,
+  TRANSACTION_FIXTURES.users.b.id,
 ] as const;
 

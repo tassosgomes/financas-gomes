@@ -21,8 +21,8 @@ import type {
   AccountBalanceReadModel,
   ManualTransactionDetailReadModel,
   ManualTransactionReadModel,
-  S03Error,
-  S03Result,
+  TransactionError,
+  TransactionResult,
 } from "@/modules/transactions/contracts";
 import {
   formatDetailCents,
@@ -70,7 +70,7 @@ export type TransactionDetailScreenProps =
   | LegacyTransactionDetailScreenProps
   | TransactionReviewDetailScreenProps;
 
-function safeUnexpectedError(): S03Error {
+function safeUnexpectedError(): TransactionError {
   return {
     code: "INVALID_COMMAND",
     message: "Não foi possível concluir a operação. Tente novamente.",
@@ -551,7 +551,7 @@ function LegacyTransactionDetailScreen({
   const router = useRouter();
   const [transaction, setTransaction] = useState(initialTransaction);
   const [balance, setBalance] = useState(initialBalance);
-  const [operationError, setOperationError] = useState<S03Error | null>(null);
+  const [operationError, setOperationError] = useState<TransactionError | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -563,7 +563,7 @@ function LegacyTransactionDetailScreen({
 
   async function handleUpdate(
     values: ManualTransactionFormValues,
-  ): Promise<S03Result<unknown>> {
+  ): Promise<TransactionResult<unknown>> {
     setOperationError(null);
     setSuccessMessage(null);
     setIsUpdating(true);

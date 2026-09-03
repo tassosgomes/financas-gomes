@@ -6,10 +6,10 @@ import { accountsUseCases } from "@/modules/accounts/use-cases";
 import { categoryUseCasePort } from "@/modules/categories/use-cases";
 import {
   createObservabilityRequestId,
-  logS02CrudOperation,
-  reportS02UnexpectedError,
-  type S02CrudOperation,
-} from "@/modules/observability/s02";
+  logCrudOperation,
+  reportCrudUnexpectedError,
+  type CrudOperation,
+} from "@/modules/observability/accounts-categories";
 
 import {
   archiveAccountCommandSchema,
@@ -18,14 +18,14 @@ import {
   createCategoryCommandSchema,
   listAccountsQuerySchema,
   listCategoriesQuerySchema,
-  toS02DomainError,
+  toAccountsCategoriesDomainError,
   updateAccountCommandSchema,
   updateCategoryCommandSchema,
 } from "./validation";
 import {
   failure,
-  S02_ERROR_CODES,
-  S02_ERROR_MESSAGES,
+  ACCOUNTS_CATEGORIES_ERROR_CODES,
+  ACCOUNTS_CATEGORIES_ERROR_MESSAGES,
   type AccountReadModel,
   type ArchiveAccountCommand,
   type ArchiveCategoryCommand,
@@ -36,8 +36,8 @@ import {
   type ListAccountsReadModel,
   type ListCategoriesQuery,
   type ListCategoriesReadModel,
-  type S02Error,
-  type S02Result,
+  type AccountsCategoriesError,
+  type AccountsCategoriesResult,
   type UpdateAccountCommand,
   type UpdateCategoryCommand,
 } from "./contracts";
@@ -51,19 +51,19 @@ export interface AccountsUseCasePort {
   create(
     context: FinancialContext,
     command: CreateAccountCommand,
-  ): Promise<S02Result<AccountReadModel>> | S02Result<AccountReadModel>;
+  ): Promise<AccountsCategoriesResult<AccountReadModel>> | AccountsCategoriesResult<AccountReadModel>;
   list(
     context: FinancialContext,
     query: ListAccountsQuery,
-  ): Promise<S02Result<ListAccountsReadModel>> | S02Result<ListAccountsReadModel>;
+  ): Promise<AccountsCategoriesResult<ListAccountsReadModel>> | AccountsCategoriesResult<ListAccountsReadModel>;
   update(
     context: FinancialContext,
     command: UpdateAccountCommand,
-  ): Promise<S02Result<AccountReadModel>> | S02Result<AccountReadModel>;
+  ): Promise<AccountsCategoriesResult<AccountReadModel>> | AccountsCategoriesResult<AccountReadModel>;
   archive(
     context: FinancialContext,
     command: ArchiveAccountCommand,
-  ): Promise<S02Result<AccountReadModel>> | S02Result<AccountReadModel>;
+  ): Promise<AccountsCategoriesResult<AccountReadModel>> | AccountsCategoriesResult<AccountReadModel>;
 }
 
 /** The category counterpart of {@link AccountsUseCasePort}. */
@@ -71,29 +71,29 @@ export interface CategoriesUseCasePort {
   create(
     context: FinancialContext,
     command: CreateCategoryCommand,
-  ): Promise<S02Result<CategoryReadModel>> | S02Result<CategoryReadModel>;
+  ): Promise<AccountsCategoriesResult<CategoryReadModel>> | AccountsCategoriesResult<CategoryReadModel>;
   list(
     context: FinancialContext,
     query: ListCategoriesQuery,
-  ): Promise<S02Result<ListCategoriesReadModel>> | S02Result<ListCategoriesReadModel>;
+  ): Promise<AccountsCategoriesResult<ListCategoriesReadModel>> | AccountsCategoriesResult<ListCategoriesReadModel>;
   update(
     context: FinancialContext,
     command: UpdateCategoryCommand,
-  ): Promise<S02Result<CategoryReadModel>> | S02Result<CategoryReadModel>;
+  ): Promise<AccountsCategoriesResult<CategoryReadModel>> | AccountsCategoriesResult<CategoryReadModel>;
   archive(
     context: FinancialContext,
     command: ArchiveCategoryCommand,
-  ): Promise<S02Result<CategoryReadModel>> | S02Result<CategoryReadModel>;
+  ): Promise<AccountsCategoriesResult<CategoryReadModel>> | AccountsCategoriesResult<CategoryReadModel>;
 }
 
-export interface S02UseCasePorts {
+export interface AccountsCategoriesUseCasePorts {
   accounts: AccountsUseCasePort;
   categories: CategoriesUseCasePort;
 }
 
-export interface S02ActionDependencies {
+export interface AccountsCategoriesActionDependencies {
   resolveContext: () => Promise<FinancialContext>;
-  ports: S02UseCasePorts;
+  ports: AccountsCategoriesUseCasePorts;
 }
 
 type Schema<T> = {
@@ -102,7 +102,7 @@ type Schema<T> = {
     | { success: false; error: unknown };
 };
 
-function isResult<T>(value: unknown): value is S02Result<T> {
+function isResult<T>(value: unknown): value is AccountsCategoriesResult<T> {
   if (
     typeof value !== "object" ||
     value === null ||
@@ -123,12 +123,12 @@ function isResult<T>(value: unknown): value is S02Result<T> {
       : undefined;
   return (
     typeof code === "string" &&
-    S02_ERROR_CODES.includes(code as (typeof S02_ERROR_CODES)[number])
+    ACCOUNTS_CATEGORIES_ERROR_CODES.includes(code as (typeof ACCOUNTS_CATEGORIES_ERROR_CODES)[number])
   );
 }
 
-type CrudActionOperation = S02CrudOperation["operation"];
-type CrudActionEntity = S02CrudOperation["entityType"];
+type CrudActionOperation = CrudOperation["operation"];
+type CrudActionEntity = CrudOperation["entityType"];
 
 interface CrudActionDescriptor {
   operation: CrudActionOperation;
@@ -210,7 +210,7 @@ function isExpectedError(error: unknown): boolean {
   const code = errorCode(error);
   return (
     (typeof code === "string" &&
-      S02_ERROR_CODES.includes(code as (typeof S02_ERROR_CODES)[number])) ||
+      ACCOUNTS_CATEGORIES_ERROR_CODES.includes(code as (typeof ACCOUNTS_CATEGORIES_ERROR_CODES)[number])) ||
     code === "UNAUTHENTICATED" ||
     code === "HOUSEHOLD_MEMBERSHIP_REQUIRED" ||
     code === "HOUSEHOLD_SELECTION_REQUIRED" ||
@@ -223,11 +223,11 @@ function isExpectedError(error: unknown): boolean {
  * crosses the React/Next boundary; database messages and context internals
  * are never returned to the browser.
  */
-export function toS02ActionError(error: unknown): S02Error {
+export function toAccountsCategoriesActionError(error: unknown): AccountsCategoriesError {
   if (error instanceof FinancialContextError) {
     return {
       code: "UNAUTHENTICATED",
-      message: S02_ERROR_MESSAGES.UNAUTHENTICATED,
+      message: ACCOUNTS_CATEGORIES_ERROR_MESSAGES.UNAUTHENTICATED,
     };
   }
 
@@ -240,34 +240,34 @@ export function toS02ActionError(error: unknown): S02Error {
   ) {
     return {
       code: "UNAUTHENTICATED",
-      message: S02_ERROR_MESSAGES.UNAUTHENTICATED,
+      message: ACCOUNTS_CATEGORIES_ERROR_MESSAGES.UNAUTHENTICATED,
     };
   }
 
-  return toS02DomainError(error).toError();
+  return toAccountsCategoriesDomainError(error).toError();
 }
 
-function parseInput<T>(schema: Schema<T>, input: unknown): S02Result<T> {
+function parseInput<T>(schema: Schema<T>, input: unknown): AccountsCategoriesResult<T> {
   const parsed = schema.safeParse(input);
   if (parsed.success) {
     return { ok: true, value: parsed.data };
   }
 
-  return { ok: false, error: toS02ActionError(parsed.error) };
+  return { ok: false, error: toAccountsCategoriesActionError(parsed.error) };
 }
 
 async function runAction<TInput, TResult>(
   input: unknown,
   schema: Schema<TInput>,
-  dependencies: S02ActionDependencies,
+  dependencies: AccountsCategoriesActionDependencies,
   descriptor: CrudActionDescriptor,
   operation: (context: FinancialContext, input: TInput) =>
-    | Promise<S02Result<TResult>>
-    | S02Result<TResult>,
-): Promise<S02Result<TResult>> {
+    | Promise<AccountsCategoriesResult<TResult>>
+    | AccountsCategoriesResult<TResult>,
+): Promise<AccountsCategoriesResult<TResult>> {
   const startedAt = monotonicNow();
   let unexpectedReported = false;
-  const telemetry: S02CrudOperation = {
+  const telemetry: CrudOperation = {
     ...descriptor,
     requestId: createObservabilityRequestId(),
     entityId: resourceIdForAction(input, descriptor.entityType),
@@ -280,14 +280,14 @@ async function runAction<TInput, TResult>(
       return;
     }
     unexpectedReported = true;
-    reportS02UnexpectedError(
+    reportCrudUnexpectedError(
       error,
       telemetry,
       elapsedMs(startedAt),
       financialContext,
     );
   };
-  let parsed: S02Result<TInput>;
+  let parsed: AccountsCategoriesResult<TInput>;
   try {
     parsed = parseInput(schema, input);
   } catch (error) {
@@ -295,7 +295,7 @@ async function runAction<TInput, TResult>(
     throw error;
   }
   if (!parsed.ok) {
-    logS02CrudOperation(
+    logCrudOperation(
       telemetry,
       "expected_error",
       elapsedMs(startedAt),
@@ -310,8 +310,8 @@ async function runAction<TInput, TResult>(
     context = await dependencies.resolveContext();
   } catch (error) {
     if (isExpectedError(error)) {
-      const safeError = toS02ActionError(error);
-      logS02CrudOperation(
+      const safeError = toAccountsCategoriesActionError(error);
+      logCrudOperation(
         telemetry,
         "expected_error",
         elapsedMs(startedAt),
@@ -329,13 +329,13 @@ async function runAction<TInput, TResult>(
     const result = await operation(context, parsed.value);
     if (isResult<TResult>(result)) {
       if (result.ok) {
-        const completedTelemetry: S02CrudOperation = {
+        const completedTelemetry: CrudOperation = {
           ...telemetry,
           entityId:
             telemetry.entityId ??
             resourceIdFromResult(result.value),
         };
-        logS02CrudOperation(
+        logCrudOperation(
           completedTelemetry,
           "success",
           elapsedMs(startedAt),
@@ -344,8 +344,8 @@ async function runAction<TInput, TResult>(
         return { ok: true, value: result.value };
       }
 
-      const safeError = toS02ActionError(result.error);
-      logS02CrudOperation(
+      const safeError = toAccountsCategoriesActionError(result.error);
+      logCrudOperation(
         telemetry,
         "expected_error",
         elapsedMs(startedAt),
@@ -360,8 +360,8 @@ async function runAction<TInput, TResult>(
     throw invalidResultError;
   } catch (error) {
     if (isExpectedError(error)) {
-      const safeError = toS02ActionError(error);
-      logS02CrudOperation(
+      const safeError = toAccountsCategoriesActionError(error);
+      logCrudOperation(
         telemetry,
         "expected_error",
         elapsedMs(startedAt),
@@ -376,15 +376,15 @@ async function runAction<TInput, TResult>(
   }
 }
 
-export interface S02ActionHandlers {
-  createAccount(input: unknown): Promise<S02Result<AccountReadModel>>;
-  listAccounts(input?: unknown): Promise<S02Result<ListAccountsReadModel>>;
-  updateAccount(input: unknown): Promise<S02Result<AccountReadModel>>;
-  archiveAccount(input: unknown): Promise<S02Result<AccountReadModel>>;
-  createCategory(input: unknown): Promise<S02Result<CategoryReadModel>>;
-  listCategories(input?: unknown): Promise<S02Result<ListCategoriesReadModel>>;
-  updateCategory(input: unknown): Promise<S02Result<CategoryReadModel>>;
-  archiveCategory(input: unknown): Promise<S02Result<CategoryReadModel>>;
+export interface AccountsCategoriesActionHandlers {
+  createAccount(input: unknown): Promise<AccountsCategoriesResult<AccountReadModel>>;
+  listAccounts(input?: unknown): Promise<AccountsCategoriesResult<ListAccountsReadModel>>;
+  updateAccount(input: unknown): Promise<AccountsCategoriesResult<AccountReadModel>>;
+  archiveAccount(input: unknown): Promise<AccountsCategoriesResult<AccountReadModel>>;
+  createCategory(input: unknown): Promise<AccountsCategoriesResult<CategoryReadModel>>;
+  listCategories(input?: unknown): Promise<AccountsCategoriesResult<ListCategoriesReadModel>>;
+  updateCategory(input: unknown): Promise<AccountsCategoriesResult<CategoryReadModel>>;
+  archiveCategory(input: unknown): Promise<AccountsCategoriesResult<CategoryReadModel>>;
 }
 
 /**
@@ -392,9 +392,9 @@ export interface S02ActionHandlers {
  * Schemas are applied before context resolution, so malformed input cannot
  * reach authentication or persistence.
  */
-export function createS02ActionHandlers(
-  dependencies: S02ActionDependencies,
-): S02ActionHandlers {
+export function createAccountsCategoriesActionHandlers(
+  dependencies: AccountsCategoriesActionDependencies,
+): AccountsCategoriesActionHandlers {
   return {
     createAccount: (input) =>
       runAction(
@@ -619,7 +619,7 @@ function createMockCategoryPort(): CategoriesUseCasePort {
   };
 }
 
-export function createMockS02UseCasePorts(): S02UseCasePorts {
+export function createMockAccountsCategoriesUseCasePorts(): AccountsCategoriesUseCasePorts {
   return {
     accounts: createMockAccountPort(),
     categories: createMockCategoryPort(),
@@ -630,25 +630,25 @@ export function createMockS02UseCasePorts(): S02UseCasePorts {
  * T05/T06 are the production composition. Their ports resolve the database
  * lazily, so importing this module does not establish a connection during
  * route generation. Tests and early UI scaffolding can still replace them
- * with `configureS02UseCasePorts(createMockS02UseCasePorts())`.
+ * with `configureAccountsCategoriesUseCasePorts(createMockAccountsCategoriesUseCasePorts())`.
  */
-let configuredPorts: S02UseCasePorts = {
+let configuredPorts: AccountsCategoriesUseCasePorts = {
   accounts: accountsUseCases,
   categories: categoryUseCasePort,
 };
 
 /** Installs T05/T06 ports at composition time; never called by the browser. */
-export function configureS02UseCasePorts(ports: S02UseCasePorts): void {
+export function configureAccountsCategoriesUseCasePorts(ports: AccountsCategoriesUseCasePorts): void {
   configuredPorts = ports;
 }
 
-export function getS02UseCasePorts(): S02UseCasePorts {
+export function getAccountsCategoriesUseCasePorts(): AccountsCategoriesUseCasePorts {
   return configuredPorts;
 }
 
-export function getS02ActionHandlers(): S02ActionHandlers {
-  return createS02ActionHandlers({
+export function getAccountsCategoriesActionHandlers(): AccountsCategoriesActionHandlers {
+  return createAccountsCategoriesActionHandlers({
     resolveContext: () => requireFinancialContext(),
-    ports: getS02UseCasePorts(),
+    ports: getAccountsCategoriesUseCasePorts(),
   });
 }

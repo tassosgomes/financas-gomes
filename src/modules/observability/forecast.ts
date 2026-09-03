@@ -3,7 +3,7 @@ import { FinancialContextError } from "@/modules/households/contracts";
 import {
   FORECAST_ERROR_CODES,
   FORECAST_SCENARIOS,
-  FORECAST_SOURCE_KINDS,
+  FORECAST_SOURCE_KINDS as DOMAIN_FORECAST_SOURCE_KINDS,
   type ForecastScenario,
 } from "@/modules/forecast/contracts";
 
@@ -14,31 +14,31 @@ import { addBreadcrumbSafely, captureServerException } from "./server";
  * Observable stages of the S07 pipeline.  A stage is deliberately broader
  * than a source/reference identifier so it remains useful for aggregation.
  */
-export const S07_FORECAST_STAGES = [
+export const FORECAST_STAGES = [
   "source",
   "builder",
   "engine",
   "query",
 ] as const;
 
-export type S07ForecastStage = (typeof S07_FORECAST_STAGES)[number];
+export type ForecastStage = (typeof FORECAST_STAGES)[number];
 
 /**
  * Code-owned operation names.  They are the only names that can reach an
  * event/use-case field; callers cannot turn a query or label into a name.
  */
-export const S07_FORECAST_OPERATIONS = [
+export const FORECAST_OPERATIONS = [
   "forecast.source.load",
   "forecast.timeline.build",
   "forecast.engine.calculate",
   "forecast.query.get",
 ] as const;
 
-export type S07ForecastOperation = (typeof S07_FORECAST_OPERATIONS)[number];
+export type ForecastOperation = (typeof FORECAST_OPERATIONS)[number];
 
 /** Compatibility input names for adapters that call the stage a builder. */
-export const S07_FORECAST_OPERATION_ALIASES = [
-  ...S07_FORECAST_OPERATIONS,
+export const FORECAST_OPERATION_ALIASES = [
+  ...FORECAST_OPERATIONS,
   "forecast.builder.build",
   "forecast.source",
   "forecast.builder",
@@ -48,55 +48,55 @@ export const S07_FORECAST_OPERATION_ALIASES = [
   "forecast.query.read",
 ] as const;
 
-export type S07ForecastOperationInput =
-  | S07ForecastOperation
-  | S07ForecastStage
-  | (typeof S07_FORECAST_OPERATION_ALIASES)[number];
+export type ForecastOperationInput =
+  | ForecastOperation
+  | ForecastStage
+  | (typeof FORECAST_OPERATION_ALIASES)[number];
 
 /** Stable query/stage codes used in metrics and slow-query investigation. */
-export const S07_FORECAST_QUERY_CODES = {
+export const FORECAST_QUERY_CODES = {
   source: "forecast_source",
   builder: "forecast_builder",
   engine: "forecast_engine",
   query: "forecast_query",
-} as const satisfies Record<S07ForecastStage, string>;
+} as const satisfies Record<ForecastStage, string>;
 
-export type S07ForecastQueryCode =
-  (typeof S07_FORECAST_QUERY_CODES)[S07ForecastStage];
+export type ForecastQueryCode =
+  (typeof FORECAST_QUERY_CODES)[ForecastStage];
 
-export const S07_FORECAST_OUTCOMES = [
+export const FORECAST_OUTCOMES = [
   "success",
   "expected_error",
   "unexpected_error",
 ] as const;
 
-export type S07ForecastOutcome = (typeof S07_FORECAST_OUTCOMES)[number];
+export type ForecastOutcome = (typeof FORECAST_OUTCOMES)[number];
 
 /** Source kind can be aggregated as ALL without exposing a source ID. */
-export const S07_FORECAST_SOURCE_KINDS = [
-  ...FORECAST_SOURCE_KINDS,
+export const FORECAST_OBSERVABILITY_SOURCE_KINDS = [
+  ...DOMAIN_FORECAST_SOURCE_KINDS,
   "ALL",
 ] as const;
 
-export type S07ForecastSourceKind =
-  (typeof S07_FORECAST_SOURCE_KINDS)[number];
+export type ForecastObservabilitySourceKind =
+  (typeof FORECAST_OBSERVABILITY_SOURCE_KINDS)[number];
 
 /** A categorical range bucket; exact from/to dates never enter telemetry. */
-export const S07_FORECAST_PERIOD_BUCKETS = [
+export const FORECAST_PERIOD_BUCKETS = [
   "SINGLE_PERIOD",
   "SHORT",
   "MEDIUM",
   "LONG",
 ] as const;
 
-export type S07ForecastPeriodBucket =
-  (typeof S07_FORECAST_PERIOD_BUCKETS)[number];
+export type ForecastPeriodBucket =
+  (typeof FORECAST_PERIOD_BUCKETS)[number];
 
 /**
  * Counters are intentionally aggregate-only.  In particular, this type has
  * no amount, balance, date, description, item, source-reference or payload.
  */
-export interface S07ForecastAggregateCounts {
+export interface ForecastAggregateCounts {
   sourceCount?: number;
   recurringCount?: number;
   plannedEventCount?: number;
@@ -110,46 +110,46 @@ export interface S07ForecastAggregateCounts {
   dayCount?: number;
 }
 
-export interface S07ForecastOperationOptions
-  extends S07ForecastAggregateCounts {
+export interface ForecastOperationOptions
+  extends ForecastAggregateCounts {
   requestId?: string;
   /** Alias accepted from a transport boundary; emitted as requestId. */
   correlationId?: string;
   userId?: string;
   householdId?: string;
   scenario?: ForecastScenario;
-  sourceKind?: S07ForecastSourceKind;
+  sourceKind?: ForecastObservabilitySourceKind;
   /** Exact period dates are never accepted; only this categorical bucket is. */
-  periodBucket?: S07ForecastPeriodBucket;
+  periodBucket?: ForecastPeriodBucket;
   /** Compatibility aliases normalized to periodBucket. */
-  periodRangeBucket?: S07ForecastPeriodBucket;
-  periodRange?: S07ForecastPeriodBucket;
+  periodRangeBucket?: ForecastPeriodBucket;
+  periodRange?: ForecastPeriodBucket;
   durationMs?: number;
   statusCode?: number;
   /** Untrusted adapter objects are allow-listed by the final sanitizer. */
   [key: string]: unknown;
 }
 
-export interface S07ForecastOperationContext
-  extends S07ForecastAggregateCounts {
-  operation: S07ForecastOperation;
-  stage: S07ForecastStage;
-  queryCode: S07ForecastQueryCode;
+export interface ForecastOperationContext
+  extends ForecastAggregateCounts {
+  operation: ForecastOperation;
+  stage: ForecastStage;
+  queryCode: ForecastQueryCode;
   requestId?: string;
   userId?: string;
   householdId?: string;
   scenario?: ForecastScenario;
-  sourceKind?: S07ForecastSourceKind;
-  periodBucket?: S07ForecastPeriodBucket;
+  sourceKind?: ForecastObservabilitySourceKind;
+  periodBucket?: ForecastPeriodBucket;
   durationMs?: number;
   statusCode?: number;
 }
 
-export interface S07ForecastLog extends S07ForecastOperationContext {
+export interface ForecastLog extends ForecastOperationContext {
   event: string;
   useCase: string;
-  outcome: S07ForecastOutcome;
-  errorCode?: S07ForecastErrorCode;
+  outcome: ForecastOutcome;
+  errorCode?: ForecastErrorCode;
   slowQuery?: boolean;
   slowQueryThresholdMs?: number;
   queryBudgetMs?: number;
@@ -157,25 +157,25 @@ export interface S07ForecastLog extends S07ForecastOperationContext {
 }
 
 /** Unknown adapter fields are accepted here only to prove they are dropped. */
-export type S07ForecastLogInput = Omit<
-  Partial<S07ForecastLog>,
+export type ForecastLogInput = Omit<
+  Partial<ForecastLog>,
   "errorCode"
 > & {
   errorCode?: unknown;
 } & Record<string, unknown>;
 
-export interface S07ForecastObservabilityHooks {
+export interface ForecastObservabilityHooks {
   /** Receives an already allow-listed record for logs/metrics. */
-  onRecord?: (record: S07ForecastLog) => void;
+  onRecord?: (record: ForecastLog) => void;
   /** Alias for metric adapters that do not emit application logs. */
-  onMetric?: (record: S07ForecastLog) => void;
+  onMetric?: (record: ForecastLog) => void;
   /** Receives only records that exceeded the slow/budget threshold. */
-  onSlowQuery?: (record: S07ForecastLog) => void;
+  onSlowQuery?: (record: ForecastLog) => void;
 }
 
-export interface S07ForecastCompletionOptions
-  extends S07ForecastAggregateCounts,
-    S07ForecastObservabilityHooks {
+export interface ForecastCompletionOptions
+  extends ForecastAggregateCounts,
+    ForecastObservabilityHooks {
   durationMs?: number;
   errorCode?: string;
   technicalErrorCode?: string;
@@ -186,19 +186,19 @@ export interface S07ForecastCompletionOptions
   now?: () => number;
 }
 
-export interface S07ForecastQueryOptions
-  extends S07ForecastAggregateCounts,
-    S07ForecastObservabilityHooks {
-  /** Per-call override; bounded by MAX_S07_SLOW_QUERY_THRESHOLD_MS. */
+export interface ForecastQueryOptions
+  extends ForecastAggregateCounts,
+    ForecastObservabilityHooks {
+  /** Per-call override; bounded by MAX_FORECAST_SLOW_QUERY_THRESHOLD_MS. */
   thresholdMs?: number;
-  /** Per-call query budget override; bounded by MAX_S07_QUERY_BUDGET_MS. */
+  /** Per-call query budget override; bounded by MAX_FORECAST_QUERY_BUDGET_MS. */
   queryBudgetMs?: number;
   technicalErrorCode?: string;
   /** Injectable monotonic clock for deterministic measurement tests. */
   now?: () => number;
 }
 
-export const S07_FORECAST_EXPECTED_ERROR_CODES = [
+export const FORECAST_EXPECTED_ERROR_CODES = [
   "INVALID_DATE",
   "INVALID_DATE_RANGE",
   "INVALID_SCENARIO",
@@ -211,11 +211,11 @@ export const S07_FORECAST_EXPECTED_ERROR_CODES = [
   "INVALID_FINANCIAL_CONTEXT",
 ] as const satisfies readonly string[];
 
-export type S07ForecastExpectedErrorCode =
-  (typeof S07_FORECAST_EXPECTED_ERROR_CODES)[number];
+export type ForecastExpectedErrorCode =
+  (typeof FORECAST_EXPECTED_ERROR_CODES)[number];
 
 /** Technical labels are closed so provider/database text never becomes code. */
-export const S07_FORECAST_TECHNICAL_ERROR_CODES = [
+export const FORECAST_TECHNICAL_ERROR_CODES = [
   "FORECAST_INCONSISTENT",
   "FORECAST_QUERY_FAILED",
   "FORECAST_SOURCE_QUERY_FAILED",
@@ -226,19 +226,19 @@ export const S07_FORECAST_TECHNICAL_ERROR_CODES = [
   "UNEXPECTED_ERROR",
 ] as const;
 
-export type S07ForecastTechnicalErrorCode =
-  (typeof S07_FORECAST_TECHNICAL_ERROR_CODES)[number];
+export type ForecastTechnicalErrorCode =
+  (typeof FORECAST_TECHNICAL_ERROR_CODES)[number];
 
-export type S07ForecastErrorCode =
-  | S07ForecastExpectedErrorCode
-  | S07ForecastTechnicalErrorCode;
+export type ForecastErrorCode =
+  | ForecastExpectedErrorCode
+  | ForecastTechnicalErrorCode;
 
-export interface S07ForecastErrorClassification {
+export interface ForecastErrorClassification {
   outcome: "expected_error" | "unexpected_error";
-  errorCode: S07ForecastErrorCode;
+  errorCode: ForecastErrorCode;
 }
 
-export interface S07ForecastSafeErrorEnvelope {
+export interface ForecastSafeErrorEnvelope {
   ok: false;
   error: {
     code: (typeof FORECAST_ERROR_CODES)[number];
@@ -246,13 +246,13 @@ export interface S07ForecastSafeErrorEnvelope {
   };
 }
 
-export const DEFAULT_S07_SLOW_QUERY_THRESHOLD_MS = 250;
-export const MAX_S07_SLOW_QUERY_THRESHOLD_MS = 60_000;
-export const DEFAULT_S07_QUERY_BUDGET_MS = 2_000;
-export const MAX_S07_QUERY_BUDGET_MS = 60_000;
-export const MAX_S07_AGGREGATE_COUNT = 1_000_000_000;
+export const DEFAULT_FORECAST_SLOW_QUERY_THRESHOLD_MS = 250;
+export const MAX_FORECAST_SLOW_QUERY_THRESHOLD_MS = 60_000;
+export const DEFAULT_FORECAST_QUERY_BUDGET_MS = 2_000;
+export const MAX_FORECAST_QUERY_BUDGET_MS = 60_000;
+export const MAX_FORECAST_AGGREGATE_COUNT = 1_000_000_000;
 
-const OPERATION_ALIASES: Readonly<Record<string, S07ForecastOperation>> = {
+const OPERATION_ALIASES: Readonly<Record<string, ForecastOperation>> = {
   "forecast.source.load": "forecast.source.load",
   "forecast.source": "forecast.source.load",
   source: "forecast.source.load",
@@ -272,13 +272,13 @@ const OPERATION_ALIASES: Readonly<Record<string, S07ForecastOperation>> = {
   query: "forecast.query.get",
 };
 
-const OPERATION_SET = new Set<string>(S07_FORECAST_OPERATIONS);
-const PERIOD_BUCKET_SET = new Set<string>(S07_FORECAST_PERIOD_BUCKETS);
+const OPERATION_SET = new Set<string>(FORECAST_OPERATIONS);
+const PERIOD_BUCKET_SET = new Set<string>(FORECAST_PERIOD_BUCKETS);
 const EXPECTED_ERROR_SET = new Set<string>(
-  S07_FORECAST_EXPECTED_ERROR_CODES,
+  FORECAST_EXPECTED_ERROR_CODES,
 );
 const TECHNICAL_ERROR_SET = new Set<string>(
-  S07_FORECAST_TECHNICAL_ERROR_CODES,
+  FORECAST_TECHNICAL_ERROR_CODES,
 );
 const FORECAST_ERROR_SET = new Set<string>(FORECAST_ERROR_CODES);
 const OPAQUE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}$/u;
@@ -302,7 +302,7 @@ function opaqueId(value: unknown): string | undefined {
 
 function finiteInteger(
   value: unknown,
-  maximum = MAX_S07_AGGREGATE_COUNT,
+  maximum = MAX_FORECAST_AGGREGATE_COUNT,
 ): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return undefined;
@@ -328,7 +328,7 @@ function enumValue<T extends readonly string[]>(
     : undefined;
 }
 
-function operationValue(value: unknown): S07ForecastOperation | undefined {
+function operationValue(value: unknown): ForecastOperation | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
@@ -337,28 +337,28 @@ function operationValue(value: unknown): S07ForecastOperation | undefined {
   return operation && OPERATION_SET.has(operation) ? operation : undefined;
 }
 
-function stageValue(value: unknown): S07ForecastStage | undefined {
-  return enumValue(S07_FORECAST_STAGES, value);
+function stageValue(value: unknown): ForecastStage | undefined {
+  return enumValue(FORECAST_STAGES, value);
 }
 
-function outcomeValue(value: unknown): S07ForecastOutcome | undefined {
-  return enumValue(S07_FORECAST_OUTCOMES, value);
+function outcomeValue(value: unknown): ForecastOutcome | undefined {
+  return enumValue(FORECAST_OUTCOMES, value);
 }
 
 function scenarioValue(value: unknown): ForecastScenario | undefined {
   return enumValue(FORECAST_SCENARIOS, value);
 }
 
-function sourceKindValue(value: unknown): S07ForecastSourceKind | undefined {
-  return enumValue(S07_FORECAST_SOURCE_KINDS, value);
+function sourceKindValue(value: unknown): ForecastObservabilitySourceKind | undefined {
+  return enumValue(FORECAST_OBSERVABILITY_SOURCE_KINDS, value);
 }
 
-function periodBucketValue(value: unknown): S07ForecastPeriodBucket | undefined {
+function periodBucketValue(value: unknown): ForecastPeriodBucket | undefined {
   if (typeof value !== "string") {
     return undefined;
   }
 
-  const aliases: Record<string, S07ForecastPeriodBucket> = {
+  const aliases: Record<string, ForecastPeriodBucket> = {
     SINGLE: "SINGLE_PERIOD",
     SINGLE_PERIOD: "SINGLE_PERIOD",
     ONE_PERIOD: "SINGLE_PERIOD",
@@ -371,7 +371,7 @@ function periodBucketValue(value: unknown): S07ForecastPeriodBucket | undefined 
   return bucket && PERIOD_BUCKET_SET.has(bucket) ? bucket : undefined;
 }
 
-function stageForOperation(operation: S07ForecastOperation): S07ForecastStage {
+function stageForOperation(operation: ForecastOperation): ForecastStage {
   if (operation === "forecast.source.load") {
     return "source";
   }
@@ -384,7 +384,7 @@ function stageForOperation(operation: S07ForecastOperation): S07ForecastStage {
   return "query";
 }
 
-function operationForStage(stage: S07ForecastStage): S07ForecastOperation {
+function operationForStage(stage: ForecastStage): ForecastOperation {
   return stage === "source"
     ? "forecast.source.load"
     : stage === "builder"
@@ -394,18 +394,18 @@ function operationForStage(stage: S07ForecastStage): S07ForecastOperation {
         : "forecast.query.get";
 }
 
-function queryCodeForStage(stage: S07ForecastStage): S07ForecastQueryCode {
-  return S07_FORECAST_QUERY_CODES[stage];
+function queryCodeForStage(stage: ForecastStage): ForecastQueryCode {
+  return FORECAST_QUERY_CODES[stage];
 }
 
 function eventName(
-  operation: S07ForecastOperation,
-  outcome: S07ForecastOutcome,
+  operation: ForecastOperation,
+  outcome: ForecastOutcome,
 ): string {
-  return `s07_${operation.replaceAll(".", "_")}_${outcome}`;
+  return `${operation.replaceAll(".", "_")}_${outcome}`;
 }
 
-function safeErrorCode(value: unknown): S07ForecastErrorCode | undefined {
+function safeErrorCode(value: unknown): ForecastErrorCode | undefined {
   if (
     typeof value !== "string" ||
     !ERROR_CODE_PATTERN.test(value) ||
@@ -414,12 +414,12 @@ function safeErrorCode(value: unknown): S07ForecastErrorCode | undefined {
     return undefined;
   }
 
-  return value as S07ForecastErrorCode;
+  return value as ForecastErrorCode;
 }
 
-function safeTechnicalErrorCode(value: unknown): S07ForecastTechnicalErrorCode {
+function safeTechnicalErrorCode(value: unknown): ForecastTechnicalErrorCode {
   return TECHNICAL_ERROR_SET.has(value as string)
-    ? (value as S07ForecastTechnicalErrorCode)
+    ? (value as ForecastTechnicalErrorCode)
     : "UNEXPECTED_ERROR";
 }
 
@@ -437,15 +437,15 @@ function countValue(
 }
 
 /** Keeps bounded aggregate counts and drops rows/items and all payloads. */
-export function sanitizeS07ForecastCounts(
+export function sanitizeForecastCounts(
   value: unknown,
-): S07ForecastAggregateCounts | undefined {
+): ForecastAggregateCounts | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
 
   const source = isRecord(value.counts) ? value.counts : value;
-  const aliases: Record<keyof S07ForecastAggregateCounts, readonly string[]> = {
+  const aliases: Record<keyof ForecastAggregateCounts, readonly string[]> = {
     sourceCount: ["sourceCount", "source_count", "sources"],
     recurringCount: ["recurringCount", "recurring_count", "recurring"],
     plannedEventCount: [
@@ -487,8 +487,8 @@ export function sanitizeS07ForecastCounts(
     dayCount: ["dayCount", "day_count", "days"],
   };
 
-  const result: S07ForecastAggregateCounts = {};
-  for (const key of Object.keys(aliases) as Array<keyof S07ForecastAggregateCounts>) {
+  const result: ForecastAggregateCounts = {};
+  for (const key of Object.keys(aliases) as Array<keyof ForecastAggregateCounts>) {
     const count = countValue(source, aliases[key]);
     if (count !== undefined) {
       result[key] = count;
@@ -498,12 +498,12 @@ export function sanitizeS07ForecastCounts(
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-function aggregateInput(value: Record<string, unknown>): S07ForecastAggregateCounts {
-  return sanitizeS07ForecastCounts(value) ?? {};
+function aggregateInput(value: Record<string, unknown>): ForecastAggregateCounts {
+  return sanitizeForecastCounts(value) ?? {};
 }
 
 function addSafeId(
-  target: S07ForecastOperationContext,
+  target: ForecastOperationContext,
   key: "requestId" | "userId" | "householdId",
   value: unknown,
 ): void {
@@ -518,10 +518,10 @@ function addSafeId(
  * boundary has not supplied one.  No query, command, source ID or result is
  * copied into the context.
  */
-export function createS07ForecastOperation(
-  operationInput: S07ForecastOperationInput,
-  options: S07ForecastOperationOptions = {},
-): S07ForecastOperationContext {
+export function createForecastOperation(
+  operationInput: ForecastOperationInput,
+  options: ForecastOperationOptions = {},
+): ForecastOperationContext {
   const suppliedOperation = operationValue(operationInput);
   const suppliedStage = stageValue(operationInput);
   const operation =
@@ -537,7 +537,7 @@ export function createS07ForecastOperation(
     }
   }
 
-  const result: S07ForecastOperationContext = {
+  const result: ForecastOperationContext = {
     operation,
     stage,
     queryCode: queryCodeForStage(stage),
@@ -558,17 +558,17 @@ export function createS07ForecastOperation(
 }
 
 /** Canonical operation/use-case identifier for adapters and metrics. */
-export function s07ForecastUseCaseName(
-  operation: S07ForecastOperationInput,
+export function forecastUseCaseName(
+  operation: ForecastOperationInput,
 ): string {
   return operationValue(operation)
     ? operationValue(operation)!
     : operationForStage(stageValue(operation) ?? "query");
 }
 
-export function s07ForecastEventName(
-  operation: S07ForecastOperationInput,
-  outcome: S07ForecastOutcome,
+export function forecastEventName(
+  operation: ForecastOperationInput,
+  outcome: ForecastOutcome,
 ): string {
   return eventName(
     operationValue(operation) ??
@@ -579,7 +579,7 @@ export function s07ForecastEventName(
 
 function optionalLogFields(
   value: Record<string, unknown>,
-  result: S07ForecastLog,
+  result: ForecastLog,
 ): void {
   const addId = (key: "requestId" | "userId" | "householdId") => {
     const id = opaqueId(value[key]);
@@ -630,7 +630,7 @@ function optionalLogFields(
 
   const threshold = finiteInteger(
     value.slowQueryThresholdMs,
-    MAX_S07_SLOW_QUERY_THRESHOLD_MS,
+    MAX_FORECAST_SLOW_QUERY_THRESHOLD_MS,
   );
   if (threshold !== undefined) {
     result.slowQueryThresholdMs = threshold;
@@ -638,7 +638,7 @@ function optionalLogFields(
 
   const queryBudget = finiteInteger(
     value.queryBudgetMs,
-    MAX_S07_QUERY_BUDGET_MS,
+    MAX_FORECAST_QUERY_BUDGET_MS,
   );
   if (queryBudget !== undefined) {
     result.queryBudgetMs = queryBudget;
@@ -654,9 +654,9 @@ function optionalLogFields(
  * a closed vocabulary, and dates, values, balances, labels and payloads are
  * never traversed.
  */
-export function sanitizeS07ForecastLog(
-  value: S07ForecastLogInput,
-): S07ForecastLog | undefined {
+export function sanitizeForecastLog(
+  value: ForecastLogInput,
+): ForecastLog | undefined {
   try {
     const suppliedOperation =
       value.operation === undefined
@@ -686,7 +686,7 @@ export function sanitizeS07ForecastLog(
       return undefined;
     }
 
-    const safe: S07ForecastLog = {
+    const safe: ForecastLog = {
       event: eventName(operation, outcome),
       useCase: operation,
       operation,
@@ -704,11 +704,11 @@ export function sanitizeS07ForecastLog(
 }
 
 function primaryContext(
-  operation: S07ForecastOperationContext,
-  outcome: S07ForecastOutcome,
-  options: S07ForecastCompletionOptions = {},
-): S07ForecastLog | undefined {
-  return sanitizeS07ForecastLog({
+  operation: ForecastOperationContext,
+  outcome: ForecastOutcome,
+  options: ForecastCompletionOptions = {},
+): ForecastLog | undefined {
+  return sanitizeForecastLog({
     ...operation,
     ...options,
     operation: operation.operation,
@@ -718,10 +718,10 @@ function primaryContext(
 }
 
 /** Converts only S07 technical metadata to the shared Sentry context shape. */
-export function toS07ObservabilityContext(
-  operation: S07ForecastOperationContext,
-  outcome: S07ForecastOutcome = "unexpected_error",
-  options: S07ForecastCompletionOptions = {},
+export function toForecastObservabilityContext(
+  operation: ForecastOperationContext,
+  outcome: ForecastOutcome = "unexpected_error",
+  options: ForecastCompletionOptions = {},
 ): ObservabilityContext {
   const safe = primaryContext(operation, outcome, options);
   const fallbackOperation = operationValue(operation.operation) ?? "forecast.query.get";
@@ -762,10 +762,10 @@ export function toS07ObservabilityContext(
 }
 
 /** Adds one technical breadcrumb; no source/result/payload is attached. */
-export function addS07ForecastBreadcrumb(
-  operation: S07ForecastOperationContext,
-  outcome: S07ForecastOutcome,
-  options: S07ForecastCompletionOptions = {},
+export function addForecastBreadcrumb(
+  operation: ForecastOperationContext,
+  outcome: ForecastOutcome,
+  options: ForecastCompletionOptions = {},
 ): void {
   const safe = primaryContext(operation, outcome, options);
   if (!safe) {
@@ -809,13 +809,13 @@ export function addS07ForecastBreadcrumb(
 }
 
 function emitRecord(
-  safe: S07ForecastLog,
-  hooks: S07ForecastObservabilityHooks = {},
+  safe: ForecastLog,
+  hooks: ForecastObservabilityHooks = {},
   level: "info" | "warn" | "error" =
     safe.outcome === "unexpected_error" ? "error" : "info",
 ): void {
   try {
-    addS07ForecastBreadcrumb(safe, safe.outcome, safe);
+    addForecastBreadcrumb(safe, safe.outcome, safe);
   } catch {
     // Observability is best effort and never changes the forecast response.
   }
@@ -842,11 +842,11 @@ function emitRecord(
 }
 
 /** Emits a completed S07 record without serializing its input/result. */
-export function logS07ForecastOperation(
-  operation: S07ForecastOperationContext,
-  outcome: S07ForecastOutcome,
-  options: S07ForecastCompletionOptions = {},
-): S07ForecastLog | undefined {
+export function logForecastOperation(
+  operation: ForecastOperationContext,
+  outcome: ForecastOutcome,
+  options: ForecastCompletionOptions = {},
+): ForecastLog | undefined {
   const safe = primaryContext(operation, outcome, options);
   if (!safe) {
     return undefined;
@@ -871,24 +871,24 @@ function codeFromError(error: unknown): unknown {
 }
 
 /** Returns a known validation/auth/absence code without reading a message. */
-export function expectedS07ErrorCode(
+export function expectedForecastErrorCode(
   error: unknown,
-): S07ForecastExpectedErrorCode | undefined {
+): ForecastExpectedErrorCode | undefined {
   if (error instanceof FinancialContextError) {
     return EXPECTED_ERROR_SET.has(error.code)
-      ? (error.code as S07ForecastExpectedErrorCode)
+      ? (error.code as ForecastExpectedErrorCode)
       : undefined;
   }
 
   const code = codeFromError(error);
   return typeof code === "string" && EXPECTED_ERROR_SET.has(code)
-    ? (code as S07ForecastExpectedErrorCode)
+    ? (code as ForecastExpectedErrorCode)
     : undefined;
 }
 
 /** Classifies only the closed expected vocabulary; all other codes are technical. */
-export function classifyS07Error(error: unknown): S07ForecastErrorClassification {
-  const expectedCode = expectedS07ErrorCode(error);
+export function classifyForecastError(error: unknown): ForecastErrorClassification {
+  const expectedCode = expectedForecastErrorCode(error);
   if (expectedCode) {
     return { outcome: "expected_error", errorCode: expectedCode };
   }
@@ -900,8 +900,8 @@ export function classifyS07Error(error: unknown): S07ForecastErrorClassification
   };
 }
 
-export function isExpectedS07Error(error: unknown): boolean {
-  return expectedS07ErrorCode(error) !== undefined;
+export function isExpectedForecastError(error: unknown): boolean {
+  return expectedForecastErrorCode(error) !== undefined;
 }
 
 function safeForecastField(value: unknown): "from" | "to" | "scenario" | null {
@@ -923,10 +923,10 @@ function fieldFromError(error: unknown): "from" | "to" | "scenario" | null {
 }
 
 /** Converts an error to the public code/field-only forecast envelope. */
-export function toS07ErrorEnvelope(
+export function toForecastErrorEnvelope(
   error: unknown,
-): S07ForecastSafeErrorEnvelope {
-  const classification = classifyS07Error(error);
+): ForecastSafeErrorEnvelope {
+  const classification = classifyForecastError(error);
   const code =
     classification.errorCode === "UNAUTHENTICATED" ||
     classification.errorCode === "HOUSEHOLD_MEMBERSHIP_REQUIRED" ||
@@ -964,12 +964,12 @@ function resultFailure(value: unknown): { failed: boolean; error?: unknown } {
 }
 
 function completionLog(
-  operation: S07ForecastOperationContext,
-  outcome: S07ForecastOutcome,
+  operation: ForecastOperationContext,
+  outcome: ForecastOutcome,
   durationMs: number,
-  options: S07ForecastCompletionOptions,
-): S07ForecastLog | undefined {
-  return logS07ForecastOperation(operation, outcome, {
+  options: ForecastCompletionOptions,
+): ForecastLog | undefined {
+  return logForecastOperation(operation, outcome, {
     ...options,
     durationMs,
     errorCode: options.errorCode,
@@ -981,10 +981,10 @@ function completionLog(
  * errors remain ordinary outcomes; unexpected exceptions are captured and
  * rethrown after safe logging.
  */
-export async function withS07ForecastObservability<T>(
-  operation: S07ForecastOperationContext,
+export async function withForecastObservability<T>(
+  operation: ForecastOperationContext,
   work: () => Promise<T> | T,
-  options: S07ForecastCompletionOptions = {},
+  options: ForecastCompletionOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -993,7 +993,7 @@ export async function withS07ForecastObservability<T>(
     const value = await work();
     const failure = resultFailure(value);
     if (failure.failed) {
-      const classification = classifyS07Error(failure.error);
+      const classification = classifyForecastError(failure.error);
       const durationMs = elapsedMs(startedAt, now);
       if (classification.outcome === "expected_error") {
         completionLog(operation, classification.outcome, durationMs, {
@@ -1001,7 +1001,7 @@ export async function withS07ForecastObservability<T>(
           errorCode: classification.errorCode,
         });
       } else {
-        reportS07UnexpectedError(failure.error, operation, durationMs, options);
+        reportForecastUnexpectedError(failure.error, operation, durationMs, options);
       }
       return value;
     }
@@ -1010,7 +1010,7 @@ export async function withS07ForecastObservability<T>(
     return value;
   } catch (error) {
     const durationMs = elapsedMs(startedAt, now);
-    const classification = classifyS07Error(error);
+    const classification = classifyForecastError(error);
     if (classification.outcome === "expected_error") {
       completionLog(operation, classification.outcome, durationMs, {
         ...options,
@@ -1019,7 +1019,7 @@ export async function withS07ForecastObservability<T>(
       throw error;
     }
 
-    reportS07UnexpectedError(error, operation, durationMs, options);
+    reportForecastUnexpectedError(error, operation, durationMs, options);
     throw error;
   }
 }
@@ -1038,36 +1038,43 @@ function safeThreshold(
 }
 
 /** Reads the bounded slow-query threshold for S07. */
-export function getS07SlowQueryThresholdMs(value?: unknown): number {
+export function getForecastSlowQueryThresholdMs(value?: unknown): number {
   return (
     safeThreshold(
-      value ?? process.env.S07_SLOW_QUERY_THRESHOLD_MS,
-      MAX_S07_SLOW_QUERY_THRESHOLD_MS,
-    ) ?? DEFAULT_S07_SLOW_QUERY_THRESHOLD_MS
+      value ??
+        process.env.FORECAST_SLOW_QUERY_THRESHOLD_MS ??
+        process.env.S07_SLOW_QUERY_THRESHOLD_MS,
+      MAX_FORECAST_SLOW_QUERY_THRESHOLD_MS,
+    ) ?? DEFAULT_FORECAST_SLOW_QUERY_THRESHOLD_MS
   );
 }
 
 /** Reads the bounded query budget for S07. */
-export function getS07QueryBudgetMs(value?: unknown): number {
+export function getForecastQueryBudgetMs(value?: unknown): number {
   return (
-    safeThreshold(value ?? process.env.S07_QUERY_BUDGET_MS, MAX_S07_QUERY_BUDGET_MS) ??
-    DEFAULT_S07_QUERY_BUDGET_MS
+    safeThreshold(
+      value ??
+        process.env.FORECAST_QUERY_BUDGET_MS ??
+        process.env.S07_QUERY_BUDGET_MS,
+      MAX_FORECAST_QUERY_BUDGET_MS,
+    ) ??
+    DEFAULT_FORECAST_QUERY_BUDGET_MS
   );
 }
 
 /** Reports expected failures and captures only unexpected technical failures. */
-export function reportS07UnexpectedError(
+export function reportForecastUnexpectedError(
   error: unknown,
-  operation: S07ForecastOperationContext,
+  operation: ForecastOperationContext,
   durationMs: number,
-  options: S07ForecastCompletionOptions = {},
-): S07ForecastErrorClassification {
-  const classification = classifyS07Error(error);
+  options: ForecastCompletionOptions = {},
+): ForecastErrorClassification {
+  const classification = classifyForecastError(error);
   const code =
     classification.outcome === "expected_error"
       ? classification.errorCode
       : safeTechnicalErrorCode(options.technicalErrorCode ?? codeFromError(error));
-  const safeOptions: S07ForecastCompletionOptions = {
+  const safeOptions: ForecastCompletionOptions = {
     ...options,
     durationMs,
     errorCode: code,
@@ -1079,7 +1086,7 @@ export function reportS07UnexpectedError(
     try {
       captureServerException(
         error,
-        toS07ObservabilityContext(operation, "unexpected_error", safeOptions),
+        toForecastObservabilityContext(operation, "unexpected_error", safeOptions),
       );
     } catch {
       // Sentry is best effort and never changes the forecast response.
@@ -1090,10 +1097,10 @@ export function reportS07UnexpectedError(
 }
 
 /** Measures one source/builder/engine/query call without accepting SQL. */
-export async function measureS07Query<T>(
-  operation: S07ForecastOperationContext,
+export async function measureForecastQuery<T>(
+  operation: ForecastOperationContext,
   work: () => Promise<T> | T,
-  options: S07ForecastQueryOptions = {},
+  options: ForecastQueryOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -1110,18 +1117,18 @@ export async function measureS07Query<T>(
     throw error;
   } finally {
     const durationMs = elapsedMs(startedAt, now);
-    const thresholdMs = getS07SlowQueryThresholdMs(options.thresholdMs);
-    const queryBudgetMs = getS07QueryBudgetMs(options.queryBudgetMs);
+    const thresholdMs = getForecastSlowQueryThresholdMs(options.thresholdMs);
+    const queryBudgetMs = getForecastQueryBudgetMs(options.queryBudgetMs);
     const budgetExceeded = durationMs >= queryBudgetMs;
     const slowQuery = durationMs >= thresholdMs || budgetExceeded;
     if (slowQuery) {
       const returnedFailure = resultFailure(returnedValue);
       const classification = failed
-        ? classifyS07Error(thrownError)
+        ? classifyForecastError(thrownError)
         : returnedFailure.failed
-          ? classifyS07Error(returnedFailure.error)
+          ? classifyForecastError(returnedFailure.error)
           : undefined;
-      const safe = sanitizeS07ForecastLog({
+      const safe = sanitizeForecastLog({
         ...operation,
         ...options,
         operation: operation.operation,
@@ -1142,7 +1149,7 @@ export async function measureS07Query<T>(
 
       if (safe) {
         try {
-          addS07ForecastBreadcrumb(safe, safe.outcome, safe);
+          addForecastBreadcrumb(safe, safe.outcome, safe);
         } catch {
           // Best effort only.
         }
@@ -1166,10 +1173,10 @@ export async function measureS07Query<T>(
 }
 
 /** Naming aliases keep the small adapter surface discoverable to T04–T06. */
-export const createS07ForecastContext = createS07ForecastOperation;
-export const withS07ForecastOperation = withS07ForecastObservability;
-export const observeS07Forecast = withS07ForecastObservability;
-export const measureS07ForecastStage = measureS07Query;
-export const observeS07Query = measureS07Query;
-export const logS07ForecastResult = logS07ForecastOperation;
-export const captureS07UnexpectedError = reportS07UnexpectedError;
+export const createForecastContext = createForecastOperation;
+export const withForecastOperation = withForecastObservability;
+export const observeForecast = withForecastObservability;
+export const measureForecastStage = measureForecastQuery;
+export const observeForecastQuery = measureForecastQuery;
+export const logForecastResult = logForecastOperation;
+export const captureForecastUnexpectedError = reportForecastUnexpectedError;

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  S03DomainError,
-  S03_ERROR_MESSAGES,
+  TransactionDomainError,
+  TRANSACTION_ERROR_MESSAGES,
 } from "./contracts";
 import {
   createExpenseCommandSchema,
@@ -10,7 +10,7 @@ import {
   parseCreateExpenseCommand,
   parseUpdateManualTransactionCommand,
   safeParseCreateIncomeCommand,
-  toS03Error,
+  toTransactionError,
   updateManualTransactionCommandSchema,
 } from "./validation";
 
@@ -27,7 +27,7 @@ const validCreate = {
   categoryId,
 };
 
-describe("S03 serializable command schemas", () => {
+describe("serializable command schemas", () => {
   it("canonicalizes amount/date/description while preserving string boundaries", () => {
     const parsed = parseCreateExpenseCommand(validCreate, {
       today: "2026-08-29",
@@ -53,7 +53,7 @@ describe("S03 serializable command schemas", () => {
       origin: "MANUAL",
     });
     expect(result.success).toBe(false);
-    expect(toS03Error(result.success ? undefined : result.error).code).toBe(
+    expect(toTransactionError(result.success ? undefined : result.error).code).toBe(
       "NON_EDITABLE_FIELD",
     );
   });
@@ -97,7 +97,7 @@ describe("S03 serializable command schemas", () => {
         commandId: "update-1",
         financialEventId: eventId,
       }),
-    ).toThrowError(S03DomainError);
+    ).toThrowError(TransactionDomainError);
   });
 
   it("parses cancellation with no financial fields and exposes safe messages", () => {
@@ -107,7 +107,7 @@ describe("S03 serializable command schemas", () => {
         financialEventId: eventId,
       }),
     ).toEqual({ commandId: "cancel-1", financialEventId: eventId });
-    expect(S03_ERROR_MESSAGES.INVALID_AMOUNT).not.toContain("SQL");
-    expect(S03_ERROR_MESSAGES.INVALID_AMOUNT).not.toContain("amountCents");
+    expect(TRANSACTION_ERROR_MESSAGES.INVALID_AMOUNT).not.toContain("SQL");
+    expect(TRANSACTION_ERROR_MESSAGES.INVALID_AMOUNT).not.toContain("amountCents");
   });
 });

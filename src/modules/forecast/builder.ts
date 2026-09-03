@@ -38,12 +38,12 @@ import {
   type RecurringRuleInput,
 } from "@/modules/recurrences";
 import {
-  createS07ForecastOperation,
-  logS07ForecastOperation,
-  reportS07UnexpectedError,
-  type S07ForecastOperationOptions,
-  type S07ForecastCompletionOptions,
-} from "@/modules/observability/s07";
+  createForecastOperation,
+  logForecastOperation,
+  reportForecastUnexpectedError,
+  type ForecastOperationOptions,
+  type ForecastCompletionOptions,
+} from "@/modules/observability/forecast";
 import type {
   ForecastInstallmentReadModel,
   ForecastPlannedEventReadModel,
@@ -225,8 +225,8 @@ export interface ForecastBuilderInput extends ForecastSourceInput {
   readonly from?: ForecastDateInput;
   readonly to?: ForecastDateInput;
   readonly scenario?: ForecastScenario;
-  readonly observability?: S07ForecastCompletionOptions &
-    Partial<S07ForecastOperationOptions>;
+  readonly observability?: ForecastCompletionOptions &
+    Partial<ForecastOperationOptions>;
 }
 
 export type ForecastTimelineBuilderInput = ForecastBuilderInput | ForecastSourceBundle;
@@ -1607,13 +1607,13 @@ function builderOperationOptions(
   input: ForecastTimelineBuilderInput,
   range: { from: Temporal.PlainDate; to: Temporal.PlainDate },
   counts: { sourceCount: number; itemCount?: number; projectedItemCount?: number; realizedItemCount?: number },
-): S07ForecastOperationOptions & S07ForecastCompletionOptions {
+): ForecastOperationOptions & ForecastCompletionOptions {
   const candidate = record(input);
   const supplied = record(candidate?.observability);
   const months = (range.to.year - range.from.year) * 12 + range.to.month - range.from.month + 1;
   const periodBucket = months <= 1 ? "SINGLE_PERIOD" : months <= 3 ? "SHORT" : months <= 12 ? "MEDIUM" : "LONG";
   return {
-    ...(supplied as (S07ForecastOperationOptions & S07ForecastCompletionOptions) | null ?? {}),
+    ...(supplied as (ForecastOperationOptions & ForecastCompletionOptions) | null ?? {}),
     sourceKind: "ALL",
     periodBucket,
     ...counts,
@@ -1643,13 +1643,13 @@ function observabilitySuccess(
   range: ReturnType<typeof normalizeRange>,
   internal: readonly InternalForecastItem[],
 ): void {
-  const operation = createS07ForecastOperation("builder", builderOperationOptions(input, range, {
+  const operation = createForecastOperation("builder", builderOperationOptions(input, range, {
     sourceCount: internal.length,
     itemCount: internal.length,
     projectedItemCount: internal.filter((value) => value.item.status !== "POSTED").length,
     realizedItemCount: internal.filter((value) => value.item.status === "POSTED").length,
   }));
-  logS07ForecastOperation(operation, "success", builderOperationOptions(input, range, {
+  logForecastOperation(operation, "success", builderOperationOptions(input, range, {
     sourceCount: internal.length,
     itemCount: internal.length,
     projectedItemCount: internal.filter((value) => value.item.status !== "POSTED").length,
@@ -1713,11 +1713,11 @@ export function buildForecastTimelineFromSources(
         try { return normalizeRange(input); } catch { return null; }
       })();
       if (range) {
-        const operation = createS07ForecastOperation("builder", builderOperationOptions(input, range, { sourceCount: 0 }));
-        reportS07UnexpectedError(error, operation, 0, {
+        const operation = createForecastOperation("builder", builderOperationOptions(input, range, { sourceCount: 0 }));
+        reportForecastUnexpectedError(error, operation, 0, {
           technicalErrorCode: error.code === "FORECAST_INCONSISTENT" ? "FORECAST_INCONSISTENT" : undefined,
           errorCode: error.code,
-          ...(record(candidate?.observability) as S07ForecastCompletionOptions | null ?? {}),
+          ...(record(candidate?.observability) as ForecastCompletionOptions | null ?? {}),
         });
       }
       throw error;

@@ -6,11 +6,11 @@ import { useWatch, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
-import { S02Form, S02FormField } from "@/components/ui/form";
+import { DomainForm, FormField } from "@/components/ui/form";
 import type {
   CategoryKind,
   CategoryReadModel,
-  S02Result,
+  AccountsCategoriesResult,
 } from "@/modules/accounts-categories/contracts";
 import {
   categoryKindSchema,
@@ -41,7 +41,7 @@ export interface CategoryFormProps {
   onCancel: () => void;
   onSubmit: (
     values: CategoryFormValues,
-  ) => Promise<S02Result<CategoryReadModel>> | S02Result<CategoryReadModel>;
+  ) => Promise<AccountsCategoriesResult<CategoryReadModel>> | AccountsCategoriesResult<CategoryReadModel>;
 }
 
 const CATEGORY_KIND_OPTIONS: ReadonlyArray<{
@@ -102,7 +102,7 @@ function CategoryFormFields({
 
   return (
     <>
-      <S02FormField form={form} label="Nome da categoria" name="name">
+      <FormField form={form} label="Nome da categoria" name="name">
         {(field) => (
           <input
             aria-describedby="name-error"
@@ -114,9 +114,9 @@ function CategoryFormFields({
             {...field}
           />
         )}
-      </S02FormField>
+      </FormField>
 
-      <S02FormField
+      <FormField
         description={
           isEditing
             ? "O tipo não pode ser alterado depois que a categoria é criada."
@@ -167,9 +167,9 @@ function CategoryFormFields({
             </select>
           )
         }
-      </S02FormField>
+      </FormField>
 
-      <S02FormField
+      <FormField
         description="Categorias filhas só podem escolher um pai de primeiro nível. Categorias arquivadas não aparecem aqui."
         form={form}
         label="Categoria pai (opcional)"
@@ -207,7 +207,7 @@ function CategoryFormFields({
             </p>
           </>
         )}
-      </S02FormField>
+      </FormField>
     </>
   );
 }
@@ -254,7 +254,7 @@ export function CategoryForm({
         </Button>
       </div>
 
-      <S02Form<CategoryFormValues>
+      <DomainForm<CategoryFormValues>
         className="mt-6 space-y-5"
         defaultValues={{
           name: category?.name ?? "",
@@ -276,7 +276,7 @@ export function CategoryForm({
             parentOptions={parentOptions}
           />
         )}
-      </S02Form>
+      </DomainForm>
     </section>
   );
 }

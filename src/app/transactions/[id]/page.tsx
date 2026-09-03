@@ -20,7 +20,7 @@ import { FinancialContextError } from "@/modules/households/contracts";
 import { transactionReadAccess } from "@/modules/transactions/reads";
 import { withFinancialContext } from "@/modules/households/tenant-scoped";
 import { transactionReviewReadUseCases } from "@/modules/transactions/review-reads";
-import type { S05Result, TransactionDetailReadModel } from "@/modules/transactions/review-contracts";
+import type { TransactionReviewResult, TransactionDetailReadModel } from "@/modules/transactions/review-contracts";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +55,7 @@ function routeError(
   );
 }
 
-function isNotFound(result: S05Result<unknown>): boolean {
+function isNotFound(result: TransactionReviewResult<unknown>): boolean {
   return !result.ok && result.error.code === "EVENT_NOT_FOUND";
 }
 
@@ -90,7 +90,7 @@ export default async function TransactionDetailPage({
   const parsed = parseReviewQueryWithDiagnostics((await searchParams) ?? {});
   const backHref = reviewQueryHref("/transactions", parsed.query);
 
-  let detailResult: S05Result<TransactionDetailReadModel>;
+  let detailResult: TransactionReviewResult<TransactionDetailReadModel>;
   try {
     detailResult = await withFinancialContext((context) =>
       transactionReviewReadUseCases.detail(context, id),

@@ -5,7 +5,7 @@ import { spendableCausalOriginHref, spendableOriginHref } from "./origins";
 const SOURCE_ID = "00000000-0000-7000-8000-000000000001";
 const RULE_ID = "00000000-0000-7000-8000-000000000002";
 
-describe("S08 T07 origin mapping", () => {
+describe("T07 origin mapping", () => {
   it("delegates source references to the canonical server-authorized S07 route", () => {
     const href = spendableOriginHref({
       referenceId: SOURCE_ID,

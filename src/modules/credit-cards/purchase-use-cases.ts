@@ -30,9 +30,9 @@ import {
 } from "@/db/credit-cards-schema";
 import { generateUuidV7 } from "@/lib/uuidv7";
 import {
-  createS06CreditCardOperation,
-  withS06CreditCardObservability,
-} from "@/modules/observability/s06";
+  createCreditCardOperation,
+  withCreditCardObservability,
+} from "@/modules/observability/credit-cards";
 import type { FinancialContext } from "@/modules/households/contracts";
 import { assertFinancialContext } from "@/modules/households/tenant-scoped";
 
@@ -1106,7 +1106,7 @@ function operationContext(
     typeof input === "object" && input !== null && typeof (input as { cardId?: unknown }).cardId === "string"
       ? (input as { cardId: string }).cardId
       : undefined;
-  return createS06CreditCardOperation(operation, {
+  return createCreditCardOperation(operation, {
     householdId: context.householdId,
     userId: context.userId,
     ...(cardId ? { cardId } : {}),
@@ -1131,7 +1131,7 @@ export function createCreditCardPurchaseUseCases(
     get: async (context, query) => {
       const normalized = normalizeContext(context);
       return toResult(() =>
-        withS06CreditCardObservability(
+        withCreditCardObservability(
           operationContext("credit_card.purchase.read", normalized, query),
           () => executeGet(resolveDatabase(options.database), normalized, query),
         ),
@@ -1140,7 +1140,7 @@ export function createCreditCardPurchaseUseCases(
     create: async (context, command) => {
       const normalized = normalizeContext(context);
       return toResult(() =>
-        withS06CreditCardObservability(
+        withCreditCardObservability(
           operationContext(
             CREATE_CREDIT_CARD_PURCHASE_OPERATION,
             normalized,
@@ -1153,7 +1153,7 @@ export function createCreditCardPurchaseUseCases(
     update: async (context, command) => {
       const normalized = normalizeContext(context);
       return toResult(() =>
-        withS06CreditCardObservability(
+        withCreditCardObservability(
           operationContext(
             UPDATE_CREDIT_CARD_PURCHASE_OPERATION,
             normalized,
@@ -1166,7 +1166,7 @@ export function createCreditCardPurchaseUseCases(
     cancel: async (context, command) => {
       const normalized = normalizeContext(context);
       return toResult(() =>
-        withS06CreditCardObservability(
+        withCreditCardObservability(
           operationContext(
             CANCEL_CREDIT_CARD_PURCHASE_OPERATION,
             normalized,

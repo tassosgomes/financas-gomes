@@ -132,7 +132,7 @@ function reviewItem(
   };
 }
 
-describe("S05 review UI contracts", () => {
+describe("review UI contracts", () => {
   it("renders source, review and missing-category labels from the read model", () => {
     const html = renderToStaticMarkup(
       <>

@@ -60,7 +60,7 @@ function dependencies(
   };
 }
 
-describe("S07 T06 forecast service boundary", () => {
+describe("T06 forecast service boundary", () => {
   it("returns a serializable timeline and keeps household data internal", async () => {
     const deps = dependencies();
     const result = await getForecast(

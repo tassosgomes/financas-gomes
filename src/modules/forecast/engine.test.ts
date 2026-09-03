@@ -49,7 +49,7 @@ function expectEngineCode(run: () => unknown, code: string): void {
   }
 }
 
-describe("S07 ForecastEngine", () => {
+describe("ForecastEngine", () => {
   it("aggregates all events of a day before changing the projected balance", () => {
     const result = ForecastEngine(
       [
