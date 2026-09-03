@@ -1,6 +1,6 @@
 # T06 — Read model consolidado da home e reconciliação
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 2
 - Dependências: T02, T03; instrumentação de T04
 - Paralelização: Com o acabamento de T04 e a escrita incremental de T13
@@ -31,32 +31,32 @@ reconciliável com as telas de detalhe.
 
 ## Subtarefas
 
-- [ ] Implementar o serviço de leitura consolidada e seu contrato público.
-- [ ] Compor T02, T03 e T04 sem duplicar chamada às origens.
-- [ ] Implementar as chaves de reconciliação por agregado.
-- [ ] Criar `src/app/actions/overview.ts` como Server Action fina.
-- [ ] Cobrir com testes: espaço vazio, dados parciais, falha por bloco e
+- [x] Implementar o serviço de leitura consolidada e seu contrato público.
+- [x] Compor T02, T03 e T04 sem duplicar chamada às origens.
+- [x] Implementar as chaves de reconciliação por agregado.
+- [x] Criar `src/app/actions/overview.ts` como Server Action fina.
+- [x] Cobrir com testes: espaço vazio, dados parciais, falha por bloco e
   reconciliação numérica contra os reads de origem.
 
 ## Critérios de aceite
 
-- [ ] Total de despesas do período == soma dos grupos de categoria == total
+- [x] Total de despesas do período == soma dos grupos de categoria == total
   retornado pelo read de transações com o filtro equivalente.
-- [ ] "Quanto posso gastar" é idêntico ao valor da tela `/spendable/breakdown`
+- [x] "Quanto posso gastar" é idêntico ao valor da tela `/spendable/breakdown`
   para o mesmo `asOf` e contexto.
-- [ ] Resumo de caixinhas reconcilia com `/budgets` para o mesmo período.
-- [ ] Não há dupla contagem de cartão versus transação em nenhum total.
-- [ ] Um household vizinho com dados nunca altera qualquer número retornado.
-- [ ] Uma origem indisponível produz bloco em erro e o restante permanece
+- [x] Resumo de caixinhas reconcilia com `/budgets` para o mesmo período.
+- [x] Não há dupla contagem de cartão versus transação em nenhum total.
+- [x] Um household vizinho com dados nunca altera qualquer número retornado.
+- [x] Uma origem indisponível produz bloco em erro e o restante permanece
   `ready`.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/overview/service.ts` e `read-contracts.ts`.
-- [ ] `src/app/actions/overview.ts`.
-- [ ] Testes unitários com fakes e teste PostgreSQL opt-in de reconciliação e
+- [x] `src/modules/overview/service.ts` e `read-contracts.ts`.
+- [x] `src/app/actions/overview.ts`.
+- [x] Testes unitários com fakes e teste PostgreSQL opt-in de reconciliação e
   isolamento cross-space.
-- [ ] `vitest`, `eslint`, `tsc` e `rtk git diff --check` aprovados.
+- [x] `vitest`, `eslint`, `tsc` e `rtk git diff --check` aprovados.
 
 ## Sequenciamento
 

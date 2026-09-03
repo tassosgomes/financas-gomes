@@ -12,6 +12,25 @@ import {
   formatBudgetSignedCents,
 } from "@/components/budgets/formatters";
 
+import {
+  OVERVIEW_CONTRACT_VERSION,
+  type OverviewAlert,
+  type OverviewAlertRuleId,
+  type OverviewAlertSeverity,
+  type OverviewBlockEnvelope,
+  type OverviewBlockState as OverviewDataBlockState,
+  type OverviewCaixinhaItem,
+  type OverviewCardInvoiceItem,
+  type OverviewCategoryGroup,
+  type OverviewCommitmentItem,
+  type OverviewPeriod,
+  type OverviewPeriodSummary,
+  type OverviewReadModel,
+} from "./contracts";
+
+export type { OverviewReadModel } from "./contracts";
+export { OVERVIEW_CONTRACT_VERSION } from "./contracts";
+
 /**
  * Presentation contracts for S10 Visão Geral.  The financial read model is
  * produced and validated by the server; this module adds only labels and safe
@@ -60,137 +79,8 @@ export const OVERVIEW_TEST_IDS = {
   blockError: "overview-block-error",
 } as const;
 
-/** Duplicated from ADR-013 `s10.v1` until `contracts.ts` (T02) lands. */
-export const OVERVIEW_CONTRACT_VERSION = "s10.v1" as const;
-
-export type OverviewBlockState = "ready" | "empty" | "error" | "loading";
-
-export interface OverviewPeriod {
-  readonly key: string;
-  readonly from: string;
-  readonly to: string;
-  readonly asOf: string;
-}
-
-export interface OverviewBlockEnvelope<T> {
-  readonly state: "ready" | "empty" | "error";
-  readonly data?: T;
-  readonly error?: { code: string; field?: string | null };
-}
-
-export interface OverviewPeriodSummary {
-  readonly incomeCents: string;
-  readonly expenseCents: string;
-  readonly netCents: string;
-  readonly expenseEventCount: number;
-  readonly purchaseEventCount: number;
-  readonly referenceBalanceCents?: string;
-  readonly planned?: {
-    readonly inflowCents: string;
-    readonly outflowCents: string;
-    readonly realizedInflowCents: string;
-    readonly realizedOutflowCents: string;
-    readonly projectedInflowCents: string;
-    readonly projectedOutflowCents: string;
-  };
-  readonly reconciliation: {
-    readonly from: string;
-    readonly to: string;
-    readonly expenseFilter: string;
-    readonly incomeFilter: string;
-  };
-}
-
-export interface OverviewCategoryGroup {
-  readonly key: string;
-  readonly label: string;
-  readonly categoryId?: string;
-  readonly amountCents: string;
-  readonly percent: number;
-  readonly expenseEventCount: number;
-  readonly purchaseEventCount: number;
-}
-
-export interface OverviewCommitmentItem {
-  readonly referenceId: string;
-  readonly date: string;
-  readonly amountCents: string;
-  readonly direction: "INFLOW" | "OUTFLOW";
-  readonly label: string;
-  readonly originKind: string;
-}
-
-export interface OverviewCaixinhaItem {
-  readonly referenceId: string;
-  readonly name: string;
-  readonly balanceCents: string;
-  readonly protectedCents?: string;
-  readonly status: "ACTIVE" | "CLOSED";
-}
-
-export interface OverviewCardInvoiceItem {
-  readonly cardId: string;
-  readonly cardName: string;
-  readonly period: string;
-  readonly dueOn: string;
-  readonly amountCents: string;
-  readonly state: string;
-}
-
-export type OverviewAlertSeverity = "attention" | "critical";
-
-export type OverviewAlertRuleId =
-  | "SPENDABLE_NOT_POSITIVE"
-  | "FORECAST_MONTH_NEGATIVE"
-  | "COMMITMENT_SOON"
-  | "EXPECTED_INCOME_UNREALIZED"
-  | "BOX_INSUFFICIENT";
-
-export interface OverviewAlert {
-  readonly ruleId: OverviewAlertRuleId;
-  readonly severity: OverviewAlertSeverity;
-  readonly message: string;
-  readonly date?: string;
-  readonly referenceId?: string;
-}
-
-export interface OverviewReadModel {
-  readonly contractVersion: typeof OVERVIEW_CONTRACT_VERSION;
-  readonly period: OverviewPeriod;
-  readonly scenario: "CONSERVATIVE" | "EXPECTED";
-  readonly horizonDays: number;
-  readonly spendable: OverviewBlockEnvelope<{
-    readonly breakdown: SpendableBreakdown;
-  }>;
-  readonly periodSummary: OverviewBlockEnvelope<OverviewPeriodSummary>;
-  readonly expensesByCategory: OverviewBlockEnvelope<{
-    readonly totalExpenseCents: string;
-    readonly groups: readonly OverviewCategoryGroup[];
-  }>;
-  readonly upcomingCommitments: OverviewBlockEnvelope<{
-    readonly items: readonly OverviewCommitmentItem[];
-    readonly totalMatching: number;
-    readonly viewAllHref: string;
-  }>;
-  readonly upcomingIncome: OverviewBlockEnvelope<{
-    readonly items: readonly OverviewCommitmentItem[];
-    readonly totalMatching: number;
-    readonly viewAllHref: string;
-  }>;
-  readonly caixinhasSummary: OverviewBlockEnvelope<{
-    readonly status: "AVAILABLE" | "UNAVAILABLE";
-    readonly items: readonly OverviewCaixinhaItem[];
-    readonly totalCount: number;
-    readonly viewAllHref: string;
-  }>;
-  readonly cardInvoices: OverviewBlockEnvelope<{
-    readonly items: readonly OverviewCardInvoiceItem[];
-    readonly viewAllHref: string;
-  }>;
-  readonly alerts: OverviewBlockEnvelope<{
-    readonly items: readonly OverviewAlert[];
-  }>;
-}
+/** Presentation-only loading state for optimistic UI shells. */
+export type OverviewBlockState = OverviewDataBlockState | "loading";
 
 /** Product labels — exact Portuguese copy for V1. */
 export const OVERVIEW_PAGE_TITLE = "Visão geral";
@@ -203,8 +93,10 @@ export const OVERVIEW_INCOME_UPCOMING_TITLE = "Próximas receitas";
 export const OVERVIEW_INVOICES_TITLE = "Faturas";
 export const OVERVIEW_ALERTS_TITLE = "Alertas";
 export const OVERVIEW_VIEW_ALL_LABEL = "Ver todos";
-export const OVERVIEW_UNCATEGORIZED_LABEL = "Sem categoria";
-export const OVERVIEW_OTHER_LABEL = "Outros";
+export {
+  OVERVIEW_UNCATEGORIZED_LABEL,
+  OVERVIEW_OTHER_LABEL,
+} from "./contracts";
 
 export const OVERVIEW_STATE_BADGE_LABELS = {
   normal: "Normal",

@@ -68,6 +68,96 @@ export interface OverviewCategoryGroup {
   readonly purchaseEventCount: number;
 }
 
+export interface OverviewCommitmentItem {
+  readonly referenceId: string;
+  readonly date: string;
+  readonly amountCents: string;
+  readonly direction: "INFLOW" | "OUTFLOW";
+  readonly label: string;
+  readonly originKind: string;
+}
+
+export interface OverviewCaixinhaItem {
+  readonly referenceId: string;
+  readonly name: string;
+  readonly balanceCents: string;
+  readonly protectedCents?: string;
+  readonly status: "ACTIVE" | "CLOSED";
+  readonly periodContributionCents?: string;
+  readonly periodWithdrawalCents?: string;
+  readonly progress?: {
+    readonly progressCents: string;
+    readonly remainingCents: string;
+    readonly progressBps: string;
+    readonly status: string;
+    readonly paceStatus: string;
+  };
+}
+
+export interface OverviewCardInvoiceItem {
+  readonly cardId: string;
+  readonly cardName: string;
+  readonly period: string;
+  readonly dueOn: string;
+  readonly amountCents: string;
+  readonly state: string;
+}
+
+export type OverviewAlertSeverity = "attention" | "critical";
+
+export type OverviewAlertRuleId =
+  | "SPENDABLE_NOT_POSITIVE"
+  | "FORECAST_MONTH_NEGATIVE"
+  | "COMMITMENT_SOON"
+  | "EXPECTED_INCOME_UNREALIZED"
+  | "BOX_INSUFFICIENT";
+
+export interface OverviewAlert {
+  readonly ruleId: OverviewAlertRuleId;
+  readonly severity: OverviewAlertSeverity;
+  readonly message: string;
+  readonly date?: string;
+  readonly referenceId?: string;
+}
+
+export interface OverviewReadModel {
+  readonly contractVersion: typeof OVERVIEW_CONTRACT_VERSION;
+  readonly period: OverviewPeriod;
+  readonly scenario: OverviewScenario;
+  readonly horizonDays: number;
+  readonly spendable: OverviewBlockEnvelope<{
+    readonly breakdown: import("@/modules/spendable/contracts").SpendableBreakdown;
+  }>;
+  readonly periodSummary: OverviewBlockEnvelope<OverviewPeriodSummary>;
+  readonly expensesByCategory: OverviewBlockEnvelope<{
+    readonly totalExpenseCents: string;
+    readonly groups: readonly OverviewCategoryGroup[];
+  }>;
+  readonly upcomingCommitments: OverviewBlockEnvelope<{
+    readonly items: readonly OverviewCommitmentItem[];
+    readonly totalMatching: number;
+    readonly viewAllHref: string;
+  }>;
+  readonly upcomingIncome: OverviewBlockEnvelope<{
+    readonly items: readonly OverviewCommitmentItem[];
+    readonly totalMatching: number;
+    readonly viewAllHref: string;
+  }>;
+  readonly caixinhasSummary: OverviewBlockEnvelope<{
+    readonly status: "AVAILABLE" | "UNAVAILABLE";
+    readonly items: readonly OverviewCaixinhaItem[];
+    readonly totalCount: number;
+    readonly viewAllHref: string;
+  }>;
+  readonly cardInvoices: OverviewBlockEnvelope<{
+    readonly items: readonly OverviewCardInvoiceItem[];
+    readonly viewAllHref: string;
+  }>;
+  readonly alerts: OverviewBlockEnvelope<{
+    readonly items: readonly OverviewAlert[];
+  }>;
+}
+
 export interface GetOverviewInput {
   readonly asOf?: string;
   readonly scenario?: OverviewScenario;

@@ -67,6 +67,7 @@ export interface DefaultOverviewPortsDependencies {
 
 const PUBLIC_ORIGIN_ERROR_CODES = new Set([
   "FINANCIAL_CONTEXT_REQUIRED",
+  "SPENDABLE_NOT_FOUND",
   "SPENDABLE_QUERY_FAILED",
   "FORECAST_QUERY_FAILED",
   "QUERY_FAILED",
