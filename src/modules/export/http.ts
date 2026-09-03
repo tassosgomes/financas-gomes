@@ -1,4 +1,4 @@
-import { createExportOpaqueError, type ExportErrorCode } from "@/components/export/contracts";
+import { createExportOpaqueError, S11_EXPORT_ROW_COUNT_HEADER, type ExportErrorCode } from "@/components/export/contracts";
 import { FinancialContextError } from "@/modules/households/contracts";
 import { toS11ErrorEnvelope } from "@/modules/observability/s11";
 
@@ -116,13 +116,22 @@ export function mapExportRouteError(
   };
 }
 
-export function exportDownloadHeaders(): HeadersInit {
-  return {
+/** Response header carrying total exported row count (integer only, no PII). */
+export { S11_EXPORT_ROW_COUNT_HEADER } from "@/components/export/contracts";
+
+export function exportDownloadHeaders(rowCountTotal?: number): HeadersInit {
+  const headers: Record<string, string> = {
     "Content-Type": "application/zip",
     "Content-Disposition": `attachment; filename="financas-gomes-export-s11v1.zip"`,
     "Cache-Control": "no-store",
     Pragma: "no-cache",
   };
+
+  if (rowCountTotal !== undefined) {
+    headers[S11_EXPORT_ROW_COUNT_HEADER] = String(rowCountTotal);
+  }
+
+  return headers;
 }
 
 export function exportNoStoreHeaders(): HeadersInit {

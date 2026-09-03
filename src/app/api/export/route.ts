@@ -54,7 +54,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return new Response(new Uint8Array(result.zip), {
       status: 200,
-      headers: exportDownloadHeaders(),
+      headers: exportDownloadHeaders(result.manifest.rowCountTotal),
     });
   } catch (error) {
     const mapped = mapExportRouteError(error);

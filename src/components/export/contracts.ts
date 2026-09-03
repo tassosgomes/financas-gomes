@@ -28,6 +28,9 @@ export { EXPORT_SETTINGS_NAV_LABEL };
 
 export const S11_CONTRACT_VERSION = "s11.v1" as const;
 
+/** Response header carrying total exported row count (integer only, no PII). */
+export const S11_EXPORT_ROW_COUNT_HEADER = "X-S11-Row-Count" as const;
+
 /** Closed set of export request states for the Settings screen. */
 export const EXPORT_REQUEST_STATES = [
   "idle",
