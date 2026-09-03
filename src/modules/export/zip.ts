@@ -1,4 +1,4 @@
-import { deflateRawSync } from "node:zlib";
+import { deflateRawSync, inflateRawSync } from "node:zlib";
 
 const LOCAL_FILE_HEADER_SIGNATURE = 0x04034b50;
 const CENTRAL_DIRECTORY_SIGNATURE = 0x02014b50;
@@ -121,6 +121,53 @@ export function createZipArchive(entries: readonly ZipEntry[]): Buffer {
   writeUInt16LE(endRecord, 20, 0);
 
   return Buffer.concat([...localParts, centralDirectory, endRecord]);
+}
+
+/** Reads one entry body as UTF-8 text from a ZIP built by `createZipArchive`. */
+export function readZipEntryText(zip: Buffer, entryName: string): string {
+  const endOffset = zip.lastIndexOf(
+    Buffer.from([0x50, 0x4b, 0x05, 0x06]),
+  );
+  if (endOffset < 0) {
+    throw new Error("ZIP end record not found");
+  }
+
+  const centralDirectoryOffset = zip.readUInt32LE(endOffset + 16);
+  const entryCount = zip.readUInt16LE(endOffset + 10);
+  let offset = centralDirectoryOffset;
+
+  for (let index = 0; index < entryCount; index += 1) {
+    if (zip.readUInt32LE(offset) !== CENTRAL_DIRECTORY_SIGNATURE) {
+      throw new Error("ZIP central directory signature mismatch");
+    }
+
+    const compressionMethod = zip.readUInt16LE(offset + 10);
+    const compressedSize = zip.readUInt32LE(offset + 20);
+    const localHeaderOffset = zip.readUInt32LE(offset + 42);
+    const nameLength = zip.readUInt16LE(offset + 28);
+    const nameStart = offset + 46;
+    const name = zip.subarray(nameStart, nameStart + nameLength).toString("utf8");
+    const extraLength = zip.readUInt16LE(offset + 30);
+    const commentLength = zip.readUInt16LE(offset + 32);
+    offset += 46 + nameLength + extraLength + commentLength;
+
+    if (name !== entryName) {
+      continue;
+    }
+
+    if (compressionMethod !== COMPRESSION_DEFLATE) {
+      throw new Error(`Unsupported ZIP compression for ${entryName}`);
+    }
+
+    const localNameLength = zip.readUInt16LE(localHeaderOffset + 26);
+    const localExtraLength = zip.readUInt16LE(localHeaderOffset + 28);
+    const dataStart =
+      localHeaderOffset + 30 + localNameLength + localExtraLength;
+    const compressed = zip.subarray(dataStart, dataStart + compressedSize);
+    return inflateRawSync(compressed).toString("utf8");
+  }
+
+  throw new Error(`ZIP entry not found: ${entryName}`);
 }
 
 /** Lists entry names from a ZIP built by `createZipArchive` (tests and fixtures). */

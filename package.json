@@ -21,7 +21,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:integration": "T02_INTEGRATION=1 T03_INTEGRATION=1 T04_INTEGRATION=1 T05_INTEGRATION=1 T06_INTEGRATION=1 T07_INTEGRATION=1 T13_INTEGRATION=1 T15_INTEGRATION=1 T08_INTEGRATION=1 T11_INTEGRATION=1 vitest run --config vitest.integration.config.mts",
+    "test:integration": "T02_INTEGRATION=1 T03_INTEGRATION=1 T04_INTEGRATION=1 T05_INTEGRATION=1 T06_INTEGRATION=1 T07_INTEGRATION=1 T13_INTEGRATION=1 T15_INTEGRATION=1 T08_INTEGRATION=1 T11_INTEGRATION=1 S11_INTEGRATION=1 vitest run --config vitest.integration.config.mts",
     "test:watch": "vitest",
     "check": "npm run lint && npm run typecheck && npm test"
   },

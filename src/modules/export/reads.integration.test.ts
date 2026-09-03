@@ -1,29 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { inArray, sql } from "drizzle-orm";
 
 import { closeDb, getDb, type Database } from "@/db";
 import { applyMigrations } from "@/db/migrate";
-import {
-  accountEntries,
-  accounts,
-  budgetAllocationRules,
-  budgetMovements,
-  budgets,
-  categories,
-  creditCardBillingRules,
-  creditCardPurchases,
-  creditCards,
-  financialEvents,
-  holidays,
-  households,
-  installmentPlans,
-  installments,
-  plannedEvents,
-  recurringOccurrences,
-  recurringRules,
-  spendableSettings,
-} from "@/db/schema";
-import type { FinancialContext } from "@/modules/households/contracts";
 
 import {
   S11_DATASET_IDS,
@@ -31,101 +9,21 @@ import {
   type ExportDatasetRow,
   type S11DatasetId,
 } from "./reads";
+import {
+  collectExportRows,
+  readSourceDatasetIds,
+} from "../../../tests/fixtures/s11-operacao-confiavel/export-integration-helpers";
+import {
+  cleanupS11IntegrationHouseholds,
+  contextA,
+  contextEmpty,
+  foreignIdsForHouseholdB,
+  seedS11IntegrationHouseholds,
+  S11_INTEGRATION_FIXTURES,
+} from "../../../tests/fixtures/s11-operacao-confiavel/integration-fixtures";
 
 const integration =
   process.env.S11_INTEGRATION === "1" ? describe : describe.skip;
-
-const FIXTURES = {
-  households: {
-    a: "00000000-0000-7000-8000-000000506101",
-    b: "00000000-0000-7000-8000-000000506102",
-    empty: "00000000-0000-7000-8000-000000506103",
-  },
-  categories: {
-    a: "00000000-0000-7000-8000-000000506201",
-    b: "00000000-0000-7000-8000-000000506202",
-  },
-  accounts: {
-    checkingA: "00000000-0000-7000-8000-000000506301",
-    cardAccountA: "00000000-0000-7000-8000-000000506302",
-    checkingB: "00000000-0000-7000-8000-000000506303",
-    cardAccountB: "00000000-0000-7000-8000-000000506304",
-  },
-  events: {
-    a: "00000000-0000-7000-8000-000000506401",
-    b: "00000000-0000-7000-8000-000000506402",
-    purchaseA: "00000000-0000-7000-8000-000000506403",
-    purchaseB: "00000000-0000-7000-8000-000000506404",
-  },
-  entries: {
-    a: "00000000-0000-7000-8000-000000506501",
-    b: "00000000-0000-7000-8000-000000506502",
-  },
-  cards: {
-    a: "00000000-0000-7000-8000-000000506601",
-    b: "00000000-0000-7000-8000-000000506602",
-  },
-  billingRules: {
-    a: "00000000-0000-7000-8000-000000506701",
-    b: "00000000-0000-7000-8000-000000506702",
-  },
-  purchases: {
-    a: "00000000-0000-7000-8000-000000506801",
-    b: "00000000-0000-7000-8000-000000506802",
-  },
-  plans: {
-    a: "00000000-0000-7000-8000-000000506901",
-    b: "00000000-0000-7000-8000-000000506902",
-  },
-  installments: {
-    a: "00000000-0000-7000-8000-000000507001",
-    b: "00000000-0000-7000-8000-000000507002",
-  },
-  recurringRules: {
-    a: "00000000-0000-7000-8000-000000507101",
-    b: "00000000-0000-7000-8000-000000507102",
-  },
-  recurringOccurrences: {
-    a: "00000000-0000-7000-8000-000000507201",
-    b: "00000000-0000-7000-8000-000000507202",
-  },
-  plannedEvents: {
-    a: "00000000-0000-7000-8000-000000507301",
-    b: "00000000-0000-7000-8000-000000507302",
-  },
-  holidays: {
-    a: "00000000-0000-7000-8000-000000507401",
-    b: "00000000-0000-7000-8000-000000507402",
-  },
-  spendable: {
-    a: "00000000-0000-7000-8000-000000507501",
-    b: "00000000-0000-7000-8000-000000507502",
-  },
-  budgets: {
-    a: "00000000-0000-7000-8000-000000507601",
-    b: "00000000-0000-7000-8000-000000507602",
-  },
-  budgetMovements: {
-    a: "00000000-0000-7000-8000-000000507701",
-    b: "00000000-0000-7000-8000-000000507702",
-  },
-  allocationRules: {
-    a: "00000000-0000-7000-8000-000000507801",
-    b: "00000000-0000-7000-8000-000000507802",
-  },
-} as const;
-
-const householdIds = Object.values(FIXTURES.households);
-
-const contextA: FinancialContext = {
-  userId: "00000000-0000-7000-8000-000000508001",
-  householdId: FIXTURES.households.a,
-};
-
-const contextEmpty: FinancialContext = {
-  userId: "00000000-0000-7000-8000-000000508002",
-  householdId: FIXTURES.households.empty,
-};
 
 function databaseOrThrow(database: Database | undefined): Database {
   if (!database) {
@@ -134,283 +32,17 @@ function databaseOrThrow(database: Database | undefined): Database {
   return database;
 }
 
-async function collectRows(
-  generator: AsyncGenerator<ExportDatasetRow>,
-): Promise<ExportDatasetRow[]> {
-  const rows: ExportDatasetRow[] = [];
-  for await (const row of generator) {
-    rows.push(row);
-  }
-  return rows;
-}
-
 async function readDatasetRows(
   database: Database,
-  context: FinancialContext,
   datasetId: S11DatasetId,
   filters?: Parameters<typeof readExportDataset>[2],
 ): Promise<ExportDatasetRow[]> {
-  const result = await readExportDataset(context, datasetId, {
+  const result = await readExportDataset(contextA, datasetId, {
     ...filters,
     database,
   });
   expect(result.availability).toBe("AVAILABLE");
-  return collectRows(result.rows);
-}
-
-async function cleanup(database: Database): Promise<void> {
-  await database.execute(
-    sql.raw(
-      "truncate table budget_movements, budget_allocation_rules, budgets, spendable_settings, holidays, planned_events, recurring_occurrences, recurring_rules, installments, installment_plans, credit_card_purchases, credit_card_billing_rules, credit_cards, account_entries, financial_events, categories, accounts restart identity cascade",
-    ),
-  );
-  await database
-    .delete(households)
-    .where(inArray(households.id, [...householdIds]));
-}
-
-async function seedHousehold(
-  database: Database,
-  householdId: string,
-  suffix: "a" | "b",
-): Promise<void> {
-  const categoryId = FIXTURES.categories[suffix];
-  const checkingId = FIXTURES.accounts[suffix === "a" ? "checkingA" : "checkingB"];
-  const cardAccountId = FIXTURES.accounts[suffix === "a" ? "cardAccountA" : "cardAccountB"];
-  const eventId = FIXTURES.events[suffix];
-  const purchaseEventId = FIXTURES.events[suffix === "a" ? "purchaseA" : "purchaseB"];
-  const entryId = FIXTURES.entries[suffix];
-  const cardId = FIXTURES.cards[suffix];
-  const billingRuleId = FIXTURES.billingRules[suffix];
-  const purchaseId = FIXTURES.purchases[suffix];
-  const planId = FIXTURES.plans[suffix];
-  const installmentId = FIXTURES.installments[suffix];
-  const recurringRuleId = FIXTURES.recurringRules[suffix];
-  const recurringOccurrenceId = FIXTURES.recurringOccurrences[suffix];
-  const plannedEventId = FIXTURES.plannedEvents[suffix];
-  const holidayId = FIXTURES.holidays[suffix];
-  const spendableId = FIXTURES.spendable[suffix];
-  const budgetId = FIXTURES.budgets[suffix];
-  const movementId = FIXTURES.budgetMovements[suffix];
-  const allocationRuleId = FIXTURES.allocationRules[suffix];
-
-  await database.insert(categories).values({
-    id: categoryId,
-    householdId,
-    name: `S11 Category ${suffix.toUpperCase()}`,
-    kind: "EXPENSE",
-  });
-
-  await database.insert(accounts).values([
-    {
-      id: checkingId,
-      householdId,
-      name: `S11 Checking ${suffix.toUpperCase()}`,
-      type: "CHECKING",
-      trackingStartedOn: "2026-01-01",
-    },
-    {
-      id: cardAccountId,
-      householdId,
-      name: `S11 Card Account ${suffix.toUpperCase()}`,
-      type: "CREDIT_CARD",
-      trackingStartedOn: "2026-01-01",
-    },
-  ]);
-
-  await database.insert(financialEvents).values([
-    {
-      id: eventId,
-      householdId,
-      kind: "EXPENSE",
-      status: "POSTED",
-      origin: "MANUAL",
-      amountCents: BigInt("1500"),
-      occurredOn: "2026-02-01",
-      description: `S11 Event ${suffix.toUpperCase()}`,
-      categoryId,
-    },
-    {
-      id: purchaseEventId,
-      householdId,
-      kind: "PURCHASE",
-      status: "POSTED",
-      origin: "SYSTEM",
-      amountCents: BigInt("3000"),
-      occurredOn: "2026-02-15",
-      description: `S11 Purchase ${suffix.toUpperCase()}`,
-      categoryId,
-    },
-  ]);
-
-  await database.insert(accountEntries).values({
-    id: entryId,
-    householdId,
-    financialEventId: eventId,
-    accountId: checkingId,
-    amountCents: BigInt("-1500"),
-    status: "POSTED",
-    postedOn: "2026-02-01",
-  });
-
-  await database.insert(creditCards).values({
-    id: cardId,
-    householdId,
-    accountId: cardAccountId,
-    creditLimitCents: BigInt("100000"),
-    defaultPaymentAccountId: checkingId,
-  });
-
-  await database.insert(creditCardBillingRules).values({
-    id: billingRuleId,
-    householdId,
-    cardId,
-    closingDay: 10,
-    dueDay: 17,
-    effectiveFrom: "2026-01-01",
-  });
-
-  await database.insert(creditCardPurchases).values({
-    id: purchaseId,
-    householdId,
-    cardId,
-    financialEventId: purchaseEventId,
-    installmentPlanId: planId,
-  });
-
-  await database.insert(installmentPlans).values({
-    id: planId,
-    householdId,
-    purchaseId,
-    totalAmountCents: BigInt("3000"),
-    installmentCount: 1,
-  });
-
-  await database.insert(installments).values({
-    id: installmentId,
-    householdId,
-    planId,
-    purchaseId,
-    sequence: 1,
-    amountCents: BigInt("3000"),
-    status: "POSTED",
-    billingRuleId,
-    billingCycle: "2026-02-01",
-    billingClosingDay: 10,
-    billingDueDay: 17,
-    billingClosingOn: "2026-02-10",
-    billingDueOn: "2026-02-17",
-  });
-
-  await database.insert(recurringRules).values({
-    id: recurringRuleId,
-    householdId,
-    accountId: checkingId,
-    categoryId,
-    kind: "EXPENSE",
-    amountCents: BigInt("500"),
-    description: `S11 Recurring ${suffix.toUpperCase()}`,
-    frequency: "MONTHLY",
-    dayRule: "FIXED_DAY",
-    dayOfMonth: 5,
-    startOn: "2026-01-01",
-  });
-
-  await database.insert(recurringOccurrences).values({
-    id: recurringOccurrenceId,
-    householdId,
-    recurringRuleId,
-    occurrenceKey: "2026-02",
-    status: "PLANNED",
-  });
-
-  await database.insert(plannedEvents).values({
-    id: plannedEventId,
-    householdId,
-    accountId: checkingId,
-    categoryId,
-    kind: "EXPENSE",
-    status: "PLANNED",
-    amountCents: BigInt("700"),
-    expectedOn: "2026-03-01",
-    description: `S11 Planned ${suffix.toUpperCase()}`,
-  });
-
-  await database.insert(holidays).values({
-    id: holidayId,
-    householdId,
-    date: "2026-04-21",
-    name: `S11 Holiday ${suffix.toUpperCase()}`,
-  });
-
-  await database.insert(spendableSettings).values({
-    id: spendableId,
-    householdId,
-    effectiveFrom: "2026-01-01",
-    operationalBufferCents: BigInt("2000"),
-  });
-
-  await database.insert(budgets).values({
-    id: budgetId,
-    householdId,
-    referenceId: `s11-box-${suffix}`,
-    categoryId,
-    name: `S11 Budget ${suffix.toUpperCase()}`,
-    status: "ACTIVE",
-    activeFrom: "2026-01-01",
-  });
-
-  await database.insert(budgetMovements).values({
-    id: movementId,
-    householdId,
-    budgetId,
-    referenceId: `s11-movement-${suffix}`,
-    kind: "CONTRIBUTION",
-    amountCents: BigInt("1000"),
-    effectiveOn: "2026-02-01",
-  });
-
-  await database.insert(budgetAllocationRules).values({
-    id: allocationRuleId,
-    householdId,
-    budgetId,
-    amountCents: BigInt("1000"),
-    effectiveFrom: "2026-01-01",
-  });
-}
-
-async function seed(database: Database): Promise<void> {
-  await database.insert(households).values([
-    { id: FIXTURES.households.a, name: "S11 Household A" },
-    { id: FIXTURES.households.b, name: "S11 Household B" },
-    { id: FIXTURES.households.empty, name: "S11 Household Empty" },
-  ]);
-  await seedHousehold(database, FIXTURES.households.a, "a");
-  await seedHousehold(database, FIXTURES.households.b, "b");
-}
-
-function foreignIdsForHouseholdB(): string[] {
-  return [
-    FIXTURES.categories.b,
-    FIXTURES.accounts.checkingB,
-    FIXTURES.accounts.cardAccountB,
-    FIXTURES.events.b,
-    FIXTURES.events.purchaseB,
-    FIXTURES.entries.b,
-    FIXTURES.cards.b,
-    FIXTURES.billingRules.b,
-    FIXTURES.purchases.b,
-    FIXTURES.plans.b,
-    FIXTURES.installments.b,
-    FIXTURES.recurringRules.b,
-    FIXTURES.recurringOccurrences.b,
-    FIXTURES.plannedEvents.b,
-    FIXTURES.holidays.b,
-    FIXTURES.spendable.b,
-    FIXTURES.budgets.b,
-    FIXTURES.budgetMovements.b,
-    FIXTURES.allocationRules.b,
-  ];
+  return collectExportRows(result.rows);
 }
 
 integration("S11 export reads tenant isolation", () => {
@@ -428,13 +60,13 @@ integration("S11 export reads tenant isolation", () => {
 
   beforeEach(async () => {
     const db = databaseOrThrow(database);
-    await cleanup(db);
-    await seed(db);
+    await cleanupS11IntegrationHouseholds(db);
+    await seedS11IntegrationHouseholds(db);
   });
 
   afterAll(async () => {
     if (database) {
-      await cleanup(database);
+      await cleanupS11IntegrationHouseholds(database);
     }
     await closeDb();
   });
@@ -443,7 +75,7 @@ integration("S11 export reads tenant isolation", () => {
     "never returns household B rows for dataset %s when context is A",
     async (datasetId) => {
       const db = databaseOrThrow(database);
-      const rows = await readDatasetRows(db, contextA, datasetId);
+      const rows = await readDatasetRows(db, datasetId);
       const foreignIds = new Set(foreignIdsForHouseholdB());
 
       expect(rows.length).toBeGreaterThan(0);
@@ -463,23 +95,46 @@ integration("S11 export reads tenant isolation", () => {
   it("returns zero rows for an empty household without error", async () => {
     const db = databaseOrThrow(database);
     for (const datasetId of S11_DATASET_IDS) {
-      const rows = await readDatasetRows(db, contextEmpty, datasetId);
+      const result = await readExportDataset(contextEmpty, datasetId, {
+        database: db,
+      });
+      expect(result.availability).toBe("AVAILABLE");
+      const rows = await collectExportRows(result.rows);
       expect(rows).toEqual([]);
     }
   });
 
   it("treats foreign account and category filters as absence for financial datasets", async () => {
     const db = databaseOrThrow(database);
-    const eventRows = await readDatasetRows(db, contextA, "financial_events", {
+    const eventRows = await readDatasetRows(db, "financial_events", {
       filters: {
-        accountId: FIXTURES.accounts.checkingB,
-        categoryId: FIXTURES.categories.b,
+        accountId: S11_INTEGRATION_FIXTURES.accounts.checkingB,
+        categoryId: S11_INTEGRATION_FIXTURES.categories.b,
       },
     });
-    const entryRows = await readDatasetRows(db, contextA, "account_entries", {
+    const entryRows = await readDatasetRows(db, "account_entries", {
       filters: {
-        accountId: FIXTURES.accounts.checkingB,
-        categoryId: FIXTURES.categories.b,
+        accountId: S11_INTEGRATION_FIXTURES.accounts.checkingB,
+        categoryId: S11_INTEGRATION_FIXTURES.categories.b,
+      },
+    });
+
+    expect(eventRows).toEqual([]);
+    expect(entryRows).toEqual([]);
+  });
+
+  it("returns zero financial rows when valid filters exclude every event", async () => {
+    const db = databaseOrThrow(database);
+    const eventRows = await readDatasetRows(db, "financial_events", {
+      filters: {
+        from: "2099-01-01",
+        to: "2099-12-31",
+      },
+    });
+    const entryRows = await readDatasetRows(db, "account_entries", {
+      filters: {
+        from: "2099-01-01",
+        to: "2099-12-31",
       },
     });
 
@@ -489,14 +144,40 @@ integration("S11 export reads tenant isolation", () => {
 
   it("keeps non-transaction datasets complete when transaction filters are provided", async () => {
     const db = databaseOrThrow(database);
-    const accountRows = await readDatasetRows(db, contextA, "accounts", {
+    const accountRows = await readDatasetRows(db, "accounts", {
       filters: {
         from: "2099-01-01",
-        accountId: FIXTURES.accounts.checkingB,
+        accountId: S11_INTEGRATION_FIXTURES.accounts.checkingB,
       },
     });
-    expect(accountRows.some((row) => row.id === FIXTURES.accounts.checkingA)).toBe(
+    expect(accountRows.some((row) => row.id === S11_INTEGRATION_FIXTURES.accounts.checkingA)).toBe(
       true,
     );
+  });
+
+  it.each(S11_DATASET_IDS)(
+    "reconciles exported ids for dataset %s with the source read order",
+    async (datasetId) => {
+      const db = databaseOrThrow(database);
+      const ids = await readSourceDatasetIds(db, contextA, datasetId);
+      const rows = await readDatasetRows(db, datasetId);
+      expect(rows.map((row) => String(row.id))).toEqual(ids);
+    },
+  );
+
+  it("filters financial events by kind, status and date range from the transactions screen", async () => {
+    const db = databaseOrThrow(database);
+    const rows = await readDatasetRows(db, "financial_events", {
+      filters: {
+        from: "2026-02-01",
+        to: "2026-02-15",
+        kind: "EXPENSE",
+        status: "POSTED",
+        accountId: S11_INTEGRATION_FIXTURES.accounts.checkingA,
+        categoryId: S11_INTEGRATION_FIXTURES.categories.a,
+      },
+    });
+
+    expect(rows.map((row) => row.id)).toEqual([S11_INTEGRATION_FIXTURES.events.a]);
   });
 });

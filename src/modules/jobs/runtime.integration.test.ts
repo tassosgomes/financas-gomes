@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { eq } from "drizzle-orm";
 
 import { closeDb, getDb, type Database } from "@/db";
@@ -107,10 +107,12 @@ integration("S11 job runtime (integration)", () => {
       effect: async () => {
         effectCount += 1;
       },
+    }).then((result) => {
+      release?.();
+      return result;
     });
 
     const [firstResult, secondResult] = await Promise.all([first, second]);
-    release?.();
 
     const statuses = [firstResult.status, secondResult.status].sort();
     expect(statuses).toEqual(["SKIPPED_IDEMPOTENT", "SUCCEEDED"]);
@@ -183,6 +185,35 @@ integration("S11 job runtime (integration)", () => {
       .where(eq(jobExecutions.logicalWindow, LOGICAL_WINDOW));
     expect(rows[0]?.status).toBe("FAILED");
     expect(rows[0]?.errorCode).toBe("JOB_INVALID_INPUT");
+  });
+
+  it("emits job.finish with opaque state after deterministic failure", async () => {
+    const db = databaseOrThrow(database);
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    const infoLog = vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+    const result = await runJob({
+      jobName: "s11.job.heartbeat",
+      logicalWindow: LOGICAL_WINDOW,
+      correlationId: "corr-finish-event",
+      database: db,
+      sleep: async () => undefined,
+      effect: async () => {
+        throw new JobDeterministicError("JOB_INVALID_INPUT");
+      },
+    });
+
+    expect(result.status).toBe("FAILED");
+    const payloads = [...errorLog.mock.calls, ...infoLog.mock.calls].map((call) =>
+      String(call[0]),
+    );
+    const finish = payloads.find((payload) => payload.includes('"operation":"job.finish"'));
+    expect(finish).toBeDefined();
+    expect(finish).toContain('"result":"FAILED"');
+    expect(finish).toContain('"operation":"job.finish"');
+    expect(finish).not.toMatch(/household|amount|password|postgresql/iu);
+    errorLog.mockRestore();
+    infoLog.mockRestore();
   });
 
   it("exposes recent executions for operator diagnostics", async () => {

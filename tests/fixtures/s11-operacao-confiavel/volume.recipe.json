@@ -1,0 +1,20 @@
+{
+  "fixtureVersion": "s11-operacao-confiavel-volume-v1",
+  "description": "Representative export volume per ADR-014 (10k events, 20k entries).",
+  "householdId": "00000000-0000-7000-8000-000000508201",
+  "categoryId": "00000000-0000-7000-8000-000000508301",
+  "accountId": "00000000-0000-7000-8000-000000508401",
+  "userId": "00000000-0000-7000-8000-000000508501",
+  "targets": {
+    "financial_events": 10000,
+    "account_entries": 20000
+  },
+  "limits": {
+    "maxExportDurationMs": 25000
+  },
+  "idPrefixes": {
+    "financialEvent": "00000000-0000-7000-8100-",
+    "accountEntry": "00000000-0000-7000-8200-"
+  },
+  "optInEnv": "S11_VOLUME_INTEGRATION"
+}
