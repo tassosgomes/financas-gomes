@@ -1,52 +1,21 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { inArray } from "drizzle-orm";
 
 import { closeDb, getDb, type Database } from "@/db";
 import { applyMigrations } from "@/db/migrate";
 import {
-  categories,
-  financialEvents,
-  households,
-} from "@/db/schema";
-import type { FinancialContext } from "@/modules/households/contracts";
+  cleanupS10VolumeFixtures,
+  createS10VolumeContexts,
+  S10_VOLUME_AS_OF,
+  S10_VOLUME_IDS,
+  seedS10VolumeFixtures,
+} from "../../../tests/fixtures/s10-visao-consolidada/seed";
 
+import { civilMonthPeriod } from "./period";
+import { readPeriodAggregationForContext } from "./query";
 import { getOverviewForContext } from "./service";
 
 const integration =
   process.env.T10_INTEGRATION === "1" ? describe : describe.skip;
-
-const FIXTURES = {
-  households: {
-    a: "00000000-0000-7000-8000-000000101001",
-    b: "00000000-0000-7000-8000-000000101002",
-  },
-  categories: {
-    aFood: "00000000-0000-7000-8000-000000101101",
-    aCard: "00000000-0000-7000-8000-000000101102",
-    bOther: "00000000-0000-7000-8000-000000101103",
-  },
-  events: {
-    expenseA: "00000000-0000-7000-8000-000000101201",
-    purchaseA: "00000000-0000-7000-8000-000000101202",
-    transferA: "00000000-0000-7000-8000-000000101203",
-    expenseB: "00000000-0000-7000-8000-000000101204",
-  },
-} as const;
-
-const householdIds = [
-  FIXTURES.households.a,
-  FIXTURES.households.b,
-] as const;
-
-const contextA: FinancialContext = {
-  userId: "00000000-0000-7000-8000-000000101901",
-  householdId: FIXTURES.households.a,
-};
-
-const contextB: FinancialContext = {
-  userId: "00000000-0000-7000-8000-000000101902",
-  householdId: FIXTURES.households.b,
-};
 
 function databaseOrThrow(database: Database | undefined): Database {
   if (!database) {
@@ -55,130 +24,102 @@ function databaseOrThrow(database: Database | undefined): Database {
   return database;
 }
 
-async function cleanup(database: Database): Promise<void> {
-  await database
-    .delete(financialEvents)
-    .where(inArray(financialEvents.householdId, householdIds));
-  await database
-    .delete(categories)
-    .where(inArray(categories.householdId, householdIds));
-  await database.delete(households).where(inArray(households.id, householdIds));
-}
-
-async function seed(database: Database): Promise<void> {
-  await database.insert(households).values([
-    { id: FIXTURES.households.a, name: "T10 Overview Service A" },
-    { id: FIXTURES.households.b, name: "T10 Overview Service B" },
-  ]);
-
-  await database.insert(categories).values([
-    {
-      id: FIXTURES.categories.aFood,
-      householdId: FIXTURES.households.a,
-      name: "Alimentação",
-      kind: "EXPENSE",
-    },
-    {
-      id: FIXTURES.categories.aCard,
-      householdId: FIXTURES.households.a,
-      name: "Cartão",
-      kind: "EXPENSE",
-    },
-    {
-      id: FIXTURES.categories.bOther,
-      householdId: FIXTURES.households.b,
-      name: "Vizinho",
-      kind: "EXPENSE",
-    },
-  ]);
-
-  await database.insert(financialEvents).values([
-    {
-      id: FIXTURES.events.expenseA,
-      householdId: FIXTURES.households.a,
-      kind: "EXPENSE",
-      status: "POSTED",
-      origin: "MANUAL",
-      amountCents: BigInt(2500),
-      occurredOn: "2026-09-08",
-      description: "T10 expense A",
-      categoryId: FIXTURES.categories.aFood,
-    },
-    {
-      id: FIXTURES.events.purchaseA,
-      householdId: FIXTURES.households.a,
-      kind: "PURCHASE",
-      status: "POSTED",
-      origin: "MANUAL",
-      amountCents: BigInt(30000),
-      occurredOn: "2026-09-05",
-      description: "T10 purchase A",
-      categoryId: FIXTURES.categories.aCard,
-    },
-    {
-      id: FIXTURES.events.transferA,
-      householdId: FIXTURES.households.a,
-      kind: "TRANSFER",
-      status: "POSTED",
-      origin: "MANUAL",
-      amountCents: BigInt(10000),
-      occurredOn: "2026-09-20",
-      description: "T10 card payment transfer",
-      categoryId: null,
-    },
-    {
-      id: FIXTURES.events.expenseB,
-      householdId: FIXTURES.households.b,
-      kind: "EXPENSE",
-      status: "POSTED",
-      origin: "MANUAL",
-      amountCents: BigInt(99999),
-      occurredOn: "2026-09-12",
-      description: "T10 neighbor expense",
-      categoryId: FIXTURES.categories.bOther,
-    },
-  ]);
-}
-
 integration("overview service integration", () => {
+  const contexts = createS10VolumeContexts();
+  const period = civilMonthPeriod(S10_VOLUME_AS_OF);
   let database: Database | undefined;
 
   beforeAll(async () => {
+    if (!process.env.DATABASE_URL) {
+      throw new Error(
+        "Defina DATABASE_URL apontando para PostgreSQL descartável antes de executar T10_INTEGRATION=1.",
+      );
+    }
     await applyMigrations();
     database = getDb();
   });
 
   beforeEach(async () => {
-    await cleanup(databaseOrThrow(database));
-    await seed(databaseOrThrow(database));
+    const db = databaseOrThrow(database);
+    await cleanupS10VolumeFixtures(db);
+    await seedS10VolumeFixtures(db);
   });
 
   afterAll(async () => {
-    await cleanup(databaseOrThrow(database));
-    await closeDb();
+    if (database) {
+      await cleanupS10VolumeFixtures(database);
+      await closeDb();
+    }
   });
 
   it("isolates households and reconciles expense totals with aggregation", async () => {
+    const db = databaseOrThrow(database);
+    const aggregationA = await readPeriodAggregationForContext(contexts.a, period, {
+      database: db,
+    });
+    const aggregationB = await readPeriodAggregationForContext(contexts.b, period, {
+      database: db,
+    });
+
     const resultA = await getOverviewForContext(
-      contextA,
-      { asOf: "2026-09-15" },
-      { database },
+      contexts.a,
+      { asOf: S10_VOLUME_AS_OF },
+      { database: db },
     );
     const resultB = await getOverviewForContext(
-      contextB,
-      { asOf: "2026-09-15" },
-      { database },
+      contexts.b,
+      { asOf: S10_VOLUME_AS_OF },
+      { database: db },
     );
 
     expect(resultA.ok).toBe(true);
     expect(resultB.ok).toBe(true);
     if (!resultA.ok || !resultB.ok) return;
 
-    expect(resultA.value.expensesByCategory.data?.totalExpenseCents).toBe("32500");
-    expect(resultB.value.expensesByCategory.data?.totalExpenseCents).toBe("99999");
-    expect(JSON.stringify(resultA.value)).not.toContain(FIXTURES.households.b);
-    expect(JSON.stringify(resultB.value)).not.toContain(FIXTURES.households.a);
+    expect(resultA.value.expensesByCategory.data?.totalExpenseCents).toBe(
+      aggregationA.totalExpenseCents,
+    );
+    expect(resultA.value.periodSummary.data?.expenseCents).toBe(
+      aggregationA.summary.expenseCents,
+    );
+    expect(resultB.value.expensesByCategory.data?.totalExpenseCents).toBe(
+      aggregationB.totalExpenseCents,
+    );
+    expect(resultB.value.periodSummary.data?.expenseCents).toBe(
+      aggregationB.summary.expenseCents,
+    );
+    expect(aggregationA.summary.expenseCents).not.toBe(
+      aggregationB.summary.expenseCents,
+    );
+
+    const serializedA = JSON.stringify(resultA.value);
+    const serializedB = JSON.stringify(resultB.value);
+    expect(serializedA).not.toContain(S10_VOLUME_IDS.households.b);
+    expect(serializedB).not.toContain(S10_VOLUME_IDS.households.a);
+    expect(serializedA).not.toContain("T09 expense B");
+    expect(serializedB).not.toContain("T09 installment purchase A");
+  });
+
+  it("does not leak neighbor names, references or links through forged context", async () => {
+    const db = databaseOrThrow(database);
+    const result = await getOverviewForContext(
+      contexts.a,
+      { asOf: S10_VOLUME_AS_OF },
+      { database: db },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const serialized = JSON.stringify(result.value);
+    expect(serialized).not.toContain(S10_VOLUME_IDS.categories.bFood);
+    expect(serialized).not.toContain(S10_VOLUME_IDS.categories.bOther);
+    expect(serialized).not.toContain(S10_VOLUME_IDS.events.purchaseB);
+    expect(serialized).not.toContain(S10_VOLUME_IDS.events.transferA);
+    expect(serialized).not.toContain("T09 single purchase B");
+    expect(serialized).not.toContain("Alimentação B");
+    expect(serialized).not.toContain("householdId");
   });
 });
 
-// Opt-in PostgreSQL reconciliation for T06. Enable with `T10_INTEGRATION=1`.
+// Opt-in PostgreSQL reconciliation for T06/T13. Enable with `T10_INTEGRATION=1`.

@@ -8,6 +8,8 @@ import type { SpendableBreakdown } from "@/modules/spendable/contracts";
 import type { PeriodAggregationResult } from "./aggregate";
 import { getOverviewForContext } from "./service";
 import type { OriginResult, OverviewOriginPorts } from "./ports";
+import { OverviewQueryError } from "./query";
+import type { OverviewBlockEnvelope, OverviewReadModel } from "./contracts";
 
 const AS_OF = "2026-09-15";
 const CONTEXT_A: FinancialContext = {
@@ -247,6 +249,35 @@ function createAggregationReader(
   });
 }
 
+function monetaryFieldsFromBlock(block: OverviewBlockEnvelope<unknown>): string[] {
+  if (block.state !== "ready" || block.data === undefined) {
+    return [];
+  }
+
+  const serialized = JSON.stringify(block.data);
+  const matches = serialized.match(/"[^"]*Cents":\s*"-?\d+"/gu) ?? [];
+  return matches;
+}
+
+function assertErrorBlocksNeverExposeMonetaryZero(model: OverviewReadModel): void {
+  const blocks: Array<[string, OverviewBlockEnvelope<unknown>]> = [
+    ["spendable", model.spendable],
+    ["periodSummary", model.periodSummary],
+    ["expensesByCategory", model.expensesByCategory],
+    ["upcomingCommitments", model.upcomingCommitments],
+    ["upcomingIncome", model.upcomingIncome],
+    ["caixinhasSummary", model.caixinhasSummary],
+    ["cardInvoices", model.cardInvoices],
+  ];
+
+  for (const [name, block] of blocks) {
+    if (block.state === "error") {
+      expect(block.data, `${name} error block must not carry monetary data`).toBeUndefined();
+      expect(monetaryFieldsFromBlock(block), `${name} error block leaked cents`).toEqual([]);
+    }
+  }
+}
+
 describe("getOverviewForContext", () => {
   it("returns empty blocks for an empty household without invented critical numbers", async () => {
     const ports = createFakePorts({
@@ -383,6 +414,48 @@ describe("getOverviewForContext", () => {
       BigInt(0),
     );
     expect(groupSum.toString()).toBe(data?.totalExpenseCents);
+  });
+
+  it("never maps origin failures to monetary zero in ready blocks", async () => {
+    const ports = createFakePorts({
+      readSpendable: vi.fn(async () => ({
+        ok: false,
+        error: { code: "SPENDABLE_QUERY_FAILED", field: null },
+      })) as OverviewOriginPorts["readSpendable"],
+      readForecast: vi.fn(async () => ({
+        ok: false,
+        error: { code: "FORECAST_QUERY_FAILED", field: null },
+      })) as OverviewOriginPorts["readForecast"],
+      readBudgets: vi.fn(async () => ({
+        ok: false,
+        error: { code: "QUERY_FAILED", field: null },
+      })) as OverviewOriginPorts["readBudgets"],
+      readCardInvoices: vi.fn(async () => ({
+        ok: false,
+        error: { code: "OVERVIEW_ORIGIN_UNAVAILABLE", field: null },
+      })) as OverviewOriginPorts["readCardInvoices"],
+    });
+    const readAggregation = vi.fn(async () => {
+      throw new OverviewQueryError();
+    });
+
+    const result = await getOverviewForContext(
+      CONTEXT_A,
+      { asOf: AS_OF },
+      { ports, readAggregation },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.spendable.state).toBe("error");
+    expect(result.value.periodSummary.state).toBe("error");
+    expect(result.value.expensesByCategory.state).toBe("error");
+    expect(result.value.upcomingCommitments.state).toBe("error");
+    expect(result.value.upcomingIncome.state).toBe("error");
+    expect(result.value.caixinhasSummary.state).toBe("error");
+    expect(result.value.cardInvoices.state).toBe("error");
+    assertErrorBlocksNeverExposeMonetaryZero(result.value);
   });
 
   it("does not leak neighbor household data through fakes", async () => {

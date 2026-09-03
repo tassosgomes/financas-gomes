@@ -7,10 +7,12 @@ import {
   OVERVIEW_UNCATEGORIZED_LABEL,
 } from "./contracts";
 import {
+  __distributeHamiltonPercentsForTest,
   aggregatePeriodFacts,
   sumCategoryGroupAmounts,
   sumCategoryGroupPercents,
   type PeriodAggregationCategory,
+  type PeriodAggregationEventKind,
   type PeriodAggregationFact,
 } from "./aggregate";
 import { civilMonthPeriod } from "./period";
@@ -262,6 +264,27 @@ describe("aggregatePeriodFacts", () => {
     expect(JSON.stringify(result)).not.toMatch(/Cents":\s*\d/);
   });
 
+  it("9. counts purchase once and ignores non-economic transfer rows in facts", () => {
+    const facts: PeriodAggregationFact[] = [
+      purchase("evt-purchase", "30000", "2026-09-05"),
+      {
+        id: "evt-transfer",
+        kind: "TRANSFER" as unknown as PeriodAggregationEventKind,
+        status: "POSTED",
+        amountCents: "10000",
+        occurredOn: "2026-09-20",
+        categoryId: null,
+        reversalOfEventId: null,
+      },
+    ];
+
+    const result = aggregatePeriodFacts(facts, CATEGORIES, SEPTEMBER);
+    expect(result.summary.expenseCents).toBe("30000");
+    expect(result.summary.purchaseEventCount).toBe(1);
+    expect(result.summary.expenseEventCount).toBe(0);
+    expect(sumCategoryGroupAmounts(result.groups)).toBe("30000");
+  });
+
   it("nets income reversals in the reversal month", () => {
     const incomeId = "evt-income";
     const facts = withOriginals(
@@ -275,6 +298,28 @@ describe("aggregatePeriodFacts", () => {
     const result = aggregatePeriodFacts(facts, CATEGORIES, SEPTEMBER);
     expect(result.summary.incomeCents).toBe("15000");
     expect(result.summary.expenseCents).toBe("0");
+  });
+});
+
+describe("Hamilton percent distribution", () => {
+  it("allocates integer percents that sum to 100", () => {
+    const percents = __distributeHamiltonPercentsForTest(
+      ["3333", "3333", "3334"],
+      "10000",
+    );
+
+    expect(percents).toEqual([33, 33, 34]);
+    expect(percents.reduce((sum, percent) => sum + percent, 0)).toBe(100);
+  });
+
+  it("assigns the remainder to the largest fractional parts", () => {
+    const percents = __distributeHamiltonPercentsForTest(
+      ["1000", "1000", "1000", "1000", "1000", "1000", "1000", "1000", "1000"],
+      "9000",
+    );
+
+    expect(percents.reduce((sum, percent) => sum + percent, 0)).toBe(100);
+    expect(percents.every((percent) => Number.isInteger(percent))).toBe(true);
   });
 });
 
