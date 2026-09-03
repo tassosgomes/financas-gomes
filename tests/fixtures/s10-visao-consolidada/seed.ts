@@ -327,18 +327,25 @@ export async function cleanupS10VolumeFixtures(database: Database): Promise<void
     .delete(installments)
     .where(inArray(installments.householdId, S10_VOLUME_HOUSEHOLD_IDS));
   // purchase ↔ plan is a circular FK pair. The compra→plano edge is
-  // DEFERRABLE INITIALLY DEFERRED; we SET CONSTRAINTS inside a transaction
-  // so both sides can be dropped without ordering issues.
+  // DEFERRABLE INITIALLY DEFERRED; the plan→compra edge is IMMEDIATE
+  // RESTRICT. Two separate DELETEs fail at the end of the first statement
+  // (`installment_plans_purchase_household_fkey`). S06 uses a data-modifying
+  // CTE so both sides disappear in one command.
+  const householdIds = () =>
+    sql.join(
+      S10_VOLUME_HOUSEHOLD_IDS.map((id) => sql`${id}::uuid`),
+      sql`, `,
+    );
   await database.transaction(async (tx) => {
     await tx.execute(
       sql`SET CONSTRAINTS "credit_card_purchases_installment_plan_household_fkey" DEFERRED`,
     );
-    await tx
-      .delete(creditCardPurchases)
-      .where(inArray(creditCardPurchases.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-    await tx
-      .delete(installmentPlans)
-      .where(inArray(installmentPlans.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+    await tx.execute(sql`with deleted_purchases as (
+      delete from credit_card_purchases
+       where household_id in (${householdIds()})
+       returning installment_plan_id
+    ) delete from installment_plans
+       where household_id in (${householdIds()})`);
   });
   await database
     .delete(creditCardBillingRules)
