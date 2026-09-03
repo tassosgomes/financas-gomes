@@ -13,11 +13,9 @@ import {
 } from "@/components/budgets/formatters";
 
 import {
-  OVERVIEW_CONTRACT_VERSION,
   type OverviewAlert,
   type OverviewAlertRuleId,
   type OverviewAlertSeverity,
-  type OverviewBlockEnvelope,
   type OverviewBlockState as OverviewDataBlockState,
   type OverviewCaixinhaItem,
   type OverviewCardInvoiceItem,
@@ -25,7 +23,6 @@ import {
   type OverviewCommitmentItem,
   type OverviewPeriod,
   type OverviewPeriodSummary,
-  type OverviewReadModel,
 } from "./contracts";
 
 export type { OverviewReadModel } from "./contracts";
