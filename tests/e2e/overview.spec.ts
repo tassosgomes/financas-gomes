@@ -213,10 +213,10 @@ test.describe("S10 visão geral", () => {
     await expect(page.getByTestId("overview-page")).toBeVisible();
     await page.getByTestId("spendable-card-details-link").click();
     await expect(page).toHaveURL(/\/spendable\/breakdown/);
-    await expect(page.getByTestId("spendable-card-primary-value")).toHaveAttribute(
-      "aria-label",
-      homeSpendable,
-    );
+    await expect(page.getByTestId("spendable-breakdown-route")).toBeVisible();
+    await expect(
+      page.getByTestId("spendable-breakdown-card-primary-value"),
+    ).toHaveAttribute("aria-label", homeSpendable);
   });
 
   test("consulta mobile em 360px não gera scroll horizontal na home", async ({
