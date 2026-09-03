@@ -4,8 +4,6 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  EXPORT_COMPLETED_EMPTY_TITLE,
-  EXPORT_COMPLETED_TITLE,
   EXPORT_ERROR_MESSAGES,
   EXPORT_GENERATING_ACTION_LABEL,
   EXPORT_PRIMARY_ACTION_LABEL,

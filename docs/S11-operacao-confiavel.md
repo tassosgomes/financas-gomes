@@ -71,13 +71,13 @@ idempotentes e deixar estado observável de sucesso/falha.
 
 ## Critérios de aceite
 
-- [ ] Usuário consegue exportar seus dados principais em formato aberto.
-- [ ] Exportação contém apenas dados do espaço financeiro atual.
-- [ ] Existe backup automático compatível com o requisito operacional da V1.
-- [ ] Existe procedimento documentado de restauração e ele é tecnicamente plausível/testado em ambiente seguro.
-- [ ] Falha de job recorrente relevante chega ao Sentry.
-- [ ] Retry não duplica efeitos.
-- [ ] Nenhum segredo é incluído em exportações ou logs.
+- [x] Usuário consegue exportar seus dados principais em formato aberto.
+- [x] Exportação contém apenas dados do espaço financeiro atual.
+- [x] Existe backup automático compatível com o requisito operacional da V1.
+- [x] Existe procedimento documentado de restauração e ele é tecnicamente plausível/testado em ambiente seguro.
+- [x] Falha de job recorrente relevante chega ao Sentry (pipeline + flush; alerta no projeto é configuração do operador).
+- [x] Retry não duplica efeitos.
+- [x] Nenhum segredo é incluído em exportações ou logs.
 
 ## Testes
 

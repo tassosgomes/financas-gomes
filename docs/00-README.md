@@ -31,7 +31,8 @@ Este diretório quebra a V1 em vertical slices implementáveis e validáveis de 
 11. [S11 — Portabilidade, backup e operação confiável](./S11-operacao-confiavel.md)
     ([ADR-014](./adr/014-s11-portabilidade-backup.md),
     [matriz](./S11-operacao-confiavel-contract-matrix.md),
-    [runbook de backup/restauração](./backup-restore.md))
+    [runbook de backup/restauração](./backup-restore.md),
+    [fechamento V1](./v1-fechamento.md))
 
 ## Regra de execução
 

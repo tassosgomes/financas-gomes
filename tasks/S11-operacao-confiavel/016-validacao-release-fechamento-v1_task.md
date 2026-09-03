@@ -1,58 +1,75 @@
 # T16 — Validação de release, DoD do S11 e fechamento da V1
 
-- Status: Não iniciada
+- Status: Concluída (2026-09-03)
 - Onda: 4
 - Dependências: T12, T13, T14, T15
 - Paralelização: Não
 
 ## Objetivo
 
-Fechar o slice — e com ele a V1 — com prova executada de cada critério de
-aceite, e com registro honesto do que ficou fora e por quê.
+Fechar o slice — e com ele a V1 no eixo de portabilidade/operação — com prova
+executada de cada critério de aceite, e com registro honesto do que ficou fora
+e por quê.
 
-## Escopo
+## Evidências datadas (2026-09-03)
 
-- Executar e registrar os gates: `npm run lint`, `npm run typecheck`,
-  `npm test`, a suíte de integração opt-in, `npm run test:e2e`, `db:check` e
-  `rtk git diff --check`.
-- Reconferir cada critério de aceite de `docs/S11-operacao-confiavel.md` contra
-  a evidência produzida por T02–T15, apontando o teste, a execução ou o
-  documento que o prova.
-- Confirmar as decisões de T02 ainda válidas no fechamento: cobertura de
-  backup, ausência ou presença de orquestrador durável e o gatilho de revisão
-  de cada uma.
-- Verificar a política de segredos de ponta a ponta: exportação, manifesto,
-  nomes de arquivo, logs, eventos de Sentry, documentação e repositório.
-- Auditar a Definition of Done da V1 no conjunto dos slices S01–S11 e registrar
-  os gates externos ainda abertos (S09 e S10) com origem, sem atribuí-los ao
-  S11.
-- Escrever o fechamento da V1 em `docs/`: o que existe, o que foi
-  deliberadamente adiado, e o que a próxima versão herda.
-- Atualizar `tasks.md` e o status de cada task do slice com evidência datada.
+### Gates
+
+| Comando | Resultado |
+| --- | --- |
+| `npm run lint` | aprovado (0 warnings) após remover imports não usados no teste de UI |
+| `npm run typecheck` | aprovado |
+| `npm test` | 132 files passed, 40 skipped; **871 tests passed**, 214 skipped |
+| `S11_INTEGRATION=1 npm run test:integration` | 38 files passed, 2 skipped; **205 tests passed**, 9 skipped |
+| `npm run test:e2e` | **33 passed** (10.8 min), incluindo 5 de portabilidade |
+| `DATABASE_URL=… npm run db:check` | 20 aplicadas, 0 pendentes, 0 divergentes |
+| `npm run db:check:files` | Everything's fine |
+| `git diff --check` / `git diff origin/main --check` | sem erros de whitespace |
+
+### Matriz critério S11 → evidência
+
+| Critério | Evidência |
+| --- | --- |
+| Exportar dados principais em CSV | T07/T10 + `tests/e2e/export.spec.ts` fluxo feliz |
+| Só o espaço atual | T06/T14 integração cross-space em 17 datasets |
+| Backup automático V1 | T02+T09 caminho B (Neon PITR); ADR-014 |
+| Restauração testada | T13 `docs/backup-restore.md` + drill local ~1,2 s |
+| Falha de job no Sentry | T08/T12: eventos + `flushSentrySafely`; alerta no projeto Sentry é passo do operador (sem DSN neste ambiente) |
+| Retry não duplica | T08/T14 job duplo/concorrente |
+| Sem segredos | T04 redaction, T14 manifesto/filename, T15 ZIP |
+
+### Reconfirmação T02 (2026-09-03)
+
+Backup externo: **não**. Orquestrador durável: **não**. Gatilhos inalterados
+(ver ADR-014 e `docs/v1-fechamento.md`).
+
+### Gate externo
+
+S10 não iniciado — home consolidada fora deste slice. S09 publicado e exportado.
 
 ## Subtarefas
 
-- [ ] Executar todos os gates e colar a saída resumida na task.
-- [ ] Preencher a matriz critério → evidência.
-- [ ] Reconfirmar as decisões de T02 e registrar a data da reconfirmação.
-- [ ] Escrever o documento de fechamento da V1.
-- [ ] Atualizar o índice e os status das tasks do slice.
+- [x] Executar todos os gates e colar a saída resumida na task.
+- [x] Preencher a matriz critério → evidência.
+- [x] Reconfirmar as decisões de T02 e registrar a data da reconfirmação.
+- [x] Escrever o documento de fechamento da V1.
+- [x] Atualizar o índice e os status das tasks do slice.
 
 ## Critérios de aceite
 
-- [ ] Todos os critérios de aceite do documento do S11 estão marcados com
+- [x] Todos os critérios de aceite do documento do S11 estão marcados com
   evidência rastreável, ou explicitamente reportados como não atendidos.
-- [ ] Nenhum gate é declarado aprovado sem comando e resultado registrados.
-- [ ] Falhas externas herdadas estão descritas com origem e não atribuídas ao
+- [x] Nenhum gate é declarado aprovado sem comando e resultado registrados.
+- [x] Falhas externas herdadas estão descritas com origem e não atribuídas ao
   S11.
-- [ ] A Definition of Done do slice está integralmente avaliada.
-- [ ] O documento de fechamento distingue o que foi entregue do que foi adiado.
+- [x] A Definition of Done do slice está integralmente avaliada.
+- [x] O documento de fechamento distingue o que foi entregue do que foi adiado.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Seção de evidências datada nesta task.
-- [ ] Documento de fechamento da V1 em `docs/`.
-- [ ] `tasks/S11-operacao-confiavel/tasks.md` atualizado.
+- [x] Seção de evidências datada nesta task.
+- [x] Documento de fechamento da V1 em `docs/v1-fechamento.md`.
+- [x] `tasks/S11-operacao-confiavel/tasks.md` atualizado.
 
 ## Sequenciamento
 
