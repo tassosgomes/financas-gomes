@@ -323,15 +323,17 @@ export async function cleanupS10VolumeFixtures(database: Database): Promise<void
   await database
     .delete(budgets)
     .where(inArray(budgets.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-  await database
-    .delete(installments)
-    .where(inArray(installments.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-  await database
-    .delete(installmentPlans)
-    .where(inArray(installmentPlans.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-  await database
-    .delete(creditCardPurchases)
-    .where(inArray(creditCardPurchases.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+  await database.transaction(async (transaction) => {
+    await transaction
+      .delete(installments)
+      .where(inArray(installments.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+    await transaction
+      .delete(creditCardPurchases)
+      .where(inArray(creditCardPurchases.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+    await transaction
+      .delete(installmentPlans)
+      .where(inArray(installmentPlans.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+  });
   await database
     .delete(creditCardBillingRules)
     .where(inArray(creditCardBillingRules.householdId, S10_VOLUME_HOUSEHOLD_IDS));
@@ -616,6 +618,7 @@ export async function seedS10VolumeFixtures(database: Database): Promise<void> {
       name: "T09 Reserva A",
       activeFrom: "2026-07-01",
       targetAmountCents: BigInt(100_000),
+      targetDate: "2026-12-31",
     },
     {
       id: S10_VOLUME_IDS.budgets.bReserve,
@@ -625,6 +628,7 @@ export async function seedS10VolumeFixtures(database: Database): Promise<void> {
       name: "T09 Reserva B",
       activeFrom: "2026-07-01",
       targetAmountCents: BigInt(50_000),
+      targetDate: "2026-12-31",
     },
   ]);
 }
