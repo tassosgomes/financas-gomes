@@ -33,6 +33,11 @@ O usuário não fica preso ao produto e o operador consegue detectar problemas e
 - Pode ser iniciado parcialmente desde S01.
 - Exportação completa depende do modelo final da V1.
 - Backup final depende da infraestrutura efetivamente escolhida.
+- A home autenticada (`/app`, contrato `s10.v1`) é composição descartável.
+  O handoff normativo está na seção *Handoff S10 → S11* de
+  [`ADR-013`](adr/013-s10-overview-contract.md):
+  exportar fatos de S03–S09, nunca o read model da Visão Geral; Spendable
+  continua derivado do S08.
 
 ## Dados / domínio
 

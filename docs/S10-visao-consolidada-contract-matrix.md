@@ -80,20 +80,20 @@ PURCHASE 30000 (3×10000) no mês
 
 | Task | Pré-condição | Evidência mínima para fechar | Estado nesta T01 |
 | --- | --- | --- | --- |
-| [T02 — agregação](../tasks/S10-visao-consolidada/002-agregacao-periodo-categorias_task.md) | ADR-013 período e categorias | testes puros EXPENSE+PURCHASE+REVERSAL; Hamilton; soma exata | Aberta; contrato fechado |
-| [T03 — composição](../tasks/S10-visao-consolidada/003-composicao-leituras-existentes_task.md) | inventário ADR-013 | orquestração tenant-safe sem recálculo S08 | Aberta; contrato fechado |
-| [T04 — observabilidade](../tasks/S10-visao-consolidada/004-observabilidade-s10_task.md) | limites 2500/500 ms | allow-list/redaction S10 | Aberta; contrato fechado |
-| [T05 — UI contracts](../tasks/S10-visao-consolidada/005-contratos-ui-componentes_task.md) | `s10.v1` e estados por bloco | view models serializáveis | Aberta; contrato fechado |
-| [T06 — read model](../tasks/S10-visao-consolidada/006-read-model-consolidado_task.md) | T02 + T03 | `s10.v1` integrado; reconciliação | Aberta |
-| [T07 — drill-down](../tasks/S10-visao-consolidada/007-drill-down-navegacao_task.md) | T06 + mapa ADR | links determinísticos; split PURCHASE | Aberta; mapa fechado |
-| [T08 — alertas](../tasks/S10-visao-consolidada/008-alertas-deterministicos_task.md) | T06 + tabela ADR | 5 regras; ordenação; cap 5 | Aberta; regras fechadas |
-| [T09 — performance](../tasks/S10-visao-consolidada/009-performance-volume_task.md) | T06 | volume representativo; índices motivados | Aberta |
-| [T10 — UI hierarquia](../tasks/S10-visao-consolidada/010-ui-hierarquia-decisao_task.md) | T05 + T06 | ordem de blocos; spendable primeiro | Aberta |
-| [T11 — UI blocos](../tasks/S10-visao-consolidada/011-ui-compromissos-caixinhas-drilldown_task.md) | T05–T08 | compromissos, caixinhas AVAILABLE, drill-down | Aberta |
-| [T12 — estados](../tasks/S10-visao-consolidada/012-estados-empty-erro-responsivo_task.md) | T10 + T11 | empty/error/loading; 360px | Aberta |
-| [T13 — testes](../tasks/S10-visao-consolidada/013-testes-unitarios-integracao_task.md) | T02–T09 | unitário + PostgreSQL + cenários matriz | Aberta |
-| [T14 — E2E](../tasks/S10-visao-consolidada/014-testes-e2e_task.md) | T10–T13 | home → detalhes reconciliados | Aberta |
-| [T15 — release](../tasks/S10-visao-consolidada/015-validacao-release-handoff_task.md) | T04, T09, T13, T14 | DoD S10 + handoff S11 | Aberta |
+| [T02 — agregação](../tasks/S10-visao-consolidada/002-agregacao-periodo-categorias_task.md) | ADR-013 período e categorias | testes puros EXPENSE+PURCHASE+REVERSAL; Hamilton; soma exata | Concluída |
+| [T03 — composição](../tasks/S10-visao-consolidada/003-composicao-leituras-existentes_task.md) | inventário ADR-013 | orquestração tenant-safe sem recálculo S08 | Concluída |
+| [T04 — observabilidade](../tasks/S10-visao-consolidada/004-observabilidade-s10_task.md) | limites 2500/500 ms | allow-list/redaction S10 | Concluída |
+| [T05 — UI contracts](../tasks/S10-visao-consolidada/005-contratos-ui-componentes_task.md) | `s10.v1` e estados por bloco | view models serializáveis | Concluída |
+| [T06 — read model](../tasks/S10-visao-consolidada/006-read-model-consolidado_task.md) | T02 + T03 | `s10.v1` integrado; reconciliação | Concluída |
+| [T07 — drill-down](../tasks/S10-visao-consolidada/007-drill-down-navegacao_task.md) | T06 + mapa ADR | links determinísticos; split PURCHASE | Concluída |
+| [T08 — alertas](../tasks/S10-visao-consolidada/008-alertas-deterministicos_task.md) | T06 + tabela ADR | 5 regras; ordenação; cap 5 | Concluída |
+| [T09 — performance](../tasks/S10-visao-consolidada/009-performance-volume_task.md) | T06 | volume representativo; índices motivados | Concluída no código; EXPLAIN pendente de CI |
+| [T10 — UI hierarquia](../tasks/S10-visao-consolidada/010-ui-hierarquia-decisao_task.md) | T05 + T06 | ordem de blocos; spendable primeiro | Concluída |
+| [T11 — UI blocos](../tasks/S10-visao-consolidada/011-ui-compromissos-caixinhas-drilldown_task.md) | T05–T08 | compromissos, caixinhas AVAILABLE, drill-down | Concluída |
+| [T12 — estados](../tasks/S10-visao-consolidada/012-estados-empty-erro-responsivo_task.md) | T10 + T11 | empty/error/loading; 360px | Concluída |
+| [T13 — testes](../tasks/S10-visao-consolidada/013-testes-unitarios-integracao_task.md) | T02–T09 | unitário + PostgreSQL + cenários matriz | Unitário verde; integração pendente de CI |
+| [T14 — E2E](../tasks/S10-visao-consolidada/014-testes-e2e_task.md) | T10–T13 | home → detalhes reconciliados | Spec pronta; Playwright pendente de CI |
+| [T15 — release](../tasks/S10-visao-consolidada/015-validacao-release-handoff_task.md) | T04, T09, T13, T14 | DoD S10 + handoff S11 | Auditoria local; Postgres/E2E = CI |
 
 ## 5. Critérios de aceite → tasks
 
@@ -128,9 +128,9 @@ O gate de contrato T01 fecha com:
 
 Pendências downstream (não são falhas da especificação):
 
-- T02–T15 permanecem abertas.
-- Read model consolidado, agregação SQL, UI completa e testes E2E ainda não
-  existem como evidência de S10.
+- Implementação T02–T14 está no branch; T15 registrou gates locais.
+- Integração PostgreSQL, EXPLAIN T09, `db:check` contra banco e Playwright
+  E2E permanecem gates de CI (este ambiente de auditoria não tem Postgres).
 - Patrimônio total/líquido e gráficos de evolução ficam para S11+.
 
 ## 7. Comandos de revisão do gate

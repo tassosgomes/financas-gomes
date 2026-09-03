@@ -584,6 +584,69 @@ Quick actions da home limitam-se a **adicionar receita** e **adicionar despesa**
 (PRD §21 parcial). Transferência entre Caixinhas e atualização de patrimônio
 permanecem nas telas de origem.
 
+## Handoff S10 → S11
+
+S11 (exportação, backup, runbook e Sentry consolidado) **não** deve tratar o
+read model `s10.v1` como fonte de verdade. A home é uma composição descartável:
+não há tabela, snapshot, cache nem job da Visão Geral. Exportar ou restaurar
+`OverviewReadModel` duplicaria números derivados e divergiria de S03–S09.
+
+### O que a home consome (owners)
+
+| Bloco | Origem | Porta / chamada | Owner |
+| --- | --- | --- | --- |
+| Pode gastar | `getSpendable` → `s08.v1` byte-a-byte | `OverviewOriginPorts.readSpendable` | S08 |
+| Compromissos / receitas futuras / planejado×realizado | `getForecast` → `s07.v1` | `readForecast` | S07 |
+| Caixinhas | `budgetReadAccess.list` → `s09.v1` | `readBudgets` | S09 |
+| Faturas informativas | projeções S06 | `readCardInvoices` | S06 |
+| Resumo do mês e categorias | agregação S10 sobre eventos S03/S05 | `readPeriodAggregationForContext` | S10 (única agregação nova) |
+
+Defaults de composição: cenário `CONSERVATIVE`, horizonte 90 dias, período =
+mês civil do `asOf` do servidor, timeout **2500 ms** por origem, limiar de
+query lenta **500 ms**. Browser nunca envia `householdId`/`userId`.
+
+Consumidores atuais de `s10.v1`: Server Action `getOverviewAction` e a rota
+`/app`. Nenhuma API HTTP pública adicional.
+
+### Pontos de falha monitorados
+
+Operações `overview.read` / `overview.aggregate` / `overview.compose` /
+`overview.render` em `src/modules/observability/s10.ts`. Telemetria allow-list:
+`requestId`, versão `s10.v1`, estágio, duração, `AVAILABLE`/`EMPTY`/`PARTIAL`/
+`UNAVAILABLE`, contagens de blocos/itens. **Nunca** centavos, nomes, SQL,
+payloads, cookies, tokens ou IDs de tenancy.
+
+Códigos técnicos: `OVERVIEW_QUERY_FAILED`, `OVERVIEW_AGGREGATION_FAILED`,
+`OVERVIEW_COMPOSE_FAILED`, `OVERVIEW_RENDER_FAILED`, `OVERVIEW_QUERY_TIMEOUT`,
+`OVERVIEW_ORIGIN_UNAVAILABLE`. Falha de uma origem vira `error` no bloco;
+os demais permanecem utilizáveis. Erro nunca é serializado como `"0"` monetário.
+
+S11 deve correlacionar jobs/exportações pelo mesmo `requestId` opaco, sem
+reabrir o read model da home.
+
+### O que exportação / backup precisa considerar
+
+- **Exportar fatos, não a home.** Datasets de portabilidade: contas, categorias,
+  eventos financeiros (inclui `PURCHASE`/`EXPENSE`/`INCOME`/`TRANSFER`/
+  `REVERSAL`), cartões/faturas/parcelas (S06), itens de forecast (S07),
+  Caixinhas e movimentos (S09). Spendable e overview são derivados.
+- **Reconciliação:** despesas do período S10 = `EXPENSE` POSTED + `PURCHASE`
+  econômico uma vez. `PURCHASE` não aparece em `/transactions` (dialect
+  manual-only). Fatura, parcela isolada, `TRANSFER` e movimentos de Caixinha
+  ficam fora do total de despesas.
+- **Tenancy:** todo recorte é o `FinancialContext` da sessão; exportação S11
+  deve filtrar pelo mesmo household resolvido no servidor.
+- **Sem cache / sem materialização:** backup nativo do Postgres (ou o que S11
+  escolher) já cobre o estado reconstruível da home. Não criar job que
+  persista `s10.v1`.
+- **Segredos:** a home já redige telemetria; exportação CSV não deve incluir
+  cookies, tokens, `BETTER_AUTH_SECRET` nem logs brutos.
+
+### Fora do S10 (S11+)
+
+Patrimônio total/líquido, gráficos de evolução, BI, segundo card de spendable
+e cache da home.
+
 ## Consequências e gates
 
 - T02 implementa a agregação de período e categorias conforme esta ADR.
@@ -593,6 +656,7 @@ permanecem nas telas de origem.
 - T07 monta drill-down a partir das chaves de reconciliação.
 - T08 implementa a tabela de alertas sem query extra.
 - T09–T15 medem volume, índices, UI, testes e release.
+- T15 publica este handoff; S11 não reimplementa agregação da home.
 
-Esta ADR não declara schema, query, componente, migration ou endpoint
-implementados; apenas fecha semântica e contrato.
+A semântica pública permanece a desta ADR. Implementação e evidências de
+execução estão nas tasks T02–T15.

@@ -86,12 +86,19 @@ Esta slice deve **consumir serviços de domínio existentes**, evitando reimplem
 
 ## Critérios de aceite
 
-- [ ] Totalizações reconciliam com as telas de detalhe.
-- [ ] "Quanto posso gastar" é exatamente o mesmo cálculo do S08.
-- [ ] Usuário consegue navegar de um agregado para os lançamentos que o compõem.
-- [ ] Não há dupla contagem de cartão versus transação.
-- [ ] Dashboard permanece compreensível com nenhum dado, poucos dados e volume representativo.
-- [ ] Nenhum dado de outro espaço financeiro aparece em agregações.
+- [x] Totalizações reconciliam com as telas de detalhe.
+  - Prova: T02/T06/T13 (centavos); E2E spec T14 (drill-down). Execução
+    Playwright pendente de CI.
+- [x] "Quanto posso gastar" é exatamente o mesmo cálculo do S08.
+  - Prova: `getSpendable` byte-a-byte (`composition.test.ts`, `service.test.ts`).
+- [x] Usuário consegue navegar de um agregado para os lançamentos que o compõem.
+  - Prova: `links.test.ts`; spec `tests/e2e/overview.spec.ts`.
+- [x] Não há dupla contagem de cartão versus transação.
+  - Prova: `aggregate.test.ts`; integração opt-in T13 (execução pendente de CI).
+- [x] Dashboard permanece compreensível com nenhum dado, poucos dados e volume representativo.
+  - Prova: empty UI T12/T14; seed T09. EXPLAIN/volume PostgreSQL pendente de CI.
+- [x] Nenhum dado de outro espaço financeiro aparece em agregações.
+  - Prova: testes puros T13; integração cross-space pendente de CI.
 
 ## Testes
 
