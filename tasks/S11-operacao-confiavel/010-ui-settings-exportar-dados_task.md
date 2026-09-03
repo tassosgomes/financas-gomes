@@ -1,6 +1,6 @@
 # T10 — UI: Settings → dados e portabilidade, ação de exportar
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 3
 - Dependências: T05, T07
 - Paralelização: Com T09 e T12
@@ -28,24 +28,24 @@ dentro da área de configurações já existente, sem inflar a navegação princ
 
 ## Subtarefas
 
-- [ ] Criar rota, layout e entrada de navegação em Settings.
-- [ ] Implementar o componente de exportação consumindo os contratos de T05.
-- [ ] Escrever o texto explicativo do conteúdo e dos limites da exportação.
-- [ ] Cobrir a página com teste de componente para os estados principais.
+- [x] Criar rota, layout e entrada de navegação em Settings.
+- [x] Implementar o componente de exportação consumindo os contratos de T05.
+- [x] Escrever o texto explicativo do conteúdo e dos limites da exportação.
+- [x] Cobrir a página com teste de componente para os estados principais.
 
 ## Critérios de aceite
 
-- [ ] A portabilidade é alcançável a partir de Settings sem instrução externa.
-- [ ] A ação de exportar funciona em um clique para o espaço financeiro atual.
-- [ ] Dataset indisponível aparece como indisponível e explicado.
-- [ ] Nenhum parâmetro de tenancy sai do browser.
-- [ ] A página permanece legível e operável em 360px e por teclado.
+- [x] A portabilidade é alcançável a partir de Settings sem instrução externa.
+- [x] A ação de exportar funciona em um clique para o espaço financeiro atual.
+- [x] Dataset indisponível aparece como indisponível e explicado.
+- [x] Nenhum parâmetro de tenancy sai do browser.
+- [x] A página permanece legível e operável em 360px e por teclado.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Rota, componentes e testes de componente versionados.
-- [ ] Registro visual (captura) do estado inicial da tela.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] Rota, componentes e testes de componente versionados.
+- [x] Registro visual (captura) do estado inicial da tela.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 

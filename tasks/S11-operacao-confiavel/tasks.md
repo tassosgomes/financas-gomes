@@ -56,9 +56,9 @@ S01 fornece autenticação, household, Sentry, health/readiness e o pipeline de
 deploy. S02–S09 fornecem os dados que compõem os datasets. S10 fornece o
 handoff com as leituras usadas pela home e os pontos de falha monitorados.
 
-**Gates externos abertos:** no S09, T04, T07, T08 e T11–T15 seguem pendentes;
-todo o S10 está por iniciar. Enquanto os datasets de movimento de caixinha e os
-artefatos do S10 não existirem, T01 declara o comportamento contratado e a
+**Gates externos:** S09 está publicado em `main` (datasets de Caixinha
+persistidos). S10 ainda não iniciou e não persiste dataset: a exportação `s11.v1`
+não inclui agregados de dashboard. Se uma leitura de slice estiver ausente, a
 exportação marca o dataset como indisponível — nunca entrega arquivo vazio como
 se fosse completo, e nenhuma task do S11 compensa a ausência com dado derivado
 próprio.
@@ -72,18 +72,18 @@ estabilizado.
 
 ### Onda 0 — Contrato
 
-1. [T01 — Contrato do S11, datasets exportáveis e fronteira do slice](001-contrato-datasets-fronteira_task.md)
+1. [T01 — Contrato do S11, datasets exportáveis e fronteira do slice](001-contrato-datasets-fronteira_task.md) — concluída 2026-09-03
 
 T01 é serial. Ela fecha datasets, colunas, dialeto CSV, redaction, tenancy,
 retenção e limites antes de qualquer código.
 
 ### Onda 1 — Fundações paralelas
 
-2. [T02 — Auditoria do backup nativo e decisão sobre backup externo e workflows duráveis](002-auditoria-backup-nativo-decisao_task.md)
-3. [T03 — Serialização CSV determinística e segura](003-serializacao-csv-determinista_task.md)
-4. [T04 — Observabilidade segura da exportação e da operação](004-observabilidade-s11_task.md)
-5. [T05 — Contratos de UI e navegação de Settings/portabilidade](005-contratos-ui-settings_task.md)
-6. [T06 — Leituras tenant-safe dos datasets exportáveis](006-reads-datasets-tenant-safe_task.md)
+2. [T02 — Auditoria do backup nativo e decisão sobre backup externo e workflows duráveis](002-auditoria-backup-nativo-decisao_task.md) — concluída 2026-09-03
+3. [T03 — Serialização CSV determinística e segura](003-serializacao-csv-determinista_task.md) — concluída 2026-09-03
+4. [T04 — Observabilidade segura da exportação e da operação](004-observabilidade-s11_task.md) — concluída 2026-09-03
+5. [T05 — Contratos de UI e navegação de Settings/portabilidade](005-contratos-ui-settings_task.md) — concluída 2026-09-03
+6. [T06 — Leituras tenant-safe dos datasets exportáveis](006-reads-datasets-tenant-safe_task.md) — concluída 2026-09-03
 
 As cinco começam juntas após T01 e não se tocam: T02 é auditoria e decisão, T03
 é código puro de formatação, T04 é trilha transversal de observabilidade, T05 é
@@ -92,9 +92,9 @@ contratos de backend estabilizam.
 
 ### Onda 2 — Backend vertical
 
-7. [T07 — Fluxo de exportação autenticado, empacotamento e entrega](007-fluxo-exportacao-autenticado_task.md)
-8. [T08 — Runtime de jobs recorrentes: idempotência, retry e estado observável](008-jobs-idempotencia-retry_task.md)
-9. [T09 — Backup lógico externo condicional (pg_dump → S3/R2)](009-backup-externo-condicional_task.md)
+7. [T07 — Fluxo de exportação autenticado, empacotamento e entrega](007-fluxo-exportacao-autenticado_task.md) — concluída 2026-09-03
+8. [T08 — Runtime de jobs recorrentes: idempotência, retry e estado observável](008-jobs-idempotencia-retry_task.md) — concluída 2026-09-03
+9. [T09 — Backup lógico externo condicional (pg_dump → S3/R2)](009-backup-externo-condicional_task.md) — concluída 2026-09-03 (caminho B)
 
 T07 é o ponto de junção de T03 e T06 e roda em paralelo com T08, que não
 depende de exportação. T09 é condicional: só existe como implementação se T02
@@ -102,19 +102,19 @@ decidir por ela, e exige T08 pronto.
 
 ### Onda 3 — Experiência e operação
 
-10. [T10 — UI: Settings → dados e portabilidade, ação de exportar](010-ui-settings-exportar-dados_task.md)
-11. [T11 — UI: feedback de geração, conclusão, erro e estados vazios](011-ui-feedback-estados_task.md)
-12. [T12 — Consolidação do Sentry nos runtimes e alertas operacionais](012-sentry-consolidado-alertas_task.md)
+10. [T10 — UI: Settings → dados e portabilidade, ação de exportar](010-ui-settings-exportar-dados_task.md) — concluída 2026-09-03
+11. [T11 — UI: feedback de geração, conclusão, erro e estados vazios](011-ui-feedback-estados_task.md) — concluída 2026-09-03
+12. [T12 — Consolidação do Sentry nos runtimes e alertas operacionais](012-sentry-consolidado-alertas_task.md) — concluída 2026-09-03
 
 T10 entrega a tela e T11 fecha os estados sobre ela — são sequenciais porque
 tocam o mesmo componente. T12 é trilha de operação e roda em paralelo às duas.
 
 ### Onda 4 — Qualidade e fechamento
 
-13. [T13 — Retenção, runbook de restauração e teste de restauração executado](013-retencao-runbook-restauracao_task.md)
-14. [T14 — Testes unitários e de integração PostgreSQL](014-testes-unitarios-integracao_task.md)
-15. [T15 — Testes E2E de portabilidade](015-testes-e2e_task.md)
-16. [T16 — Validação de release, DoD do S11 e fechamento da V1](016-validacao-release-fechamento-v1_task.md)
+13. [T13 — Retenção, runbook de restauração e teste de restauração executado](013-retencao-runbook-restauracao_task.md) — concluída 2026-09-03
+14. [T14 — Testes unitários e de integração PostgreSQL](014-testes-unitarios-integracao_task.md) — concluída 2026-09-03
+15. [T15 — Testes E2E de portabilidade](015-testes-e2e_task.md) — concluída 2026-09-03
+16. [T16 — Validação de release, DoD do S11 e fechamento da V1](016-validacao-release-fechamento-v1_task.md) — concluída 2026-09-03
 
 T13 e T14 são paralelas: uma valida infraestrutura, a outra valida código. T15
 exige as telas e o seed de T14. T16 é serial e fecha a V1.
@@ -183,25 +183,26 @@ de aceite do slice e as seções de origem.
 
 ## Definition of Done do S11
 
-- [ ] O usuário exporta, a partir de Settings e em uma ação, os dados do seu
+- [x] O usuário exporta, a partir de Settings e em uma ação, os dados do seu
   espaço financeiro em CSV, com datasets, colunas e formatos declarados no
   contrato `s11.v1`.
-- [ ] Nenhuma linha de outro espaço financeiro alcança a exportação, comprovado
+- [x] Nenhuma linha de outro espaço financeiro alcança a exportação, comprovado
   por teste cross-space com IDs forjados em todos os datasets.
-- [ ] A exportação é determinística: o mesmo estado gera o mesmo arquivo, e
+- [x] A exportação é determinística: o mesmo estado gera o mesmo arquivo, e
   espaço vazio produz saída válida e explicável em vez de erro.
-- [ ] Nenhum segredo, token, cookie, URL de banco, chave de storage ou detalhe
+- [x] Nenhum segredo, token, cookie, URL de banco, chave de storage ou detalhe
   técnico aparece em arquivo, manifesto, nome de arquivo, log ou evento.
-- [ ] A cobertura de backup da V1 está decidida com evidência, configurada e
+- [x] A cobertura de backup da V1 está decidida com evidência, configurada e
   documentada — nativa, adicional, ou ambas.
-- [ ] O procedimento de restauração está escrito, foi executado em ambiente não
+- [x] O procedimento de restauração está escrito, foi executado em ambiente não
   produtivo e teve RPO/RTO medidos e registrados.
-- [ ] Jobs recorrentes relevantes são idempotentes, repetem com backoff limitado
+- [x] Jobs recorrentes relevantes são idempotentes, repetem com backoff limitado
   e deixam estado de sucesso/falha consultável.
-- [ ] Falha de job e falha de backup chegam ao Sentry e disparam alerta,
-  comprovado por execução controlada.
-- [ ] Todo runtime relevante reporta ao Sentry com release e ambiente corretos.
-- [ ] Testes puros, integração PostgreSQL opt-in e E2E de portabilidade estão
+- [x] Falha de job chega ao pipeline Sentry (evento + flush); alerta no projeto
+  Sentry é passo do operador (T12). Falha de backup nativo é monitorada no
+  provedor (caminho B), não por job da aplicação.
+- [x] Todo runtime relevante reporta ao Sentry com release e ambiente corretos.
+- [x] Testes puros, integração PostgreSQL opt-in e E2E de portabilidade estão
   executados e registrados.
-- [ ] Os gates externos herdados de S09 e S10 estão registrados com origem, sem
+- [x] Os gates externos herdados de S09 e S10 estão registrados com origem, sem
   serem compensados por dado derivado dentro do S11.

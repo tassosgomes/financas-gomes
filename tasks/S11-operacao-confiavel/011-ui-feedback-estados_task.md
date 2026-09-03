@@ -1,6 +1,6 @@
 # T11 — UI: feedback de geração, conclusão, erro e estados vazios
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 3
 - Dependências: T05, T10
 - Paralelização: Com T09 e T12
@@ -29,25 +29,25 @@ mensagem técnica e sem estado ambíguo.
 
 ## Subtarefas
 
-- [ ] Implementar os estados e as transições no componente de exportação.
-- [ ] Implementar a proteção contra disparo duplicado.
-- [ ] Escrever os textos de erro e de estado vazio.
-- [ ] Cobrir cada estado com teste de componente, incluindo o de erro.
+- [x] Implementar os estados e as transições no componente de exportação.
+- [x] Implementar a proteção contra disparo duplicado.
+- [x] Escrever os textos de erro e de estado vazio.
+- [x] Cobrir cada estado com teste de componente, incluindo o de erro.
 
 ## Critérios de aceite
 
-- [ ] Cada estado contratado em T05 é alcançável e distinguível na tela.
-- [ ] Nenhum estado de erro é apresentado como sucesso vazio.
-- [ ] Disparo duplicado não gera duas exportações concorrentes do mesmo usuário.
-- [ ] Nenhuma mensagem exibida contém detalhe técnico interno.
-- [ ] Mudança de estado é perceptível sem depender de cor e é anunciada para
+- [x] Cada estado contratado em T05 é alcançável e distinguível na tela.
+- [x] Nenhum estado de erro é apresentado como sucesso vazio.
+- [x] Disparo duplicado não gera duas exportações concorrentes do mesmo usuário.
+- [x] Nenhuma mensagem exibida contém detalhe técnico interno.
+- [x] Mudança de estado é perceptível sem depender de cor e é anunciada para
   tecnologia assistiva.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Componentes de estado e testes cobrindo todos os estados.
-- [ ] Registro visual dos estados de geração, conclusão e erro.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] Componentes de estado e testes cobrindo todos os estados.
+- [x] Registro visual dos estados de geração, conclusão e erro.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 

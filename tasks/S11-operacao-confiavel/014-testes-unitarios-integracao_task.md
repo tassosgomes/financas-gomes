@@ -1,6 +1,6 @@
 # T14 — Testes unitários e de integração PostgreSQL
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 4
 - Dependências: T03, T06, T07, T08 e T09 quando aplicável
 - Paralelização: Com T10–T13 durante a escrita
@@ -39,29 +39,29 @@ visível.
 
 ## Subtarefas
 
-- [ ] Escrever os testes puros do encoder e dos formatadores.
-- [ ] Escrever os testes de integração de exportação e isolamento.
-- [ ] Escrever os testes de idempotência, retry e falha de job.
-- [ ] Escrever o teste de redaction do S11.
-- [ ] Construir o seed de volume representativo e medir a exportação.
+- [x] Escrever os testes puros do encoder e dos formatadores.
+- [x] Escrever os testes de integração de exportação e isolamento.
+- [x] Escrever os testes de idempotência, retry e falha de job.
+- [x] Escrever o teste de redaction do S11.
+- [x] Construir o seed de volume representativo e medir a exportação.
 
 ## Critérios de aceite
 
-- [ ] Exportação com dados vazios e completos coberta por teste executado.
-- [ ] Isolamento cross-space coberto em todos os datasets exportáveis.
-- [ ] Retry e idempotência de job comprovados por teste, incluindo execução
+- [x] Exportação com dados vazios e completos coberta por teste executado.
+- [x] Isolamento cross-space coberto em todos os datasets exportáveis.
+- [x] Retry e idempotência de job comprovados por teste, incluindo execução
   concorrente.
-- [ ] Simulação de falha de job comprova o estado registrado e o evento emitido.
-- [ ] O teste de redaction falha ao introduzir qualquer campo proibido.
-- [ ] A suíte de integração opt-in roda por comando documentado e é
+- [x] Simulação de falha de job comprova o estado registrado e o evento emitido.
+- [x] O teste de redaction falha ao introduzir qualquer campo proibido.
+- [x] A suíte de integração opt-in roda por comando documentado e é
   determinística.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Testes versionados junto aos módulos correspondentes.
-- [ ] Seed determinístico em `tests/fixtures/s11-operacao-confiavel/`.
-- [ ] Variável de integração adicionada ao script `test:integration`.
-- [ ] Saída resumida de `npm test` e da suíte de integração registrada na task.
+- [x] Testes versionados junto aos módulos correspondentes.
+- [x] Seed determinístico em `tests/fixtures/s11-operacao-confiavel/`.
+- [x] Variável de integração adicionada ao script `test:integration`.
+- [x] Saída resumida de `npm test` e da suíte de integração registrada na task.
 
 ## Sequenciamento
 
@@ -72,3 +72,60 @@ visível.
 ## Fora de escopo
 
 Teste E2E de navegador (T15) e teste de restauração de infraestrutura (T13).
+
+## Medição de exportação (volume representativo)
+
+| Métrica | Valor |
+| --- | --- |
+| `financial_events` | 10_000 |
+| `account_entries` | 20_000 |
+| Duração medida | **422 ms** |
+| Limite ADR-014 (T01) | 25_000 ms |
+| Comando | `S11_VOLUME_INTEGRATION=1` (opt-in) |
+
+## Saída resumida dos testes
+
+### `npm test` (unitários)
+
+```
+Test Files  132 passed | 40 skipped (172)
+     Tests  871 passed | 214 skipped (1085)
+  Duration  52.14s
+```
+
+### Integração PostgreSQL (`S11_INTEGRATION=1`)
+
+Comando:
+
+```bash
+DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/financas_gomes_test \
+  S11_INTEGRATION=1 \
+  npx vitest run --config vitest.integration.config.mts \
+  src/modules/export src/modules/jobs
+```
+
+Saída:
+
+```
+Test Files  3 passed (3)
+     Tests  68 passed | 1 skipped (69)
+  Duration  7.25s
+```
+
+Arquivos cobertos:
+
+- `src/modules/export/csv.test.ts` — encoder CSV, formatadores, byte-stability
+- `src/modules/export/reads.test.ts` — filtros, cursor, contratos
+- `src/modules/export/use-cases.test.ts` — ZIP, rate-limit, timeout, redaction manifest
+- `src/modules/export/reads.integration.test.ts` — isolamento, filtros, reconciliação reads
+- `src/modules/export/use-cases.integration.test.ts` — export ZIP, reconciliação, redaction
+- `src/modules/jobs/runtime.test.ts` — retry unitário, idempotência mockada
+- `src/modules/jobs/runtime.integration.test.ts` — double/concurrent/resume/failure/eventos
+- `src/modules/observability/t13-s11-redaction.test.ts` — redaction S11
+
+### Volume opt-in (`S11_VOLUME_INTEGRATION=1`)
+
+```
+Tests  1 passed | 23 skipped (24)
+[S11_VOLUME_EXPORT_MS] 422
+```

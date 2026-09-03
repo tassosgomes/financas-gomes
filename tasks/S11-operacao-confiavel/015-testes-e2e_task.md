@@ -1,6 +1,6 @@
 # T15 — Testes E2E de portabilidade
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 4
 - Dependências: T10, T11, T14
 - Paralelização: Não
@@ -27,25 +27,41 @@ seus dados e entender o que aconteceu — inclusive quando dá errado.
 
 ## Subtarefas
 
-- [ ] Escrever o cenário feliz com verificação do arquivo baixado.
-- [ ] Escrever os cenários de espaço vazio e de erro.
-- [ ] Escrever a verificação de disparo duplicado.
-- [ ] Escrever a verificação móvel.
-- [ ] Estabilizar o tempo de espera do download sem `sleep` arbitrário.
+- [x] Escrever o cenário feliz com verificação do arquivo baixado.
+- [x] Escrever os cenários de espaço vazio e de erro.
+- [x] Escrever a verificação de disparo duplicado.
+- [x] Escrever a verificação móvel.
+- [x] Estabilizar o tempo de espera do download sem `sleep` arbitrário.
 
 ## Critérios de aceite
 
-- [ ] O fluxo completo de exportação passa de ponta a ponta no CI.
-- [ ] O arquivo baixado é inspecionado, não apenas o evento de download.
-- [ ] Espaço vazio e erro têm cenários próprios e passam.
-- [ ] Os testes são determinísticos e não dependem de dados residuais.
-- [ ] Nenhum artefato de teste contém dado real.
+- [x] O fluxo completo de exportação passa de ponta a ponta no CI.
+- [x] O arquivo baixado é inspecionado, não apenas o evento de download.
+- [x] Espaço vazio e erro têm cenários próprios e passam.
+- [x] Os testes são determinísticos e não dependem de dados residuais.
+- [x] Nenhum artefato de teste contém dado real.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Especificações Playwright versionadas.
-- [ ] Saída de `npm run test:e2e` registrada na task.
-- [ ] Artefatos de falha (trace/captura) configurados para o CI.
+- [x] Especificações Playwright versionadas (`tests/e2e/export.spec.ts`).
+- [x] Saída de `npm run test:e2e` registrada na task.
+- [x] Artefatos de falha (trace/captura) configurados para o CI.
+
+### Saída de `npm run test:e2e`
+
+```
+E2E_DATABASE_URL=postgresql://postgres:postgres@127.0.0.1:5432/financas_gomes_test npm run test:e2e -- tests/e2e/export.spec.ts
+
+Running 5 tests using 1 worker
+
+  ✓ fluxo feliz: exporta ZIP com contrato e sem campos proibidos (28.3s)
+  ✓ espaço vazio: conclusão distinta de erro (5.4s)
+  ✓ erro simulado: mensagem opaca e retry utilizável (5.8s)
+  ✓ disparo duplicado durante geração não inicia segunda exportação (4.5s)
+  ✓ viewport móvel 360px mantém a tela operável (5.5s)
+
+  5 passed (52.1s)
+```
 
 ## Sequenciamento
 

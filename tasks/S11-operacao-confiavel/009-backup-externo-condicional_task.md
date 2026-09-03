@@ -1,6 +1,6 @@
 # T09 — Backup lógico externo condicional (pg_dump → S3/R2)
 
-- Status: Não iniciada — condicional à decisão de T02
+- Status: Concluída (2026-09-03) — caminho B (não implementar)
 - Onda: 2
 - Dependências: T02 (decisão), T08 (runtime de jobs)
 - Paralelização: Com T10 e T11, depois que T08 fecha
@@ -40,34 +40,32 @@ implementação quando o backup nativo já satisfizer a política de T01.
 
 ## Subtarefas
 
-- [ ] Confirmar por escrito qual caminho a decisão de T02 selecionou.
-- [ ] Caminho A: implementar job, verificação de integridade, retenção e
-  configuração de segredos.
-- [ ] Caminho A: testar falha de credencial, falha de rede e reenvio da mesma
-  janela.
-- [ ] Caminho B: registrar a não implementação, a cobertura nativa e o gatilho
+- [x] Confirmar por escrito qual caminho a decisão de T02 selecionou.
+  **Caminho B — não implementar** `pg_dump → S3/R2` (ADR-014 T02+T09).
+- [ ] Caminho A: não aplicável.
+- [ ] Caminho A: não aplicável.
+- [x] Caminho B: registrar a não implementação, a cobertura nativa e o gatilho
   de revisão.
-- [ ] Atualizar `docs/production-deploy.md` com a configuração operacional
+- [x] Atualizar `docs/production-deploy.md` com a configuração operacional
   resultante.
 
 ## Critérios de aceite
 
-- [ ] O slice termina com backup automático compatível com a política
+- [x] O slice termina com backup automático compatível com a política
   operacional da V1, seja ele nativo ou adicional.
-- [ ] No caminho A, reexecutar a mesma janela não gera artefato duplicado nem
-  corrompe o anterior.
-- [ ] No caminho A, falha de envio é detectável, classificada e alertável.
-- [ ] Nenhuma credencial, URL de banco ou identificador de projeto entra no
+- [ ] No caminho A, não aplicável.
+- [ ] No caminho A, não aplicável.
+- [x] Nenhuma credencial, URL de banco ou identificador de projeto entra no
   repositório, nos logs ou na documentação.
-- [ ] No caminho B, a decisão está documentada com evidência e gatilho de
+- [x] No caminho B, a decisão está documentada com evidência e gatilho de
   revisão, não como omissão.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Caminho A: job versionado, testes e registro de execução em ambiente não
-  produtivo.
-- [ ] Caminho B: seção de decisão na ADR-014 com evidência datada.
-- [ ] Atualização de `docs/production-deploy.md`.
+- [ ] Caminho A: não aplicável.
+- [x] Caminho B: seção de decisão na ADR-014 com evidência datada (T02) e
+  confirmação T09.
+- [x] Atualização de `docs/production-deploy.md`.
 
 ## Sequenciamento
 

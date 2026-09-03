@@ -1,5 +1,9 @@
 # S11 — Portabilidade, backup e operação confiável
 
+Contrato normativo: [`ADR-014`](adr/014-s11-portabilidade-backup.md)
+(`s11.v1`). Matriz de cenários:
+[`S11-operacao-confiavel-contract-matrix.md`](S11-operacao-confiavel-contract-matrix.md).
+
 ## Objetivo
 
 Fechar a V1 com mecanismos suficientes para operar o produto com segurança prática, recuperar dados e diagnosticar falhas.
@@ -10,14 +14,20 @@ O usuário não fica preso ao produto e o operador consegue detectar problemas e
 
 ## Escopo
 
-- Exportação dos dados relevantes para CSV.
-- Estratégia de backup recorrente do banco/dados.
-- Aproveitar backup nativo da infraestrutura/Vercel quando ele cobrir adequadamente o requisito antes de duplicar para R2.
-- Caso necessário, job adicional para storage S3-compatible/R2.
-- Temporal para jobs/workflows recorrentes ou duráveis que efetivamente precisem disso.
+- Exportação dos datasets persistidos de S02–S09 em CSV no contrato `s11.v1`
+  (ZIP único a partir de Settings → Dados). O S11 não recalcula fórmula
+  financeira nem materializa forecast/Spendable/dashboard.
+- Estratégia de backup recorrente do banco: preferir o PITR nativo da
+  infraestrutura quando ele cumprir a política da ADR-014 (retenção ≥ 7 dias,
+  RPO ≤ 24 h, RTO ≤ 4 h).
+- Backup lógico externo `pg_dump → S3/R2` somente se T02 demonstrar lacuna;
+  a TechSpec §113 o deixa no backlog por padrão.
+- Runtime de jobs com idempotência e retry (T08). Orquestrador durável
+  (Temporal de workflows) **não** entra na V1 salvo lacuna demonstrada; o
+  "Temporal" da stack é o polyfill de datas.
 - Sentry consolidado para frontend/backend/workers.
 - Política mínima de retenção e restauração documentada.
-- Runbook simples de restauração.
+- Runbook simples de restauração, executado em ambiente não produtivo.
 - Tratamento de falhas e retry idempotente em jobs.
 
 ## Fora de escopo
@@ -41,9 +51,12 @@ O usuário não fica preso ao produto e o operador consegue detectar problemas e
 
 ## Dados / domínio
 
-Exportações devem incluir identificadores e campos suficientes para portabilidade/reconciliação sem incluir segredos técnicos.
+A lista fechada de datasets, colunas, dialeto CSV, redaction e tenancy está
+na ADR-014. Identificadores e campos de reconciliação entram; `householdId`,
+e-mail de membros, sessões, tokens e colunas técnicas não entram.
 
-Jobs de backup precisam ser idempotentes e deixar estado observável de sucesso/falha.
+Jobs de backup (se existirem) e o heartbeat operacional precisam ser
+idempotentes e deixar estado observável de sucesso/falha.
 
 ## Backend / infraestrutura
 
@@ -51,7 +64,7 @@ Jobs de backup precisam ser idempotentes e deixar estado observável de sucesso/
 - Geração de CSVs por conjunto de dados relevante.
 - Verificar capacidades de backup nativas da infraestrutura.
 - Implementar backup adicional apenas se necessário.
-- Configurar Temporal para workflows duráveis previstos na TechSpec.
+- Não introduzir orquestrador de workflows na V1 sem lacuna demonstrada em T02.
 - Retry/backoff e idempotência.
 - Sentry para workers/jobs.
 
@@ -63,13 +76,13 @@ Jobs de backup precisam ser idempotentes e deixar estado observável de sucesso/
 
 ## Critérios de aceite
 
-- [ ] Usuário consegue exportar seus dados principais em formato aberto.
-- [ ] Exportação contém apenas dados do espaço financeiro atual.
-- [ ] Existe backup automático compatível com o requisito operacional da V1.
-- [ ] Existe procedimento documentado de restauração e ele é tecnicamente plausível/testado em ambiente seguro.
-- [ ] Falha de job recorrente relevante chega ao Sentry.
-- [ ] Retry não duplica efeitos.
-- [ ] Nenhum segredo é incluído em exportações ou logs.
+- [x] Usuário consegue exportar seus dados principais em formato aberto.
+- [x] Exportação contém apenas dados do espaço financeiro atual.
+- [x] Existe backup automático compatível com o requisito operacional da V1.
+- [x] Existe procedimento documentado de restauração e ele é tecnicamente plausível/testado em ambiente seguro.
+- [x] Falha de job recorrente relevante chega ao Sentry (pipeline + flush; alerta no projeto é configuração do operador).
+- [x] Retry não duplica efeitos.
+- [x] Nenhum segredo é incluído em exportações ou logs.
 
 ## Testes
 

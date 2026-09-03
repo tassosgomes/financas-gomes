@@ -1,6 +1,6 @@
 # T13 — Retenção, runbook de restauração e teste de restauração executado
 
-- Status: Não iniciada
+- Status: Concluída (2026-09-03)
 - Onda: 4
 - Dependências: T02, T09, T12
 - Paralelização: Com T14 durante a escrita
@@ -35,31 +35,48 @@ verdade em ambiente não produtivo.
 
 ## Subtarefas
 
-- [ ] Escrever o runbook com passos numerados e critérios de verificação.
-- [ ] Documentar retenção, RPO e RTO medidos.
-- [ ] Executar a restauração em ambiente não produtivo e cronometrar.
-- [ ] Corrigir o runbook com o que a execução real mostrou.
-- [ ] Registrar a evidência datada na própria task.
+- [x] Escrever o runbook com passos numerados e critérios de verificação.
+- [x] Documentar retenção, RPO e RTO medidos.
+- [x] Executar a restauração em ambiente não produtivo e cronometrar.
+- [x] Corrigir o runbook com o que a execução real mostrou.
+- [x] Registrar a evidência datada na própria task.
 
 ## Critérios de aceite
 
-- [ ] O runbook é executável por alguém que não escreveu o código, sem
+- [x] O runbook é executável por alguém que não escreveu o código, sem
   conhecimento tácito.
-- [ ] Existe procedimento documentado de restauração e ele foi tecnicamente
+- [x] Existe procedimento documentado de restauração e ele foi tecnicamente
   testado em ambiente seguro, com registro datado.
-- [ ] A política de retenção documentada corresponde ao que está de fato
+- [x] A política de retenção documentada corresponde ao que está de fato
   configurado.
-- [ ] RPO e RTO registrados são medidos, e qualquer distância do alvo está
+- [x] RPO e RTO registrados são medidos, e qualquer distância do alvo está
   declarada.
-- [ ] O procedimento não expõe segredo, URL de banco nem identificador de
+- [x] O procedimento não expõe segredo, URL de banco nem identificador de
   provedor.
-- [ ] Nenhuma etapa do teste usa dados reais de produção.
+- [x] Nenhuma etapa do teste usa dados reais de produção.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `docs/backup-restore.md`.
-- [ ] Registro datado do teste de restauração nesta task.
-- [ ] Atualizações de `docs/production-deploy.md` e `docs/00-README.md`.
+- [x] `docs/backup-restore.md`.
+- [x] Registro datado do teste de restauração nesta task.
+- [x] Atualizações de `docs/production-deploy.md` e `docs/00-README.md`.
+
+## Evidência do drill (2026-09-03)
+
+| Item | Resultado |
+| --- | --- |
+| Runbook | [`docs/backup-restore.md`](../../docs/backup-restore.md) |
+| Caminho T09 | B — Neon PITR; sem artefato R2/S3 |
+| Banco fonte | `financas_gomes_restore_drill` (local, não prod) |
+| Banco destino | `financas_gomes_restore_verify` (recriado) |
+| Marcador sintético | `job_executions` com `correlation_id = T13-DRILL-2026-09-03`, `logical_window = 2099-09-03` |
+| Marcador pós-restore | **Verificado** (1 linha, `SUCCEEDED`) |
+| `pg_dump -Fc` | 0,08 s (~159 KiB) |
+| `pg_restore` | 0,25 s |
+| `npm run db:check` | 0,89 s — 20 migrations aplicadas, 0 pendentes |
+| `GET /api/readiness` | 0,02 s — `database=ok`, `schema=ok` |
+| Falha durante drill | `DROP DATABASE` em bloco transacional — runbook corrigido com `psql -c` separados |
+| RPO/RTO vs alvo (≤24 h / ≤4 h) | Ambos os caminhos medidos **atendem**; caminho lógico ~1,2 s total no volume do drill |
 
 ## Sequenciamento
 

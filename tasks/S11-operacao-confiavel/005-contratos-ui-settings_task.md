@@ -1,6 +1,6 @@
 # T05 — Contratos de UI e navegação de Settings/portabilidade
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 1 (transversal)
 - Dependências: T01
 - Paralelização: Com T02, T03, T04 e T06
@@ -31,27 +31,50 @@ improvisada dentro de um componente.
 - Declarar que a UI nunca envia `householdId` nem parâmetro de tenancy, e que o
   browser não escolhe dataset fora da lista contratada em T01.
 
+## Hierarquia de informação e textos (registro T05)
+
+Rota: `/settings/data` (`EXPORT_SETTINGS_ROUTE`). Item de navegação:
+**Dados** (`EXPORT_SETTINGS_NAV_LABEL`) no grupo Configurações, ao lado de
+Categorias — sem item na navegação principal.
+
+1. **Cabeçalho** — eyebrow "Configurações", título "Seus dados", descrição
+   sobre baixar uma cópia do espaço financeiro em planilhas CSV.
+2. **O que está incluído** — contas, categorias, lançamentos, cartões,
+   recorrências, Caixinhas, ZIP + manifesto.
+3. **O que não está incluído** — senhas/tokens, e-mails e nomes de membros,
+   sessões, saldos/projeções calculados.
+4. **Conjuntos de dados** — lista com título, descrição e disponibilidade por
+   dataset; indisponível por gate externo com motivo em português.
+5. **Ação primária** — "Baixar uma cópia" (ocioso) / "Gerando cópia…"
+   (gerando).
+6. **Painel de resultado** — sucesso com download, vazio sem dados (distinto de
+   erro) ou erro opaco com código fechado da ADR.
+
+Estados: `idle`, `generating`, `completed`, `completed_empty`, `error`.
+Códigos de erro: `UNAUTHENTICATED`, `EXPORT_IN_PROGRESS`, `EXPORT_RATE_LIMITED`,
+`EXPORT_TIMEOUT`, `EXPORT_TOO_LARGE`, `EXPORT_UNAVAILABLE`, `EXPORT_FAILED`.
+
 ## Subtarefas
 
-- [ ] Escrever os contratos de UI em `src/components/export/contracts.ts` ou
+- [x] Escrever os contratos de UI em `src/components/export/contracts.ts` ou
   equivalente ao padrão do repositório.
-- [ ] Escrever os formatadores e seus testes puros.
-- [ ] Mapear cada estado do contrato para o componente responsável em T10/T11.
-- [ ] Registrar os textos e a hierarquia de informação da tela.
+- [x] Escrever os formatadores e seus testes puros.
+- [x] Mapear cada estado do contrato para o componente responsável em T10/T11.
+- [x] Registrar os textos e a hierarquia de informação da tela.
 
 ## Critérios de aceite
 
-- [ ] Todo estado possível da exportação tem representação declarada, incluindo
+- [x] Todo estado possível da exportação tem representação declarada, incluindo
   dataset indisponível por gate externo.
-- [ ] Nenhum componente precisará inventar formato, rótulo ou estado.
-- [ ] Os contratos não expõem campo de tenancy nem detalhe técnico de erro.
-- [ ] Os formatadores são puros e testados.
+- [x] Nenhum componente precisará inventar formato, rótulo ou estado.
+- [x] Os contratos não expõem campo de tenancy nem detalhe técnico de erro.
+- [x] Os formatadores são puros e testados.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Contratos e formatadores versionados com testes.
-- [ ] Registro da hierarquia de informação e dos textos na própria task.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] Contratos e formatadores versionados com testes.
+- [x] Registro da hierarquia de informação e dos textos na própria task.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 

@@ -20,6 +20,7 @@ export * from "./forecast";
 export * from "./spendable";
 export * from "./s09";
 export * from "./s10";
+export * from "./s11";
 
 import { getClientSentryConfig } from "./client-config";
 import {
