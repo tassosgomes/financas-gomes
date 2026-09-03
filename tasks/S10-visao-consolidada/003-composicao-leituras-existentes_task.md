@@ -1,6 +1,6 @@
 # T03 — Composição tenant-safe das leituras existentes
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 1
 - Dependências: T01; serviços públicos de S06, S07, S08 e S09
 - Paralelização: Com T02, T04 e T05
@@ -34,35 +34,35 @@ e isolando falhas por bloco.
 
 ## Subtarefas
 
-- [ ] Definir as portas de leitura (uma por origem) com injeção de dependência,
+- [x] Definir as portas de leitura (uma por origem) com injeção de dependência,
   para permitir fake em teste sem tocar nos módulos de origem.
-- [ ] Implementar o compositor com execução paralela e agregação de resultados
+- [x] Implementar o compositor com execução paralela e agregação de resultados
   parciais.
-- [ ] Mapear os erros de cada origem para os códigos opacos do contrato
+- [x] Mapear os erros de cada origem para os códigos opacos do contrato
   `s10.v1`, preservando a distinção entre "sem dados" e "falha".
-- [ ] Cobrir com teste cada combinação relevante de sucesso/falha parcial.
-- [ ] Garantir que nenhuma origem seja chamada mais de uma vez por render.
+- [x] Cobrir com teste cada combinação relevante de sucesso/falha parcial.
+- [x] Garantir que nenhuma origem seja chamada mais de uma vez por render.
 
 ## Critérios de aceite
 
-- [ ] O valor de "quanto posso gastar" exibido é byte a byte o produzido pelo
+- [x] O valor de "quanto posso gastar" exibido é byte a byte o produzido pelo
   S08 para o mesmo contexto.
-- [ ] A falha de uma origem não impede o restante da home de carregar, e o
+- [x] A falha de uma origem não impede o restante da home de carregar, e o
   bloco afetado informa erro em vez de zero.
-- [ ] Nenhuma chamada recebe `householdId` do cliente.
-- [ ] A composição é livre de dependência circular entre módulos e não importa
+- [x] Nenhuma chamada recebe `householdId` do cliente.
+- [x] A composição é livre de dependência circular entre módulos e não importa
   detalhes internos das origens, apenas seus contratos públicos.
-- [ ] A ausência de S09 (gates ainda abertos) resulta em bloco vazio/indisponível
+- [x] A ausência de S09 (gates ainda abertos) resulta em bloco vazio/indisponível
   contratado, nunca em erro global da página.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/overview/composition.ts` e portas de leitura tipadas.
-- [ ] Testes unitários com fakes cobrindo sucesso total, falha parcial e falha
+- [x] `src/modules/overview/composition.ts` e portas de leitura tipadas.
+- [x] Testes unitários com fakes cobrindo sucesso total, falha parcial e falha
   total.
-- [ ] Evidência de que nenhuma fórmula foi reimplementada (diff sem cálculo
+- [x] Evidência de que nenhuma fórmula foi reimplementada (diff sem cálculo
   monetário próprio fora de T02).
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 

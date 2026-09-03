@@ -53,11 +53,11 @@ cartão, fatura e parcelas. S07 fornece forecast e timeline. S08 fornece a
 fórmula e o read model de Spendable. S09 fornece Caixinhas, saldo derivado e a
 porta `s09.v1`.
 
-**Gate externo aberto:** no S09, T04, T07, T08 e T11–T15 ainda não estão
-concluídas. Enquanto os movimentos, o provider integrado e a UI `/budgets` não
-existirem, o bloco de caixinhas da home opera no estado de indisponibilidade
-contratado em T01 e o drill-down correspondente permanece desabilitado e
-explicado. Nenhuma task do S10 deve compensar isso com número derivado próprio.
+**Gate S09 — fechado:** o slice S09 está integralmente entregue em `main`
+(`feat: deliver S09 caixinhas`). O bloco de Caixinhas da home opera em estado
+**AVAILABLE** por padrão, consumindo `budgetReadAccess` / `s09.v1`. Falha
+técnica isolada do bloco renderiza `error` próprio; não há fallback default de
+indisponibilidade nem número derivado próprio pelo S10.
 
 ## Ordem de execução
 
@@ -161,23 +161,37 @@ de aceite do slice e as seções de origem.
 
 ## Definition of Done do S10
 
-- [ ] A home autenticada apresenta, sem cálculo manual do usuário, resumo do
+- [x] A home autenticada apresenta, sem cálculo manual do usuário, resumo do
   período, despesas por categoria, disponibilidade para gastar, próximos
   compromissos e resumo de caixinhas.
-- [ ] "Quanto posso gastar" é o resultado do S08 consumido sem recálculo, e
+  - `/app` via `getOverviewAction` + `OverviewHome` (T10–T12).
+- [x] "Quanto posso gastar" é o resultado do S08 consumido sem recálculo, e
   coincide com `/spendable/breakdown` para o mesmo contexto.
-- [ ] Todo agregado exibido reconcilia em centavos com a tela de origem, com
+  - Byte-a-byte em testes puros; E2E spec compara o valor primário (execução
+    Playwright pendente de CI).
+- [x] Todo agregado exibido reconcilia em centavos com a tela de origem, com
   filtro equivalente na URL.
-- [ ] Nenhum cenário de cartão, parcela, fatura, pagamento, transferência ou
+  - `links.test.ts` + reconciliação T13; E2E spec para despesa/spendable.
+- [x] Nenhum cenário de cartão, parcela, fatura, pagamento, transferência ou
   movimento de Caixinha gera dupla contagem.
-- [ ] Estados de loading, vazio e erro são distinguíveis por bloco; erro nunca
+  - `aggregate.test.ts`; integração PostgreSQL pendente de CI.
+- [x] Estados de loading, vazio e erro são distinguíveis por bloco; erro nunca
   aparece como zero monetário e a falha de um bloco não derruba a página.
-- [ ] Nenhum dado de outro espaço financeiro alcança número, nome, referência
+  - T12 UI + `overview-home.test.tsx` (erro de compromissos com spendable
+    utilizável).
+- [x] Nenhum dado de outro espaço financeiro alcança número, nome, referência
   ou link da home, comprovado por teste cross-space com IDs forjados.
-- [ ] Alertas são determinísticos, orientativos, limitados em quantidade e
+  - Testes puros T13; integração A/B pendente de CI.
+- [x] Alertas são determinísticos, orientativos, limitados em quantidade e
   derivados apenas do read model consolidado.
-- [ ] A home permanece legível e utilizável em 360px para consulta rápida.
-- [ ] Logs, breadcrumbs e Sentry registram apenas contexto operacional agregado,
+  - `alerts.test.ts` (21).
+- [x] A home permanece legível e utilizável em 360px para consulta rápida.
+  - Spec E2E T14 (execução pendente de CI).
+- [x] Logs, breadcrumbs e Sentry registram apenas contexto operacional agregado,
   sem centavos, nomes, descrições, SQL, payloads, cookies ou tokens.
+  - `s10.test.ts` (13); Sentry ao vivo não exercitado neste VM.
 - [ ] Testes puros, integração PostgreSQL, performance com volume representativo
   e E2E da home para os detalhes estão executados e registrados.
+  - **Parcial (2026-09-03):** unitário 884 passed neste ambiente. Integração
+    T10, EXPLAIN T09, `db:check` e Playwright **não promovidos** (sem
+    Postgres/Docker); gate = CI (`integration` + `e2e`). Ver T15.

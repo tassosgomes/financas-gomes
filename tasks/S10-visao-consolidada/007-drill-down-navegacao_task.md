@@ -1,6 +1,6 @@
 # T07 — Drill-down determinístico para as telas de origem
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 2
 - Dependências: T06; rotas e filtros de S05, S06, S07, S08 e S09
 - Paralelização: Com T08 e T09
@@ -31,29 +31,29 @@ dados.
 
 ## Subtarefas
 
-- [ ] Implementar o construtor de links a partir do read model, com testes.
-- [ ] Validar cada URL gerada contra o parser de filtros da tela de destino.
-- [ ] Cobrir o caso de destino indisponível e o de agregado vazio.
-- [ ] Garantir que nenhum link exponha identificador de outro household.
-- [ ] Registrar no ADR-013 o mapa final agregado → destino → filtros.
+- [x] Implementar o construtor de links a partir do read model, com testes.
+- [x] Validar cada URL gerada contra o parser de filtros da tela de destino.
+- [x] Cobrir o caso de destino indisponível e o de agregado vazio.
+- [x] Garantir que nenhum link exponha identificador de outro household.
+- [x] Registrar no ADR-013 o mapa final agregado → destino → filtros.
 
 ## Critérios de aceite
 
-- [ ] Abrir o link de um agregado mostra na tela de destino o mesmo total
+- [x] Abrir o link de um agregado mostra na tela de destino o mesmo total
   exibido na home, para o mesmo `asOf`.
-- [ ] Nenhum link é montado por concatenação improvisada de string na camada de
+- [x] Nenhum link é montado por concatenação improvisada de string na camada de
   apresentação.
-- [ ] Filtros permanecem na URL e sobrevivem a refresh e a compartilhamento
+- [x] Filtros permanecem na URL e sobrevivem a refresh e a compartilhamento
   dentro do mesmo espaço financeiro.
-- [ ] Destinos ainda não entregues aparecem como indisponíveis e explicados.
+- [x] Destinos ainda não entregues aparecem como indisponíveis e explicados.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/overview/links.ts` e testes.
-- [ ] Testes que parseiam a URL gerada com o contrato de filtro da tela de
+- [x] `src/modules/overview/links.ts` e testes.
+- [x] Testes que parseiam a URL gerada com o contrato de filtro da tela de
   destino.
-- [ ] Atualização do mapa de drill-down no ADR-013.
-- [ ] `vitest`, `eslint` e `tsc` aprovados.
+- [x] Atualização do mapa de drill-down no ADR-013.
+- [x] `vitest`, `eslint` e `tsc` aprovados.
 
 ## Sequenciamento
 

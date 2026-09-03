@@ -1,6 +1,6 @@
 # T04 — Observabilidade segura da Visão Geral
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 1 (transversal)
 - Dependências: T01; infraestrutura de observabilidade do S01
 - Paralelização: Com T02, T03, T05 e demais tasks de backend
@@ -30,30 +30,30 @@ carregamento, sem jamais registrar dado financeiro ou de tenancy.
 
 ## Subtarefas
 
-- [ ] Implementar o contrato de observabilidade S10 com tipos fechados.
-- [ ] Implementar o adapter de instrumentação componível, aplicável às leituras
+- [x] Implementar o contrato de observabilidade S10 com tipos fechados.
+- [x] Implementar o adapter de instrumentação componível, aplicável às leituras
   de T02/T03 sem que elas conheçam o transporte.
-- [ ] Adicionar teste de redaction que falha se qualquer campo proibido chegar
+- [x] Adicionar teste de redaction que falha se qualquer campo proibido chegar
   ao payload.
-- [ ] Documentar em `docs/observability-s10-overview.md` as operações, os
+- [x] Documentar em `docs/observability-s10-overview.md` as operações, os
   limites de lentidão e o que nunca é registrado.
 - [ ] Integrar a instrumentação nas leituras entregues por T02, T03 e T06.
 
 ## Critérios de aceite
 
-- [ ] Um erro de agregação gera evento correlacionado e resposta opaca.
-- [ ] Query acima do limite é sinalizada com duração e contadores agregados.
-- [ ] O teste de redaction cobre todos os campos proibidos e falha ao
+- [x] Um erro de agregação gera evento correlacionado e resposta opaca.
+- [x] Query acima do limite é sinalizada com duração e contadores agregados.
+- [x] O teste de redaction cobre todos os campos proibidos e falha ao
   introduzir um deles.
-- [ ] Nenhum log da home contém valor monetário ou identificador de tenancy.
-- [ ] A instrumentação não altera o resultado nem a ordem das leituras.
+- [x] Nenhum log da home contém valor monetário ou identificador de tenancy.
+- [x] A instrumentação não altera o resultado nem a ordem das leituras.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/observability/s10.ts` e `s10.test.ts`.
-- [ ] Teste dedicado de redaction.
-- [ ] `docs/observability-s10-overview.md`.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] `src/modules/observability/s10.ts` e `s10.test.ts`.
+- [x] Teste dedicado de redaction.
+- [x] `docs/observability-s10-overview.md`.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 

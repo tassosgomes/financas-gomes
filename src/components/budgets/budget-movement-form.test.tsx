@@ -31,8 +31,9 @@ describe("BudgetMovementForm", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Revisar aporte" }));
 
-    await waitFor(() => expect(screen.getByRole("alertdialog")).toBeTruthy());
-    expect(document.activeElement).toBe(screen.getByRole("alertdialog"));
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByRole("alertdialog"));
+    });
     fireEvent.click(screen.getByRole("button", { name: "Confirmar aporte" }));
 
     await waitFor(() => {
