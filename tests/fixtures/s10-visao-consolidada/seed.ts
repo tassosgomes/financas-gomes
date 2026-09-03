@@ -521,41 +521,44 @@ export async function seedS10VolumeFixtures(database: Database): Promise<void> {
 
   await database.insert(financialEvents).values(buildRecurringFinancialEvents());
 
-  await database.insert(creditCardPurchases).values([
-    {
-      id: S10_VOLUME_IDS.purchases.aInstallment,
-      householdId: S10_VOLUME_IDS.households.a,
-      cardId: S10_VOLUME_IDS.cards.a,
-      financialEventId: S10_VOLUME_IDS.events.purchaseA,
-      installmentPlanId: S10_VOLUME_IDS.plans.aInstallment,
-    },
-    {
-      id: S10_VOLUME_IDS.purchases.bSingle,
-      householdId: S10_VOLUME_IDS.households.b,
-      cardId: S10_VOLUME_IDS.cards.b,
-      financialEventId: S10_VOLUME_IDS.events.purchaseB,
-      installmentPlanId: S10_VOLUME_IDS.plans.bSingle,
-    },
-  ]);
+  // Purchase ↔ plan is a circular FK; the reverse edge is DEFERRABLE, so both
+  // sides must be written in one transaction (same pattern as S06 aggregates).
+  await database.transaction(async (transaction) => {
+    await transaction.insert(creditCardPurchases).values([
+      {
+        id: S10_VOLUME_IDS.purchases.aInstallment,
+        householdId: S10_VOLUME_IDS.households.a,
+        cardId: S10_VOLUME_IDS.cards.a,
+        financialEventId: S10_VOLUME_IDS.events.purchaseA,
+        installmentPlanId: S10_VOLUME_IDS.plans.aInstallment,
+      },
+      {
+        id: S10_VOLUME_IDS.purchases.bSingle,
+        householdId: S10_VOLUME_IDS.households.b,
+        cardId: S10_VOLUME_IDS.cards.b,
+        financialEventId: S10_VOLUME_IDS.events.purchaseB,
+        installmentPlanId: S10_VOLUME_IDS.plans.bSingle,
+      },
+    ]);
 
-  await database.insert(installmentPlans).values([
-    {
-      id: S10_VOLUME_IDS.plans.aInstallment,
-      householdId: S10_VOLUME_IDS.households.a,
-      purchaseId: S10_VOLUME_IDS.purchases.aInstallment,
-      totalAmountCents: BigInt(48_000),
-      installmentCount: 3,
-    },
-    {
-      id: S10_VOLUME_IDS.plans.bSingle,
-      householdId: S10_VOLUME_IDS.households.b,
-      purchaseId: S10_VOLUME_IDS.purchases.bSingle,
-      totalAmountCents: BigInt(7_500),
-      installmentCount: 1,
-    },
-  ]);
+    await transaction.insert(installmentPlans).values([
+      {
+        id: S10_VOLUME_IDS.plans.aInstallment,
+        householdId: S10_VOLUME_IDS.households.a,
+        purchaseId: S10_VOLUME_IDS.purchases.aInstallment,
+        totalAmountCents: BigInt(48_000),
+        installmentCount: 3,
+      },
+      {
+        id: S10_VOLUME_IDS.plans.bSingle,
+        householdId: S10_VOLUME_IDS.households.b,
+        purchaseId: S10_VOLUME_IDS.purchases.bSingle,
+        totalAmountCents: BigInt(7_500),
+        installmentCount: 1,
+      },
+    ]);
 
-  await database.insert(installments).values([
+    await transaction.insert(installments).values([
     {
       id: S10_VOLUME_IDS.installments.a1,
       householdId: S10_VOLUME_IDS.households.a,
@@ -601,7 +604,8 @@ export async function seedS10VolumeFixtures(database: Database): Promise<void> {
       billingClosingOn: "2026-11-10",
       billingDueOn: "2026-11-20",
     },
-  ]);
+    ]);
+  });
 
   await database.insert(budgets).values([
     {
