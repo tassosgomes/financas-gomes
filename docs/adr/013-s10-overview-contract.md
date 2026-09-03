@@ -237,7 +237,7 @@ Derivados **somente** do read model consolidado; sem query extra, sem IA.
 | `ruleId` | Severidade | Condição | Mensagem |
 | --- | --- | --- | --- |
 | `SPENDABLE_NOT_POSITIVE` | `attention` se `displaySpendableCents === "0"`; `critical` se `rawSpendableCents < 0` | bloco spendable `ready` | Orientativa: revisar compromissos e reservas. |
-| `FORECAST_MONTH_NEGATIVE` | `critical` | algum mês civil futuro na timeline conservativa de 90 dias com `closingProjectedBalanceCents < 0` | Orientativa: mês projetado negativo. |
+| `FORECAST_MONTH_NEGATIVE` | `critical` | algum mês civil futuro na timeline conservativa com `netCents < 0` em `periods[]`, ou `closingProjectedBalanceCents < 0` em `days[]` após `asOf`; se a origem S07 não estiver disponível na composição, proxy via `spendable.breakdown.closingProjectedBalanceCents < 0` com spendable `ready` | Orientativa: mês projetado negativo. |
 | `COMMITMENT_SOON` | `attention` | próximo outflow em até 7 dias civis a partir de `asOf` | Orientativa: compromisso próximo. |
 | `EXPECTED_INCOME_UNREALIZED` | `attention` | inflow `EXPECTED` do mês civil atual sem `INCOME` `POSTED` correspondente reconciliado (S07) | Orientativa: receita prevista ainda não realizada. |
 | `BOX_INSUFFICIENT` | `attention` | qualquer Caixinha com saldo assinado `< 0` | Orientativa: Caixinha em déficit. |
@@ -253,22 +253,35 @@ Regras adicionais:
 
 ## Mapa de drill-down
 
+Implementação canônica em
+[`src/modules/overview/links.ts`](../../src/modules/overview/links.ts) via
+`buildOverviewLinks(model)`.  A camada de apresentação consome os hrefs
+retornados; não concatena strings de rota.
+
 Usar constantes de rota existentes e o mesmo dialeto de query das telas de
 destino.
 
-| Destino | Rota / query |
-| --- | --- |
-| Spendable | `/spendable/breakdown` (`SPENDABLE_BREAKDOWN_ROUTE`) |
-| Receitas do período | `/transactions?from={from}&to={to}&kind=INCOME&status=POSTED` |
-| Despesas EXPENSE do período | `/transactions?from={from}&to={to}&kind=EXPENSE&status=POSTED` |
-| Categoria (real) | `...&categoryId={categoryId}` |
-| Sem categoria | `...&categoryId=__none` (`UNCATEGORIZED_FILTER_VALUE`) |
-| Compras PURCHASE da categoria/período | `/credit-cards` ou `/credit-cards/{cardId}` (+ filtros `from`/`to` quando aplicável); `/transactions` não cobre PURCHASE |
-| Forecast completo | `/forecast?from={from}&to={to}&scenario=CONSERVATIVE` (ou cenário usado na composição) |
-| Caixinhas | `/budgets` (`BUDGETS_ROUTE`) |
-| Detalhe Caixinha | `/budgets/{referenceId}` (`budgetDetailRoute`) |
-| Cartões | `/credit-cards` (`CREDIT_CARD_ROUTES.collection`) |
-| Cartão | `/credit-cards/{cardId}` (`creditCardHref`) |
+| Agregado / alerta | Builder (`OverviewLinks`) | Rota / query |
+| --- | --- | --- |
+| Spendable | `spendableHref` | `/spendable/breakdown` (`SPENDABLE_BREAKDOWN_ROUTE`) |
+| Receitas do período | `periodIncomeHref` | `transactionsHref({ from, to, kind: "INCOME", status: "POSTED" })` |
+| Despesas EXPENSE do período | `periodExpenseHref` | `transactionsHref({ from, to, kind: "EXPENSE", status: "POSTED" })` |
+| Categoria (real) | `categoryHref(group)` | `...&categoryId={categoryId}` |
+| Sem categoria | `categoryHref(group)` com `key=uncategorized` | `...&categoryId=__none` (`UNCATEGORIZED_FILTER_VALUE`) |
+| Residual **Outros** | `categoryHref(group)` com `key=other` | despesas do período **sem** filtro de categoria |
+| Compras PURCHASE do período | `purchaseHref(group)` | `/credit-cards?from={from}&to={to}`; `/transactions` não cobre PURCHASE |
+| Forecast completo | `forecastHref` | `forecastHref({ from: asOf+1, to: asOf+horizonDays, scenario })` |
+| Caixinhas (lista) | `budgetsHref` | `/budgets` (`BUDGETS_ROUTE`) |
+| Detalhe Caixinha | `caixinhaHref(item)` | `budgetDetailRoute(referenceId)`; `referenceId` vazio → indisponível |
+| Cartões (lista) | `creditCardsHref` | `/credit-cards` (`CREDIT_CARD_ROUTES.collection`) |
+| Cartão / fatura | `cardHref(item)` | `creditCardHref(cardId)` |
+| Alerta spendable | `alertHref` → `SPENDABLE_NOT_POSITIVE` | `spendableHref` |
+| Alerta forecast | `alertHref` → `FORECAST_MONTH_NEGATIVE` / `COMMITMENT_SOON` | `forecastHref` (horizonte; `COMMITMENT_SOON` usa `alert.date` como `from` quando presente) |
+| Alerta receita prevista | `alertHref` → `EXPECTED_INCOME_UNREALIZED` | `periodIncomeHref` |
+| Alerta Caixinha | `alertHref` → `BOX_INSUFFICIENT` | `budgetDetailRoute(alert.referenceId)` ou indisponível |
+
+Destinos indisponíveis usam `disabledOverviewLink(reason)` (`href: null`,
+`available: false`).  Nenhum href inclui `householdId`.
 
 ## Inventário de leituras consumidas
 

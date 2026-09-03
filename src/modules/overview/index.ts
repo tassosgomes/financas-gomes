@@ -4,14 +4,20 @@ export * from "./aggregate";
 export * from "./query";
 export * from "./ports";
 export * from "./read-contracts";
+export * from "./alerts";
 export {
-  deriveOverviewAlerts,
   getOverview,
   getOverviewForContext,
   createOverviewReadAccess,
   overviewReadAccess,
   type OverviewServiceDependencies,
 } from "./service";
+export {
+  buildOverviewLinks,
+  disabledOverviewLink,
+  type DisabledOverviewLink,
+  type OverviewLinks,
+} from "./links";
 export {
   DEFAULT_OVERVIEW_HORIZON_DAYS,
   DEFAULT_OVERVIEW_SCENARIO,
