@@ -1,6 +1,6 @@
 # T02 — Agregação do período: realizados e despesas por categoria
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 1
 - Dependências: T01; contratos de S03/S05 (ledger e eventos) e S06 (cartão)
 - Paralelização: Com T03, T04 e T05
@@ -36,35 +36,35 @@ eventos financeiros canônicos já existentes.
 
 ## Subtarefas
 
-- [ ] Criar o módulo de agregação do S10 (`src/modules/overview/`) com
+- [x] Criar o módulo de agregação do S10 (`src/modules/overview/`) com
   contratos, query e derivação pura separadas.
-- [ ] Implementar a derivação pura de totais e grupos com testes de unidade
+- [x] Implementar a derivação pura de totais e grupos com testes de unidade
   cobrindo refund, correção, parcela, categoria ausente e resíduo.
-- [ ] Implementar a query tenant-scoped com filtros de período e status
+- [x] Implementar a query tenant-scoped com filtros de período e status
   `POSTED`, sem ler tabela de snapshot ou saldo materializado.
-- [ ] Provar a não dupla contagem cartão x transação com um caso numérico
+- [x] Provar a não dupla contagem cartão x transação com um caso numérico
   fechado (compra parcelada + fatura + pagamento no mesmo período).
-- [ ] Provar reconciliação: soma dos grupos == total, e total == soma dos
+- [x] Provar reconciliação: soma dos grupos == total, e total == soma dos
   eventos listados pela tela de transações com o mesmo filtro.
 
 ## Critérios de aceite
 
-- [ ] A soma dos grupos por categoria é exatamente igual ao total de despesas
+- [x] A soma dos grupos por categoria é exatamente igual ao total de despesas
   do período, em centavos, inclusive com percentuais arredondados.
-- [ ] Nenhum cenário de cartão produz dupla contagem, e o teste que prova isso
+- [x] Nenhum cenário de cartão produz dupla contagem, e o teste que prova isso
   é numérico, não textual.
-- [ ] A agregação é determinística para a mesma entrada e o mesmo `asOf`.
-- [ ] Um ID/linha de outro household nunca influencia um total nem aparece em
+- [x] A agregação é determinística para a mesma entrada e o mesmo `asOf`.
+- [x] Um ID/linha de outro household nunca influencia um total nem aparece em
   uma referência retornada.
-- [ ] Nenhum valor monetário trafega como `number`.
+- [x] Nenhum valor monetário trafega como `number`.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/overview/contracts.ts`, `aggregate.ts` e `query.ts`.
-- [ ] Testes unitários da derivação pura e teste PostgreSQL opt-in de
+- [x] `src/modules/overview/contracts.ts`, `aggregate.ts` e `query.ts`.
+- [x] Testes unitários da derivação pura e teste PostgreSQL opt-in de
   isolamento e reconciliação.
-- [ ] `EXPLAIN` das consultas de período e categoria, com índices usados.
-- [ ] `rtk npm exec vitest`, `eslint` e `tsc` aprovados no write set da task.
+- [x] `EXPLAIN` das consultas de período e categoria, com índices usados.
+- [x] `rtk npm exec vitest`, `eslint` e `tsc` aprovados no write set da task.
 
 ## Sequenciamento
 
