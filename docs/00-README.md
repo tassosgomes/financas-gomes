@@ -30,7 +30,8 @@ Este diretório quebra a V1 em vertical slices implementáveis e validáveis de 
 10. [S10 — Visão financeira consolidada](./S10-visao-consolidada.md)
 11. [S11 — Portabilidade, backup e operação confiável](./S11-operacao-confiavel.md)
     ([ADR-014](./adr/014-s11-portabilidade-backup.md),
-    [matriz](./S11-operacao-confiavel-contract-matrix.md))
+    [matriz](./S11-operacao-confiavel-contract-matrix.md),
+    [runbook de backup/restauração](./backup-restore.md))
 
 ## Regra de execução
 

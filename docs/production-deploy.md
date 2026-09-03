@@ -49,7 +49,8 @@ Antes do primeiro deploy de produção, o operador deve confirmar no console Neo
 4. O branch usado em produção é um **root branch** (PITR só é suportado em root
    branches, por exemplo `main` ou `production`).
 5. Existe procedimento aprovado para restaurar em **branch separada** antes de
-   promover qualquer troca em produção (runbook T13).
+   promover qualquer troca em produção — ver
+   [`docs/backup-restore.md`](backup-restore.md) (runbook T13).
 
 Fontes públicas (consultadas em 2026-09-03): [Neon — History
 window](https://neon.com/docs/introduction/history-window), [Neon — Instant
@@ -243,9 +244,9 @@ As migrations são forward-only. Não edite nem tente executar uma migration
   for compatível com o schema expandido; corrija o build e publique uma nova
   versão. Não reverta SQL manualmente.
 - Migration com dados incorretos ou destrutivos: pare a operação, preserve os
-  logs sem segredos e siga o procedimento de restauração/PITR aprovado pelo
-  responsável Neon. Restauração de produção exige autorização explícita e
-  validação em um banco separado antes de qualquer troca.
+  logs sem segredos e siga o procedimento de restauração/PITR em
+  [`docs/backup-restore.md`](backup-restore.md). Restauração de produção exige
+  autorização explícita e validação em um banco separado antes de qualquer troca.
 - Após corrigir a causa, reexecute o mesmo workflow no commit aprovado. A
   tabela `drizzle.__drizzle_migrations` torna a aplicação idempotente: versões
   já aplicadas ficam registradas e somente pendências são executadas.
