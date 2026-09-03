@@ -148,11 +148,6 @@ export function FormField<TFieldValues extends FieldValues>({
       <label className="text-sm font-medium" htmlFor={id}>
         {label}
       </label>
-      {description ? (
-        <p className="text-xs text-muted-foreground" id={`${id}-description`}>
-          {description}
-        </p>
-      ) : null}
       {children ? (
         children(field)
       ) : (
@@ -168,6 +163,11 @@ export function FormField<TFieldValues extends FieldValues>({
           {...field}
         />
       )}
+      {description ? (
+        <p className="text-xs text-muted-foreground" id={`${id}-description`}>
+          {description}
+        </p>
+      ) : null}
       {message ? (
         <p className="text-xs text-destructive" id={`${id}-error`} role="alert">
           {message}

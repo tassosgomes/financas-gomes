@@ -27,7 +27,22 @@ describe("MoneyInput boundary helpers", () => {
       "1.234,56",
     );
     expect(parseMoneyInputCents("-100")).toBe("");
-    expect(parseMoneyInputCents("1,234")).toBe("");
     expect(parseMoneyInputCents("")).toBe("");
   });
+
+  it("keeps digit-as-cents semantics while typing through a formatted value", () => {
+    // After the first digit the field shows "0,01". The next keystroke often
+    // produces "0,012", which is invalid as BRL display but valid as typing.
+    expect(parseMoneyInputCents("0,012")).toBe("12");
+    expect(formatMoneyInputCents(parseMoneyInputCents("0,012"))).toBe("0,12");
+    expect(parseMoneyInputCents("0,123")).toBe("123");
+    expect(formatMoneyInputCents(parseMoneyInputCents("0,123"))).toBe("1,23");
+    expect(parseMoneyInputCents("1,234")).toBe("1234");
+    expect(formatMoneyInputCents(parseMoneyInputCents("1,234"))).toBe("12,34");
+    expect(parseMoneyInputCents("1.234,567")).toBe("1234567");
+    expect(formatMoneyInputCents(parseMoneyInputCents("1.234,567"))).toBe(
+      "12.345,67",
+    );
+  });
 });
+

@@ -12,6 +12,7 @@ import {
   updatePlannedEventAction,
   updateRecurringRuleFutureAction,
 } from "@/app/actions/forecast-maintenance";
+import { MoneyInput } from "@/components/transactions/money-input";
 import { generateUuidV7 } from "@/lib/uuidv7";
 import type {
   ForecastOriginAction,
@@ -57,7 +58,7 @@ function errorMessage(response: ActionResponse | null): string | null {
     UNAUTHENTICATED: "Entre para alterar compromissos.",
     INVALID_COMMAND: "Revise os dados informados.",
     INVALID_COMMAND_ID: "Não foi possível identificar esta operação. Tente novamente.",
-    INVALID_AMOUNT: "Informe um valor positivo em centavos.",
+    INVALID_AMOUNT: "Informe um valor positivo.",
     INVALID_DATE: "Informe uma data válida.",
     INVALID_DESCRIPTION: "Informe uma descrição válida.",
     INVALID_KIND: "Escolha um tipo de compromisso válido.",
@@ -164,12 +165,11 @@ function RecurringRuleForm({ detail }: { detail: ForecastOriginDetail }) {
         </p>
       </div>
       <form className="grid gap-4 sm:grid-cols-2" noValidate onSubmit={submitUpdate}>
-        <Field label="Valor (centavos)">
-          <input
+        <Field label="Valor">
+          <MoneyInput
             className={CONTROL_CLASS}
             disabled={isPending}
-            inputMode="numeric"
-            onChange={(event) => setAmountCents(event.target.value)}
+            onCentsChange={setAmountCents}
             value={amountCents}
           />
         </Field>
@@ -273,12 +273,11 @@ function RecurringOccurrenceForm({ detail }: { detail: ForecastOriginDetail }) {
       </div>
       {hasOverride ? (
         <form className="grid gap-4 sm:grid-cols-2" noValidate onSubmit={submitOverride}>
-          <Field label="Valor substituto (centavos)">
-            <input
+          <Field label="Valor substituto">
+            <MoneyInput
               className={CONTROL_CLASS}
               disabled={isPending}
-              inputMode="numeric"
-              onChange={(event) => setAmountCents(event.target.value)}
+              onCentsChange={setAmountCents}
               value={amountCents}
             />
           </Field>
@@ -372,12 +371,11 @@ function PlannedEventForm({ detail }: { detail: ForecastOriginDetail }) {
         </p>
       </div>
       <form className="grid gap-4 sm:grid-cols-2" noValidate onSubmit={submitUpdate}>
-        <Field label="Valor (centavos)">
-          <input
+        <Field label="Valor">
+          <MoneyInput
             className={CONTROL_CLASS}
             disabled={isPending}
-            inputMode="numeric"
-            onChange={(event) => setAmountCents(event.target.value)}
+            onCentsChange={setAmountCents}
             value={amountCents}
           />
         </Field>

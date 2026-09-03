@@ -154,7 +154,7 @@ async function createPlannedEvent(
     .getByRole("combobox", { name: "Tipo", exact: true })
     .selectOption(values.kind ?? "EXPENSE");
   await route
-    .getByRole("textbox", { name: "Valor (centavos)", exact: true })
+    .getByRole("textbox", { name: "Valor", exact: true })
     .fill(values.amountCents);
   await route
     .getByRole("textbox", { name: "Data esperada", exact: true })

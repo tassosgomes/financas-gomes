@@ -37,6 +37,11 @@ export function formatMoneyInputCents(
  * `1.234,56`). Pasted Brazilian display values are parsed without Number or
  * floating-point rounding and invalid values become an empty form value.
  */
+function digitsAsCents(value: string): string {
+  const digits = value.replace(/\D/gu, "");
+  return digits ? canonicalizeDigits(digits) : "";
+}
+
 export function parseMoneyInputCents(value: string): string {
   if (/[+-]/u.test(value)) {
     return "";
@@ -51,12 +56,14 @@ export function parseMoneyInputCents(value: string): string {
     try {
       return parseMoneyBRL(trimmed);
     } catch {
-      return "";
+      // Intermediate typed values such as "0,012" are not valid BRL display
+      // (more than two decimals), but they are normal while the digit-as-cents
+      // mask reformats after each keystroke. Fall back instead of clearing.
+      return digitsAsCents(value);
     }
   }
 
-  const digits = value.replace(/\D/gu, "");
-  return digits ? canonicalizeDigits(digits) : "";
+  return digitsAsCents(value);
 }
 
 export interface MoneyInputProps

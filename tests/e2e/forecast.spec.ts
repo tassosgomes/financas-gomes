@@ -135,7 +135,7 @@ async function createPlannedEvent(
   await expect(route).toBeVisible();
   await route.getByRole("combobox", { name: "Fonte", exact: true }).selectOption("PLANNED_EVENT");
   await route.getByRole("combobox", { name: "Tipo", exact: true }).selectOption("EXPENSE");
-  await route.getByRole("textbox", { name: "Valor (centavos)", exact: true }).fill("4567");
+  await route.getByRole("textbox", { name: "Valor", exact: true }).fill("4567");
   await route.getByRole("textbox", { name: "Data esperada", exact: true }).fill(date);
   await route.getByRole("textbox", { name: "Descrição", exact: true }).fill(description);
   await route
@@ -154,7 +154,7 @@ async function createRecurringRule(
   await expect(route).toBeVisible();
   await route.getByRole("combobox", { name: "Fonte", exact: true }).selectOption("RECURRING");
   await route.getByRole("combobox", { name: "Tipo", exact: true }).selectOption("EXPENSE");
-  await route.getByRole("textbox", { name: "Valor (centavos)", exact: true }).fill("10000");
+  await route.getByRole("textbox", { name: "Valor", exact: true }).fill("10000");
   await route
     .getByRole("textbox", { name: "Início da vigência", exact: true })
     .fill(date);
@@ -489,7 +489,7 @@ test.describe("T12 — jornadas dependentes de T10", () => {
     const maintenance = page.getByTestId("forecast-planned-event-maintenance");
     await expect(maintenance).toBeVisible();
     await maintenance
-      .getByRole("textbox", { name: "Valor (centavos)", exact: true })
+      .getByRole("textbox", { name: "Valor", exact: true })
       .fill("5678");
     await maintenance
       .getByRole("textbox", { name: "Data esperada", exact: true })
@@ -587,7 +587,7 @@ test.describe("T12 — jornadas dependentes de T10", () => {
     await expect(occurrenceMaintenance).toBeVisible();
     await occurrenceMaintenance
       .getByRole("textbox", {
-        name: "Valor substituto (centavos)",
+        name: "Valor substituto",
         exact: true,
       })
       .fill("11111");

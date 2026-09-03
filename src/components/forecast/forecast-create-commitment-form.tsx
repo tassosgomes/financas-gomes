@@ -7,6 +7,7 @@ import {
   createPlannedEventAction,
   createRecurringRuleAction,
 } from "@/app/actions/forecast-maintenance";
+import { MoneyInput } from "@/components/transactions/money-input";
 import { generateUuidV7 } from "@/lib/uuidv7";
 
 const CONTROL_CLASS =
@@ -23,7 +24,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   UNAUTHENTICATED: "Entre para adicionar um compromisso.",
   INVALID_COMMAND: "Revise os dados informados.",
   INVALID_COMMAND_ID: "Não foi possível identificar esta operação. Tente novamente.",
-  INVALID_AMOUNT: "Informe um valor positivo em centavos.",
+  INVALID_AMOUNT: "Informe um valor positivo.",
   INVALID_DATE: "Informe uma data válida.",
   INVALID_DESCRIPTION: "Informe uma descrição válida.",
   INVALID_KIND: "Escolha um tipo válido.",
@@ -119,8 +120,13 @@ export function ForecastCreateCommitmentForm() {
             <option value="INCOME">Receita</option>
           </select>
         </Field>
-        <Field label="Valor (centavos)">
-          <input className={CONTROL_CLASS} disabled={isPending} inputMode="numeric" onChange={(event) => setAmountCents(event.target.value)} value={amountCents} />
+        <Field label="Valor">
+          <MoneyInput
+            className={CONTROL_CLASS}
+            disabled={isPending}
+            onCentsChange={setAmountCents}
+            value={amountCents}
+          />
         </Field>
         <Field label={kind === "PLANNED_EVENT" ? "Data esperada" : "Início da vigência"}>
           <input className={CONTROL_CLASS} disabled={isPending} onChange={(event) => setExpectedOn(event.target.value)} type="date" value={expectedOn} />
