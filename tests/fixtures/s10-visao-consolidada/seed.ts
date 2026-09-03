@@ -328,11 +328,11 @@ export async function cleanupS10VolumeFixtures(database: Database): Promise<void
       .delete(installments)
       .where(inArray(installments.householdId, S10_VOLUME_HOUSEHOLD_IDS));
     await transaction
-      .delete(creditCardPurchases)
-      .where(inArray(creditCardPurchases.householdId, S10_VOLUME_HOUSEHOLD_IDS));
-    await transaction
       .delete(installmentPlans)
       .where(inArray(installmentPlans.householdId, S10_VOLUME_HOUSEHOLD_IDS));
+    await transaction
+      .delete(creditCardPurchases)
+      .where(inArray(creditCardPurchases.householdId, S10_VOLUME_HOUSEHOLD_IDS));
   });
   await database
     .delete(creditCardBillingRules)
