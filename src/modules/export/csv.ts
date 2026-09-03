@@ -173,3 +173,11 @@ export function encodeDatasetCsv(
 ): string {
   return encodeCsvDocument(columns, rows);
 }
+
+/** Encodes one data row (without trailing LF) for streaming export. */
+export function encodeCsvDataLine(
+  columns: readonly string[],
+  row: Record<string, unknown>,
+): string {
+  return encodeCsvRow(columns, row);
+}

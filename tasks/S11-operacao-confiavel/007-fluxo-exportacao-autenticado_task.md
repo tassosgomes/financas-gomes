@@ -1,6 +1,6 @@
 # T07 — Fluxo de exportação autenticado, empacotamento e entrega
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 2
 - Dependências: T03, T06; observabilidade de T04
 - Paralelização: Com T08
@@ -39,33 +39,33 @@ nenhum vazamento de dado ou de segredo.
 
 ## Subtarefas
 
-- [ ] Implementar o caso de uso e a superfície autenticada.
-- [ ] Implementar empacotamento, manifesto e nomes de arquivo estáveis.
-- [ ] Implementar limites de tamanho/tempo e o caminho de erro correspondente.
-- [ ] Testar exportação com espaço vazio, espaço completo e filtro sem
+- [x] Implementar o caso de uso e a superfície autenticada.
+- [x] Implementar empacotamento, manifesto e nomes de arquivo estáveis.
+- [x] Implementar limites de tamanho/tempo e o caminho de erro correspondente.
+- [x] Testar exportação com espaço vazio, espaço completo e filtro sem
   resultado.
-- [ ] Testar recusa de acesso não autenticado e de tentativa cross-space.
+- [x] Testar recusa de acesso não autenticado e de tentativa cross-space.
 
 ## Critérios de aceite
 
-- [ ] Usuário autenticado exporta os dados do seu espaço em formato aberto, em
+- [x] Usuário autenticado exporta os dados do seu espaço em formato aberto, em
   uma única ação.
-- [ ] Nenhuma linha de outro espaço financeiro aparece no arquivo, comprovado
+- [x] Nenhuma linha de outro espaço financeiro aparece no arquivo, comprovado
   por teste com IDs forjados.
-- [ ] Espaço vazio produz saída válida e explicável, não erro e não arquivo
+- [x] Espaço vazio produz saída válida e explicável, não erro e não arquivo
   corrompido.
-- [ ] Nenhum segredo, token, cookie, URL de banco ou detalhe técnico aparece no
+- [x] Nenhum segredo, token, cookie, URL de banco ou detalhe técnico aparece no
   arquivo, no manifesto, no nome do arquivo ou na resposta de erro.
-- [ ] A exportação não altera nenhum dado financeiro.
-- [ ] Ultrapassar o limite de tamanho/tempo produz erro contratado e
+- [x] A exportação não altera nenhum dado financeiro.
+- [x] Ultrapassar o limite de tamanho/tempo produz erro contratado e
   observável, não resposta truncada silenciosa.
 
 ## Entregáveis e evidência esperada
 
-- [ ] Caso de uso, superfície autenticada e testes unitários/integração.
-- [ ] Amostra de exportação gerada a partir de fixture, versionada em
+- [x] Caso de uso, superfície autenticada e testes unitários/integração.
+- [x] Amostra de exportação gerada a partir de fixture, versionada em
   `tests/fixtures/s11-operacao-confiavel/`.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
 
 ## Sequenciamento
 
