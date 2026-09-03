@@ -1,0 +1,76 @@
+{
+  "fixtureVersion": "s09-caixinhas-t13-v1",
+  "normativeContract": "../../../docs/adr/012-s09-caixinhas-contract.md",
+  "testMatrix": "../../../docs/S09-caixinhas-contract-matrix.md",
+  "dateType": "Temporal.PlainDate",
+  "moneyType": "bigint-cents",
+  "syntheticData": true,
+  "domainFixtureSource": "../../../src/modules/budgets/fixtures.ts",
+  "allocationFixtureSource": "../../../src/modules/budgets/allocation-rules.fixtures.ts",
+  "movementFixtureSource": "../../../src/modules/budgets/movement-fixtures.ts",
+  "observabilityFixtureSource": "../../../src/modules/observability/s09.ts",
+  "postgresFixtureSource": "postgres-fixtures.json",
+  "fixtures": [
+    {
+      "id": "domain-matrix",
+      "owner": "T02",
+      "source": "../../../src/modules/budgets/fixtures.ts",
+      "cases": [
+        "multiple-movements",
+        "positive-rollover",
+        "negative-rollover",
+        "closed-on-boundary",
+        "december-to-january",
+        "same-date-tie-break"
+      ],
+      "coverage": ["balance", "protected", "cutoff", "rollover", "ordering"]
+    },
+    {
+      "id": "allocation-matrix",
+      "owner": "T04",
+      "source": "../../../src/modules/budgets/allocation-rules.fixtures.ts",
+      "cases": [
+        "realized-income",
+        "expected-income",
+        "effective-dated-rules",
+        "economic-purchase",
+        "installment-and-card-payment",
+        "effective-refund"
+      ],
+      "coverage": ["exact-remainder", "idempotency", "no-double-counting"]
+    },
+    {
+      "id": "movement-commands",
+      "owner": "T07",
+      "source": "../../../src/modules/budgets/movement-fixtures.ts",
+      "cases": ["basic-lifecycle"],
+      "coverage": [
+        "contribution",
+        "withdrawal",
+        "transfer-pair",
+        "append-only-correction",
+        "realized-income-distribution",
+        "idempotency",
+        "atomicity"
+      ]
+    },
+    {
+      "id": "postgres-boundaries",
+      "owner": "T03/T13",
+      "source": "postgres-fixtures.json",
+      "flag": "T13_INTEGRATION=1",
+      "service": "docker-compose.test.yml#db",
+      "coverage": ["migration", "composite-fk-isolation", "rollback", "restricted-delete"]
+    },
+    {
+      "id": "safe-observability",
+      "owner": "T09/T13",
+      "source": "../../../src/modules/observability/s09.ts",
+      "coverage": ["allow-list", "classification", "redaction", "serializable-context"]
+    }
+  ],
+  "openGates": [
+    "T14 E2E",
+    "T15 release"
+  ]
+}

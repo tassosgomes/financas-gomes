@@ -3,6 +3,7 @@
 import {
   getSpendable as readSpendable,
 } from "@/modules/spendable/service";
+import { createBudgetReserveAdapter } from "@/modules/budgets/reserve-source";
 import type {
   GetSpendableInput,
   SpendableBreakdown,
@@ -16,7 +17,11 @@ import type { SpendableResult } from "@/modules/spendable/service";
 export async function getSpendableAction(
   input?: GetSpendableInput,
 ): Promise<SpendableResult<SpendableBreakdown>> {
-  return readSpendable(input);
+  return readSpendable(input, {
+    // S09 tenancy is captured by the S08 service before this factory's
+    // adapter callback receives only the versioned ReserveAdapterContext.
+    reserveAdapterFactory: (context) => createBudgetReserveAdapter(context),
+  });
 }
 
 export async function getSpendable(input?: GetSpendableInput) {

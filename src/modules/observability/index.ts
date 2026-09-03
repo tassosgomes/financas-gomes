@@ -18,6 +18,7 @@ export * from "./transactions";
 export * from "./csv-import";
 export * from "./forecast";
 export * from "./spendable";
+export * from "./s09";
 
 import { getClientSentryConfig } from "./client-config";
 import {

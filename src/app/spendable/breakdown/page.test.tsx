@@ -137,6 +137,26 @@ describe("T10 spendable breakdown route", () => {
     });
   });
 
+  it("accepts only a same-origin budget detail as the return target", async () => {
+    mocks.getSpendableAction.mockResolvedValue(success(breakdown()));
+
+    const budgetHtml = renderToStaticMarkup(
+      await SpendableBreakdownPage({
+        searchParams: Promise.resolve({ returnTo: "/budgets/budget-reference" }),
+      }),
+    );
+    expect(budgetHtml).toContain('href="/budgets/budget-reference"');
+    expect(budgetHtml).toContain("Voltar à Caixinha");
+
+    const foreignHtml = renderToStaticMarkup(
+      await SpendableBreakdownPage({
+        searchParams: Promise.resolve({ returnTo: "https://evil.example/steal" }),
+      }),
+    );
+    expect(foreignHtml).toContain('href="/app"');
+    expect(foreignHtml).not.toContain("evil.example");
+  });
+
   it("keeps unavailable resources explicit without leaking server errors", async () => {
     mocks.getSpendableAction.mockResolvedValue({
       ok: false,

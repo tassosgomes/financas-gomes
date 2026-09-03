@@ -7,6 +7,7 @@ import {
 } from "@/components/spendable";
 import { PageHeader } from "@/components/ui/page-header";
 import { AUTHENTICATED_ROUTE } from "@/modules/auth/routes";
+import { SPENDABLE_BREAKDOWN_ROUTE } from "@/modules/budgets/routes";
 import { spendableCausalOriginHref } from "@/modules/spendable/origins";
 import type {
   GetSpendableInput,
@@ -15,8 +16,6 @@ import type {
 import type { SpendableResult } from "@/modules/spendable/service";
 
 export const dynamic = "force-dynamic";
-
-const SPENDABLE_BREAKDOWN_ROUTE = "/spendable/breakdown" as const;
 
 type SpendableSearchParams = Record<string, string | string[] | undefined>;
 type SpendablePageResult = SpendableResult<SpendableBreakdown>;
@@ -73,13 +72,36 @@ function queryHref(input: GetSpendableInput | undefined): string {
   return encoded ? `${SPENDABLE_BREAKDOWN_ROUTE}?${encoded}` : SPENDABLE_BREAKDOWN_ROUTE;
 }
 
+/**
+ * Keeps the optional UI back link on this application's origin. The budget
+ * detail is the only cross-route origin currently authorized by this page;
+ * everything else falls back to the authenticated shell.
+ */
+function safeReturnHref(value: string | undefined): string {
+  if (!value || value.length > 512 || /[\p{Cc}\p{Cf}]/u.test(value)) {
+    return AUTHENTICATED_ROUTE;
+  }
+
+  try {
+    const parsed = new URL(value, "https://spendable.local");
+    if (parsed.origin !== "https://spendable.local") return AUTHENTICATED_ROUTE;
+    const isBudgetDetail = /^\/budgets\/[^/]+$/u.test(parsed.pathname);
+    if (parsed.pathname !== AUTHENTICATED_ROUTE && !isBudgetDetail) {
+      return AUTHENTICATED_ROUTE;
+    }
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return AUTHENTICATED_ROUTE;
+  }
+}
+
 function routeAction(href: string) {
   return (
     <Link
       className="inline-flex min-h-10 items-center justify-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       href={href}
     >
-      Voltar à visão geral
+      {href.startsWith("/budgets/") ? "Voltar à Caixinha" : "Voltar à visão geral"}
     </Link>
   );
 }
@@ -102,6 +124,7 @@ export default async function SpendableBreakdownPage({
   const params = (await searchParams) ?? {};
   const input = queryInput(params);
   const href = queryHref(input);
+  const returnHref = safeReturnHref(scalar(params, "returnTo"));
   let result: SpendablePageResult;
 
   try {
@@ -116,7 +139,7 @@ export default async function SpendableBreakdownPage({
   }
 
   const state = pageState(result);
-  const action = routeAction(AUTHENTICATED_ROUTE);
+  const action = routeAction(returnHref);
 
   return (
     <section className="space-y-6" data-testid="spendable-breakdown-route">

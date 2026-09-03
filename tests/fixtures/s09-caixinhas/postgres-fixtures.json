@@ -1,0 +1,124 @@
+{
+  "fixtureVersion": "s09-caixinhas-t13-postgres-v1",
+  "households": {
+    "a": {
+      "id": "00000000-0000-7000-8000-000000131301",
+      "name": "T13 Household A"
+    },
+    "b": {
+      "id": "00000000-0000-7000-8000-000000131302",
+      "name": "T13 Household B"
+    }
+  },
+  "categories": {
+    "expenseA": {
+      "id": "00000000-0000-7000-8000-000000132301",
+      "household": "a",
+      "name": "T13 Expense A",
+      "kind": "EXPENSE"
+    },
+    "expenseB": {
+      "id": "00000000-0000-7000-8000-000000132302",
+      "household": "b",
+      "name": "T13 Expense B",
+      "kind": "EXPENSE"
+    }
+  },
+  "budgets": {
+    "a": {
+      "id": "00000000-0000-7000-8000-000000133301",
+      "household": "a",
+      "category": "expenseA",
+      "referenceId": "t13-budget-a",
+      "name": "T13 Budget A",
+      "activeFrom": "2026-01-01"
+    },
+    "b": {
+      "id": "00000000-0000-7000-8000-000000133302",
+      "household": "b",
+      "category": "expenseB",
+      "referenceId": "t13-budget-b",
+      "name": "T13 Budget B",
+      "activeFrom": "2026-01-01"
+    },
+    "rollback": {
+      "id": "00000000-0000-7000-8000-000000133303",
+      "household": "a",
+      "category": "expenseA",
+      "referenceId": "t13-budget-rollback",
+      "name": "T13 Budget Rollback",
+      "activeFrom": "2026-01-01"
+    }
+  },
+  "movements": {
+    "seed": {
+      "id": "00000000-0000-7000-8000-000000134301",
+      "household": "a",
+      "budget": "a",
+      "referenceId": "t13-movement-seed",
+      "kind": "CONTRIBUTION",
+      "amountCents": "1000",
+      "effectiveOn": "2026-01-05"
+    },
+    "rollback": {
+      "id": "00000000-0000-7000-8000-000000134302",
+      "household": "a",
+      "budget": "rollback",
+      "referenceId": "t13-movement-rollback",
+      "kind": "CONTRIBUTION",
+      "amountCents": "2000",
+      "effectiveOn": "2026-01-05"
+    }
+  },
+  "allocationRules": {
+    "rollback": {
+      "id": "00000000-0000-7000-8000-000000135301",
+      "household": "a",
+      "budget": "rollback",
+      "amountCents": "100",
+      "effectiveFrom": "2026-01-01"
+    }
+  },
+  "movementCommands": {
+    "contribution": {
+      "commandId": "t07-contribution-1",
+      "budgetReferenceId": "t13-budget-a",
+      "amountCents": "10000",
+      "effectiveOn": "2026-09-01",
+      "referenceId": "t07-contribution-reference"
+    },
+    "withdrawal": {
+      "commandId": "t07-withdrawal-1",
+      "budgetReferenceId": "t13-budget-a",
+      "amountCents": "3000",
+      "effectiveOn": "2026-09-02",
+      "referenceId": "t07-withdrawal-reference"
+    },
+    "transfer": {
+      "commandId": "t07-transfer-1",
+      "sourceBudgetReferenceId": "t13-budget-a",
+      "destinationBudgetReferenceId": "t13-budget-b",
+      "amountCents": "2500",
+      "effectiveOn": "2026-09-03",
+      "withdrawalReferenceId": "t07-transfer-withdrawal",
+      "contributionReferenceId": "t07-transfer-contribution",
+      "transferReferenceId": "t07-transfer-reference"
+    },
+    "correction": {
+      "commandId": "t07-correction-1",
+      "budgetReferenceId": "t13-budget-a",
+      "correctsReferenceId": "t07-contribution-reference",
+      "correctionReferenceId": "t07-correction-reference",
+      "effectiveOn": "2026-09-04"
+    },
+    "distribution": {
+      "commandId": "t07-distribution-1",
+      "financialEventId": "00000000-0000-7000-8000-000000071501"
+    }
+  },
+  "probes": {
+    "crossCategoryBudgetId": "00000000-0000-7000-8000-000000133399",
+    "crossHouseholdMovementId": "00000000-0000-7000-8000-000000134399",
+    "crossHouseholdRuleId": "00000000-0000-7000-8000-000000135399"
+  }
+}

@@ -371,7 +371,12 @@ histórico, mas sua proteção e seu ajuste global são zero. `closedOn` libera 
 proteção na data de encerramento, sem apagar a série histórica.
 
 O contrato de comportamento, os cenários que S09 deve habilitar e o owner
-estão detalhados no [handoff S08 → S09](../S09-caixinhas.md#handoff-s08--s09-t08).
+estão detalhados no [handoff S08 → S09](../S09-caixinhas.md#handoff-s08--s09-t08)
+e fechados, para a implementação do S09, pela
+[`ADR-012 — Contrato de Caixinhas`](012-s09-caixinhas-contract.md) e pela
+[`matriz de gates do S09`](../S09-caixinhas-contract-matrix.md). A ADR-012 não
+altera a fórmula `spendable.v1`, a API pública do S08 ou o owner do provider;
+ela apenas resolve as decisões que o S09 deve cumprir.
 O `ZeroReserveAdapter` comprova o caminho pré-S09: retorna `UNAVAILABLE`,
 centavos zero e componentes vazios; portanto, a ausência de S09 não bloqueia
 nem altera a API pública de S08.

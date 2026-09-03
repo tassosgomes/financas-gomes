@@ -159,6 +159,10 @@ export interface SpendableServiceDependencies {
   readonly forecastReader?: SpendableForecastReader;
   readonly getForecast?: SpendableForecastReader;
   readonly reserveAdapter?: SpendableReserveAdapter;
+  /** Optional server-side composition hook; context is resolved first. */
+  readonly reserveAdapterFactory?: (
+    context: FinancialContext,
+  ) => SpendableReserveAdapter;
   readonly clock?: () => string | Temporal.PlainDate;
   readonly today?: string | Temporal.PlainDate;
   readonly maxHorizonDays?: number;
@@ -585,7 +589,12 @@ function validateForecastWindow(
 function reflectedReferences(forecast: ForecastTimeline): readonly string[] {
   const references = new Set<string>(forecast.minimumBalanceReferences);
   for (const day of forecast.days) {
-    for (const item of day.items) references.add(item.referenceId);
+    for (const item of day.items) {
+      references.add(item.referenceId);
+      references.add(item.source.referenceId);
+      const replaces = item.reconciliation?.replacesReferenceId;
+      if (replaces !== null && replaces !== undefined) references.add(replaces);
+    }
   }
   return [...references].sort();
 }
@@ -715,7 +724,9 @@ async function runSpendable(
       dayCount: normalizedTimeline.days.length,
     }),
   );
-  const reserveAdapter = dependencies.reserveAdapter ?? new ZeroReserveAdapter();
+  const reserveAdapter = dependencies.reserveAdapter ??
+    dependencies.reserveAdapterFactory?.(context) ??
+    new ZeroReserveAdapter();
   const reserve = await observed(
     reserveOperation,
     () =>

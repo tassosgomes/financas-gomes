@@ -25,7 +25,7 @@ describe("ForecastCreateCommitmentForm money mask", () => {
   it("masks the amount field as Brazilian currency instead of raw cents", () => {
     render(<ForecastCreateCommitmentForm />);
 
-    const amount = screen.getByRole("textbox", { name: "Valor", exact: true });
+    const amount = screen.getByRole("textbox", { name: /^Valor$/ });
     expect(screen.queryByRole("textbox", { name: "Valor (centavos)" })).toBeNull();
     expect(amount.getAttribute("data-money-boundary")).toBe("amountCents");
 
@@ -43,4 +43,3 @@ describe("ForecastCreateCommitmentForm money mask", () => {
     expect((amount as HTMLInputElement).value).toBe("1.234,56");
   });
 });
-

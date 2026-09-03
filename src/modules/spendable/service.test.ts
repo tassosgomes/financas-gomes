@@ -173,6 +173,32 @@ describe("T06 availability service", () => {
     expect(reserveAdapter.getReserve.mock.calls[0]?.[0]).not.toHaveProperty("householdId");
   });
 
+  it("builds the persisted S09 adapter only after resolving the financial context", async () => {
+    const deps = dependencies(noEventsSpendableFixture);
+    const reserveAdapter = {
+      contractVersion: "s09.v1" as const,
+      getReserve: vi.fn().mockReturnValue({
+        contractVersion: "s09.v1",
+        status: "UNAVAILABLE",
+        protectedAmount: { cents: BigInt(0) },
+        appliedOpeningAdjustment: { cents: BigInt(0) },
+        components: [],
+        boxes: [],
+      }),
+    };
+    const reserveAdapterFactory = vi.fn(() => reserveAdapter);
+    const result = await getSpendable(undefined, {
+      ...deps,
+      reserveAdapterFactory,
+    });
+
+    expect(result).toMatchObject({ ok: true });
+    expect(reserveAdapterFactory).toHaveBeenCalledWith(contextA);
+    expect(reserveAdapter.getReserve).toHaveBeenCalledWith(
+      expect.not.objectContaining({ householdId: expect.anything() }),
+    );
+  });
+
   it("preserves a negative raw result while displaying zero and its deficit", async () => {
     const result = await getSpendable(
       { asOf: negativeSpendableFixture.asOf, horizon: { days: 1 } },

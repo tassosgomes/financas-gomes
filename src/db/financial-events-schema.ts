@@ -70,6 +70,12 @@ export const accountEntries = pgTable(
       columns: [table.installmentId, table.householdId],
       foreignColumns: [installments.id, installments.householdId],
     }).onDelete("restrict"),
+    // S09 keeps the tenant key in its source FK when linking a movement to a
+    // ledger entry.
+    uniqueIndex("account_entries_id_household_id_uq").on(
+      table.id,
+      table.householdId,
+    ),
     index("account_entries_household_account_posted_on_idx").on(
       table.householdId,
       table.accountId,

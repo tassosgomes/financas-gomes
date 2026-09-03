@@ -36,10 +36,16 @@
     ".next-e2e-s08-focused/types/**/*.ts",
     ".next-e2e-s08-t13-20260902/types/**/*.ts",
     ".next-e2e-s08/types/**/*.ts",
+    ".next-e2e-t07-forecast/types/**/*.ts",
+    ".next-e2e-t07-regressions/types/**/*.ts",
+    ".next-e2e-t07/types/**/*.ts",
+    ".next-e2e-t13-forecast/types/**/*.ts",
+    ".next-e2e-t15-final/types/**/*.ts",
+    ".next-e2e-t15/types/**/*.ts",
     ".next-e2e/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-e2e-t13-forecast/types/**/*.ts"
+    ".next-e2e-s09-final/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

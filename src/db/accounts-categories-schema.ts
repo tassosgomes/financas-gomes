@@ -245,7 +245,7 @@ export const applicationCommands = pgTable(
       "application_commands_operation_check",
       sql`char_length(btrim(${table.operation})) between 1 and 128`,
     ),
-    // Keep command retries bounded to operations published by S02-S06. New
+    // Keep command retries bounded to operations published by S02-S09. New
     // domain writes must add an explicit operation instead of persisting an
     // arbitrary caller-controlled string.
     check(
@@ -281,7 +281,16 @@ export const applicationCommands = pgTable(
         'recurring_occurrence.realize',
         'planned_event.create',
         'planned_event.update',
-        'planned_event.cancel'
+        'planned_event.cancel',
+        'budget.create',
+        'budget.update',
+        'budget.close',
+        'budget.movement.contribution',
+        'budget.movement.withdrawal',
+        'budget.movement.transfer',
+        'budget.movement.correct',
+        'budget.allocation.replace',
+        'budget.distribution'
       )`,
     ),
   ],

@@ -12,6 +12,29 @@ O usuário cria caixinhas, define quanto pretende reservar e acompanha quanto j�
 
 O produto utiliza o nome **caixinhas**.
 
+## Contrato fechado pela T01
+
+As decisões normativas de fronteira, associação com categoria, vigência,
+movimentos, alocação, metas, saldo derivado e integração com Spendable estão
+em [`ADR-012 — Contrato de Caixinhas, fronteira e integração S09`](adr/012-s09-caixinhas-contract.md).
+A matriz de dependências, cenários e gates de T02–T15 está em
+[`Matriz de dependências, decisões e gates`](S09-caixinhas-contract-matrix.md).
+
+Em resumo: a UI chama o recurso de **Caixinha**; o domínio usa `Budget` e a
+porta do S08 usa `ReserveBox`. Cada Caixinha tem uma categoria `EXPENSE`, uma
+categoria só pode ter uma Caixinha vigente por vez e a Caixinha mais específica
+vence para uma despesa na data econômica. `activeFrom` é inclusivo e
+`closedOn` é exclusivo para proteção: a data de encerramento preserva
+histórico, mas não protege o Spendable.
+
+Movimentos têm amount positivo em centavos e o tipo carrega o sinal:
+`CONTRIBUTION` soma e `WITHDRAWAL` subtrai. Saldo, rollover, progresso e
+proteção são derivados com `Money`/`bigint`; não existe saldo persistido.
+Somente uma receita realizada gera distribuição automática, usando as regras
+`budget_allocation_rules.amount_cents` efetivas na data e arredondamento
+determinístico que totaliza exatamente a receita. Ausência de regra não cria
+aporte implícito.
+
 ## Fluxo principal
 
 1. Usuário cria uma caixinha.
@@ -47,6 +70,12 @@ O proprietário da implementação final é o **domínio/backend do S09 —
 Caixinhas e movimentos**. S08 mantém somente a porta de leitura; T06 apenas a
 consumirá quando o domínio estiver disponível. Nenhuma tabela, migration ou
 CRUD de caixinhas é criada no slice S08.
+
+Este handoff é detalhado e fechado por
+[`ADR-012`](adr/012-s09-caixinhas-contract.md) e pela
+[`matriz T01`](S09-caixinhas-contract-matrix.md). Em particular, T08 S09 deve
+consumir a fonte de movimentos normalizada pelo S09, sem assumir saldo
+persistido ou criar ledger/forecast paralelo.
 
 A porta versionada publicada em
 [`src/modules/spendable/reserve-adapter.ts`](../src/modules/spendable/reserve-adapter.ts)
@@ -93,8 +122,20 @@ Os testes de integração do S09 devem provar, com dados tenant-scoped:
    deduplicadas, e uma parcela/compra/pagamento não é tratada como fonte de
    reserva concorrente.
 
-Esses cenários pertencem ao fechamento do S09; o slice S08 comprova apenas a
-porta, o zero explícito e o adaptador puro de movimentos.
+Esses cenários pertencem ao fechamento do S09; a preparação T08 também
+comprova o mapeamento tenant-safe das linhas persistidas disponíveis em T05/T06
+para o adapter, mas o provider vertical e a reconciliação financeira aguardam
+T07. O slice S08 continua comprovando a porta, o zero explícito e a derivação
+pura, sem assumir semântica de movimentos ainda não publicada.
+
+O provider deve montar seu stream tenant-scoped a partir de movimentos
+`CONTRIBUTION`/`WITHDRAWAL`, despesas de categoria e refunds na data efetiva.
+Compra parcelada reduz a Caixinha pelo valor econômico total uma única vez;
+parcelas, fatura e pagamento não são fontes concorrentes. A porta aceita
+somente `asOf`, cenário, horizonte e referências já refletidas; o household é
+resolvido antes da chamada. `protectedCents` é positivo, saldo negativo fica
+explicável no domínio e `appliedOpeningAdjustmentCents` entra antes do mínimo
+do S08, sem subtrair a proteção novamente.
 
 ## Dados / domínio
 
@@ -123,12 +164,18 @@ Preferir movimentos de aporte/retirada em vez de sobrescrever saldo sem históri
 
 ## Critérios de aceite
 
-- [ ] Usuário cria uma caixinha.
-- [ ] Usuário reserva valor nela.
-- [ ] Saldo da caixinha é consistente com seus movimentos.
-- [ ] Valor reservado não continua aparecendo como livre para gastar quando a regra do produto determinar sua proteção.
-- [ ] Retirada ajusta corretamente saldo e disponibilidade.
-- [ ] Encerrar caixinha não perde o histórico necessário.
+- [x] Usuário cria uma caixinha.
+- [x] Usuário reserva valor nela.
+- [x] Saldo da caixinha é consistente com seus movimentos.
+- [x] Valor reservado não continua aparecendo como livre para gastar quando a regra do produto determinar sua proteção.
+- [x] Retirada ajusta corretamente saldo e disponibilidade.
+- [x] Encerrar caixinha não perde o histórico necessário.
+
+Fechamento funcional auditado em T15 (2026-09-03): os seis critérios têm
+prova unitária, PostgreSQL vertical e matriz E2E ampla final (28/28). A
+promoção do worktree está liberada; publicação/smoke de produção depende de
+credenciais e autorização do ambiente, conforme registrado em
+tasks/S09-caixinhas/015-validacao-release-handoff_task.md.
 
 ## Testes
 

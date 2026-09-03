@@ -61,6 +61,15 @@ export {
   recurringRules,
 } from "./recurring-schema";
 export { spendableSettings } from "./spendable-schema";
+export {
+  budgetAllocationRules,
+  BUDGET_COMMAND_OPERATIONS,
+  budgetMovementKindEnum,
+  budgetMovementSourceKindEnum,
+  budgetMovements,
+  budgetStatusEnum,
+  budgets,
+} from "./budgets-schema";
 
 import { betterAuthSchema } from "@/modules/auth/schema";
 import {
@@ -94,6 +103,11 @@ import {
   recurringRules,
 } from "./recurring-schema";
 import { spendableSettings } from "./spendable-schema";
+import {
+  budgetAllocationRules,
+  budgetMovements,
+  budgets,
+} from "./budgets-schema";
 
 export const schema = {
   ...betterAuthSchema,
@@ -119,6 +133,9 @@ export const schema = {
   holidays,
   plannedEvents,
   spendableSettings,
+  budgets,
+  budgetMovements,
+  budgetAllocationRules,
 } as const;
 
 export default schema;

@@ -40,16 +40,6 @@ async function signIn(
   }
 }
 
-function isoDateFromToday(days: number): string {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-
 function inputInside(testId: string, page: Page): Locator {
   return page.getByTestId(testId).locator("input");
 }
@@ -258,7 +248,10 @@ test.describe("T16 — fluxo crítico de cartões, faturas e parcelas", () => {
     await inputInside("credit-card-edit-closing-day-field", page).fill("12");
     await inputInside("credit-card-edit-due-day-field", page).fill("22");
     await inputInside("credit-card-effective-from-field", page).fill(
-      isoDateFromToday(1),
+      // Keep this civil date independent from the browser/server timezone.
+      // The initial rule is stamped by the server's UTC date; deriving a
+      // relative date in the test process can equal it around local midnight.
+      "2099-01-01",
     );
     await page
       .getByTestId("credit-card-maintenance")

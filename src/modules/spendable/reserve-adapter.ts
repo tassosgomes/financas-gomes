@@ -1,6 +1,13 @@
 import { Temporal } from "@js-temporal/polyfill";
 
 import {
+  instrumentS09BudgetProviderBoundary,
+  instrumentS09BudgetSerializationBoundarySync,
+  type S09BudgetBoundaryOptions,
+  type S09BudgetResultSummary,
+} from "@/modules/observability/s09";
+
+import {
   SPENDABLE_SCENARIOS,
   SpendableContractError,
   compareSpendableDates,
@@ -63,6 +70,8 @@ export interface ReserveMovement {
   readonly kind: ReserveMovementKind;
   readonly amount: SpendableMoney;
   readonly effectiveOn: SpendableDate;
+  /** Opaque lineage keys used to reconcile ledger/forecast facts once. */
+  readonly reconciliationReferenceIds?: readonly OpaqueReference[];
 }
 
 /** Input form accepted by the pure S09 handoff adapter. */
@@ -73,6 +82,8 @@ export interface ReserveMovementInput {
   readonly amount?: SpendableCentsInput;
   readonly amountCents?: SpendableCentsInput;
   readonly effectiveOn: string | Temporal.PlainDate;
+  /** Opaque lineage keys; no source metadata or tenant authority crosses S08. */
+  readonly reconciliationReferenceIds?: readonly OpaqueReference[];
 }
 
 /**
@@ -170,6 +181,9 @@ export interface SpendableReserveAdapter {
 }
 
 export type ReserveAdapter = SpendableReserveAdapter;
+
+/** Optional safe hooks for the S09 provider/serialization boundaries. */
+export type ReserveAdapterObservabilityOptions = S09BudgetBoundaryOptions;
 
 const ZERO = BigInt(0);
 const MAX_HORIZON_DAYS = 3_660;
@@ -300,12 +314,22 @@ function normalizeMovement(
       })
     : spendablePositiveCents((input as ReserveMovement).amount, `movements[${index}].amount`);
   const effectiveOn = spendableDate(input.effectiveOn, `movements[${index}].effectiveOn`);
+  const reconciliationReferenceIds =
+    input.reconciliationReferenceIds === undefined
+      ? undefined
+      : canonicalReferences(
+          input.reconciliationReferenceIds,
+          `movements[${index}].reconciliationReferenceIds`,
+        );
   return {
     referenceId,
     boxReferenceId: movementBox,
     kind,
     amount: spendableMoney(amountValue),
     effectiveOn,
+    ...(reconciliationReferenceIds === undefined
+      ? {}
+      : { reconciliationReferenceIds }),
   };
 }
 
@@ -380,6 +404,17 @@ function movementEffect(movement: ReserveMovement): bigint {
   return movement.kind === "CONTRIBUTION" ? movement.amount.cents : -movement.amount.cents;
 }
 
+function isReflected(
+  movement: ReserveMovement,
+  reflectedReferenceIds: ReadonlySet<string>,
+): boolean {
+  return movement.referenceId !== undefined &&
+    (reflectedReferenceIds.has(movement.referenceId) ||
+      (movement.reconciliationReferenceIds ?? []).some((referenceId) =>
+        reflectedReferenceIds.has(referenceId),
+      ));
+}
+
 function isActiveAt(box: ReserveBox, asOf: Temporal.PlainDate): boolean {
   return compareSpendableDates(box.activeFrom, asOf) <= 0 &&
     (box.closedOn === null || compareSpendableDates(asOf, box.closedOn) < 0);
@@ -393,6 +428,110 @@ function emptySnapshot(): ReserveSnapshotDomain {
     appliedOpeningAdjustment: spendableMoney(ZERO),
     components: [],
     boxes: [],
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function arrayLength(value: unknown): number {
+  return Array.isArray(value) ? value.length : 0;
+}
+
+function boundedSummaryCount(
+  values: readonly unknown[],
+  key: string,
+): number {
+  return values.reduce<number>((count, value) => {
+    if (!isRecord(value)) return count;
+    return count + arrayLength(value[key]);
+  }, 0);
+}
+
+/**
+ * Derives only categorical and aggregate metadata from a provider result.
+ * Amounts, dates, names and references are never copied into telemetry; the
+ * final S09 sanitizer also revalidates every returned field.
+ */
+export function summarizeS09ReserveSnapshot(
+  value: unknown,
+): S09BudgetResultSummary {
+  if (!isRecord(value)) return {};
+  const status = value.status;
+  const boxes = Array.isArray(value.boxes) ? value.boxes : [];
+  const components = Array.isArray(value.components) ? value.components : [];
+  const activeBudgetCount = boxes.filter(
+    (box) => isRecord(box) && box.status === "ACTIVE",
+  ).length;
+  const closedBudgetCount = boxes.filter(
+    (box) => isRecord(box) && box.status === "CLOSED",
+  ).length;
+
+  if (status === "UNAVAILABLE") {
+    return {
+      result: "UNAVAILABLE",
+      providerStatus: "UNAVAILABLE",
+      budgetCount: boxes.length,
+      activeBudgetCount,
+      closedBudgetCount,
+      componentCount: components.length,
+      protectedComponentCount: components.length,
+      movementCount: boundedSummaryCount(boxes, "movementReferenceIds"),
+      appliedMovementCount: boundedSummaryCount(
+        components,
+        "appliedMovementReferenceIds",
+      ),
+    };
+  }
+  if (status !== "AVAILABLE") return {};
+
+  const result = boxes.length === 0
+    ? "NO_BOXES"
+    : components.length > 0
+      ? "PROTECTED"
+      : closedBudgetCount === boxes.length
+        ? "CLOSED"
+        : "ZERO_PROTECTION";
+  return {
+    result,
+    providerStatus: "AVAILABLE",
+    budgetCount: boxes.length,
+    activeBudgetCount,
+    closedBudgetCount,
+    componentCount: components.length,
+    protectedComponentCount: components.length,
+    movementCount: boundedSummaryCount(boxes, "movementReferenceIds"),
+    appliedMovementCount: boundedSummaryCount(
+      components,
+      "appliedMovementReferenceIds",
+    ),
+  };
+}
+
+/** Summary for the already serialized public reserve DTO. */
+export function summarizeS09SerializedReserveSnapshot(
+  value: unknown,
+): S09BudgetResultSummary {
+  if (!isRecord(value)) return {};
+  const status = value.status;
+  const components = Array.isArray(value.components) ? value.components : [];
+  if (status !== "AVAILABLE" && status !== "UNAVAILABLE") return {};
+  return {
+    result: status === "UNAVAILABLE"
+      ? "UNAVAILABLE"
+      : components.length > 0
+        ? "PROTECTED"
+        : "ZERO_PROTECTION",
+    providerStatus: status,
+    componentCount: components.length,
+    protectedComponentCount: components.length,
+    serializedFieldCount: 5 + components.length * 9,
+    movementCount: boundedSummaryCount(components, "movementReferenceIds"),
+    appliedMovementCount: boundedSummaryCount(
+      components,
+      "appliedMovementReferenceIds",
+    ),
   };
 }
 
@@ -445,7 +584,7 @@ export function deriveReserveSnapshot(input: ReserveSnapshotInput): ReserveSnaps
     const active = isActiveAt(box, context.asOf);
     const protectedCents = active && balance > ZERO ? balance : ZERO;
     const unreflected = effectiveMovements
-      .filter(({ referenceId }) => !context.reflectedReferenceIds.has(referenceId))
+      .filter((movement) => !isReflected(movement, context.reflectedReferenceIds))
       .reduce((total, movement) => total + movementEffect(movement), ZERO);
     // Negative box balances are carried by S09 but can never increase global
     // spendable.  A closed box similarly releases protection exactly once.
@@ -463,7 +602,7 @@ export function deriveReserveSnapshot(input: ReserveSnapshotInput): ReserveSnaps
 
     if (protectedCents > ZERO) {
       const appliedMovementReferenceIds = effectiveMovements
-        .filter(({ referenceId }) => !context.reflectedReferenceIds.has(referenceId))
+        .filter((movement) => !isReflected(movement, context.reflectedReferenceIds))
         .map(({ referenceId }) => referenceId)
         .sort();
       protectedComponents.push({
@@ -553,7 +692,7 @@ export interface SerializedSpendableReserveSnapshot
 }
 
 /** Converts Money/PlainDate internals to the existing S08 serializable DTO. */
-export function serializeReserveSnapshot(
+function serializeReserveSnapshotValue(
   snapshot: ReserveSnapshotDomain,
 ): SerializedSpendableReserveSnapshot {
   return {
@@ -575,29 +714,56 @@ export function serializeReserveSnapshot(
   };
 }
 
+/**
+ * Serializes the reserve handoff through the S09-owned serialization boundary.
+ * The synchronous API is preserved for existing S08 callers while telemetry
+ * receives only the contract/status and bounded component counters.
+ */
+export function serializeReserveSnapshot(
+  snapshot: ReserveSnapshotDomain,
+  options: ReserveAdapterObservabilityOptions = {},
+): SerializedSpendableReserveSnapshot {
+  const serialize = instrumentS09BudgetSerializationBoundarySync(
+    serializeReserveSnapshotValue,
+    { ...options, summarizeResult: summarizeS09SerializedReserveSnapshot },
+  );
+  return serialize(snapshot);
+}
+
 export const toSerializableReserveSnapshot = serializeReserveSnapshot;
 
 /** Resolves either sync or async implementations at the S08 server boundary. */
 export async function readReserveSnapshot(
   adapter: SpendableReserveAdapter,
   context: ReserveAdapterContext,
+  options: ReserveAdapterObservabilityOptions = {},
 ): Promise<ReserveSnapshotDomain> {
-  const snapshot = await adapter.getReserve(context);
-  if (snapshot.contractVersion !== RESERVE_CONTRACT_VERSION) {
-    return fail(
-      "SPENDABLE_INCONSISTENT",
-      "A versão do contrato de reserva é incompatível.",
-      "contractVersion",
-    );
-  }
-  return snapshot;
+  const readProvider = instrumentS09BudgetProviderBoundary(
+    async (): Promise<ReserveSnapshotDomain> => {
+      const snapshot = await adapter.getReserve(context);
+      if (snapshot.contractVersion !== RESERVE_CONTRACT_VERSION) {
+        return fail(
+          "SPENDABLE_INCONSISTENT",
+          "A versão do contrato de reserva é incompatível.",
+          "contractVersion",
+        );
+      }
+      return snapshot;
+    },
+    { ...options, summarizeResult: summarizeS09ReserveSnapshot },
+  );
+  return readProvider();
 }
 
 export async function readSerializableReserveSnapshot(
   adapter: SpendableReserveAdapter,
   context: ReserveAdapterContext,
+  options: ReserveAdapterObservabilityOptions = {},
 ): Promise<SerializedSpendableReserveSnapshot> {
-  return serializeReserveSnapshot(await readReserveSnapshot(adapter, context));
+  return serializeReserveSnapshot(
+    await readReserveSnapshot(adapter, context, options),
+    options,
+  );
 }
 
 // Kept as named aliases for downstream S08/S09 handoff code.

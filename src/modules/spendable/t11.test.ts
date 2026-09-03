@@ -64,6 +64,23 @@ function calculate(
   });
 }
 
+function calculateWithReserve(
+  fixture: (typeof SPENDABLE_FIXTURES)[number],
+  reserve: SpendableReserveSnapshot,
+): SpendableBreakdown {
+  const buffer: SpendableBufferInput = {
+    amountCents: fixture.operationalBufferCents,
+    source: fixture.operationalBufferSource,
+    effectiveFrom: fixture.effectiveBufferFrom ?? null,
+    revision: fixture.operationalBufferSource === "CONFIGURED" ? "t11-buffer" : null,
+  };
+  return SpendableEngine({
+    timeline: normalizeSpendableTimeline(fixture.timeline),
+    operationalBuffer: buffer,
+    reserve,
+  });
+}
+
 function expectCents(value: unknown): asserts value is string {
   expect(typeof value).toBe("string");
   expect(value).toMatch(/^-?\d+$/u);
@@ -350,7 +367,41 @@ describe("T11 S08 unit acceptance matrix", () => {
     expect(timeline.days.flatMap(({ items: dayItems }) => dayItems)).toHaveLength(2);
   });
 
-  it.todo(
-    "T11/S09: habilitar valores de caixinha quando a persistência de S09 estiver disponível",
-  );
+  it("consumes the available s09.v1 reserve snapshot exactly once", () => {
+    const reserve: SpendableReserveSnapshot = {
+      contractVersion: "s09.v1",
+      status: "AVAILABLE",
+      protectedCents: "100000",
+      appliedOpeningAdjustmentCents: "-100000",
+      components: [
+        {
+          referenceId: "t11-box-main",
+          amountCents: "100000",
+          effectiveOn: "2026-09-01",
+        },
+      ],
+    };
+    const withoutReserve = calculate(noEventsSpendableFixture);
+    const withReserve = calculateWithReserve(noEventsSpendableFixture, reserve);
+
+    expect(withReserve.reserve).toEqual(reserve);
+    expect(withReserve.openingProjectedBalanceCents).toBe("700000");
+    expect(withReserve.minimumProjectedBalanceCents).toBe("700000");
+    expect(withReserve.rawSpendableCents).toBe(
+      (BigInt(withoutReserve.rawSpendableCents) - BigInt(100000)).toString(),
+    );
+    expect(withReserve.minimum.points[0]).toMatchObject({
+      kind: "OPENING",
+      projectedBalanceCents: "700000",
+      references: ["t11-box-main"],
+      items: [
+        expect.objectContaining({
+          referenceId: "t11-box-main",
+          sourceKind: "RESERVE",
+          amountCents: "100000",
+          direction: "OUTFLOW",
+        }),
+      ],
+    });
+  });
 });

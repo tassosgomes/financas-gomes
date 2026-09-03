@@ -64,6 +64,7 @@ export interface ErrorStateProps {
   message: string;
   retryHref?: string;
   retryLabel?: string;
+  children?: React.ReactNode;
   testId?: string;
 }
 
@@ -73,6 +74,7 @@ export function ErrorState({
   message,
   retryHref,
   retryLabel = "Tentar novamente",
+  children,
   testId = "error-state",
 }: ErrorStateProps) {
   return (
@@ -97,6 +99,7 @@ export function ErrorState({
               {retryLabel}
             </Link>
           ) : null}
+          {children ? <div className="mt-2">{children}</div> : null}
         </div>
       </div>
     </section>

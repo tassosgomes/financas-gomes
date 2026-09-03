@@ -14,7 +14,7 @@ describe("AccountForm field layout", () => {
     render(
       <AccountForm
         onCancel={vi.fn()}
-        onSubmit={vi.fn(async () => ({ ok: true, value: {} as never }))}
+        onSubmit={vi.fn(async () => ({ ok: true as const, value: {} as never }))}
       />,
     );
 

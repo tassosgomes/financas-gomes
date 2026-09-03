@@ -6,8 +6,11 @@ import {
   MIGRATIONS_FOLDER,
 } from "./migrate";
 
+// Local files provide defaults; an explicit shell/CI value must win so a
+// disposable or controlled migration target cannot be silently redirected by
+// a developer's .env.local.
 loadDotenv({ path: ".env" });
-loadDotenv({ path: ".env.local", override: true });
+loadDotenv({ path: ".env.local" });
 
 function usage(): void {
   console.log(`Uso: tsx src/db/cli.ts <comando>

@@ -120,6 +120,31 @@ describe("↔ S09 reserve adapter", () => {
     expect(component?.appliedMovementReferenceIds).toEqual(["movement-withdrawal"]);
   });
 
+  it("deduplicates an opaque movement through its source lineage", () => {
+    const snapshot = deriveReserveSnapshot({
+      ...context,
+      reflectedReferenceIds: ["posted-event"],
+      boxes: [
+        box({
+          movements: [
+            {
+              referenceId: "generated-budget-movement",
+              boxReferenceId: "box-main",
+              kind: "CONTRIBUTION",
+              amountCents: "100000",
+              effectiveOn: "2026-09-01",
+              reconciliationReferenceIds: ["posted-event", "account-entry"],
+            },
+          ],
+        }),
+      ],
+    });
+
+    expect(snapshot.protectedAmount.toCentsString()).toBe("100000");
+    expect(snapshot.appliedOpeningAdjustment.toCentsString()).toBe("0");
+    expect(snapshot.components[0]?.appliedMovementReferenceIds).toEqual([]);
+  });
+
   it("does not apply any reserve movement twice when all references are reflected", () => {
     const snapshot = deriveReserveSnapshot({
       ...context,

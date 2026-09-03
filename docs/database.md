@@ -16,6 +16,12 @@ npm run db:migrate:local
 npm run db:migrate:status
 ```
 
+Os arquivos `.env`/`.env.local` fornecem apenas valores padrão: variáveis
+definidas explicitamente no shell ou no CI têm precedência. Para verificar um
+alvo diferente do configurado localmente, informe `DATABASE_URL` e
+`MIGRATION_DATABASE_URL` juntos; assim status, check e deploy apontam para o
+mesmo PostgreSQL sem depender de overrides implícitos.
+
 `npm run db:check` verifica o estado e retorna código de erro se houver
 migrations pendentes ou divergentes. O comando não inicia o Next.js.
 
@@ -61,8 +67,12 @@ Use o compose separado para um PostgreSQL descartável, exposto por padrão em
 
 ```bash
 docker compose -f docker-compose.test.yml up -d db
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/financas_gomes_test npm run db:migrate:local
-DATABASE_URL=postgresql://postgres:postgres@localhost:5433/financas_gomes_test npm run test:integration
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/financas_gomes_test \
+MIGRATION_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/financas_gomes_test \
+npm run db:migrate:local
+DATABASE_URL=postgresql://postgres:postgres@localhost:5433/financas_gomes_test \
+MIGRATION_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/financas_gomes_test \
+npm run test:integration
 ```
 
 `npm run test:integration` is opt-in: it enables the PostgreSQL-backed
