@@ -12,7 +12,7 @@ import {
 } from "./adapters";
 import type {
   ManualTransactionReadModel,
-  S03Result,
+  TransactionResult,
 } from "./contracts";
 
 const context = {
@@ -45,7 +45,7 @@ const value: ManualTransactionReadModel = {
 };
 
 function dependencies(
-  result: S03Result<ManualTransactionReadModel> = { ok: true, value },
+  result: TransactionResult<ManualTransactionReadModel> = { ok: true, value },
 ): TransactionMaintenanceActionDependencies & {
   resolveContext: ReturnType<typeof vi.fn>;
   revalidateTransactions: ReturnType<typeof vi.fn>;
@@ -153,7 +153,7 @@ describe("transaction maintenance Server Action adapter", () => {
     expect(captureServerException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        event: "s03_transaction_update_manual_unexpected_error",
+        event: "transaction_update_manual_unexpected_error",
         useCase: "transactions.update.manual",
         operation: "update",
         entityType: "transaction",

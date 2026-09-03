@@ -58,7 +58,7 @@ function calculateFixture(fixture: {
   });
 }
 
-describe("S08 SpendableEngine (T03)", () => {
+describe("SpendableEngine (T03)", () => {
   it("reconciles positive, zero and negative raw spendable values", () => {
     const positive = calculateFixture(positiveSpendableFixture);
     expect(positive).toMatchObject({

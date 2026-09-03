@@ -117,7 +117,7 @@ function dependencies(port: MockedReviewPort = ports()): TestDependencies {
   };
 }
 
-describe("S05 review Server Action adapters", () => {
+describe("review Server Action adapters", () => {
   beforeEach(() => {
     vi.spyOn(console, "info").mockImplementation(() => undefined);
     vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -300,7 +300,7 @@ describe("S05 review Server Action adapters", () => {
     expect(captureServerException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        event: "s05_transaction_review_update_unexpected_error",
+        event: "transaction_review_update_unexpected_error",
         useCase: "transactions.review.update",
         eventId,
         errorCode: "UPDATE_FAILED",

@@ -12,7 +12,7 @@ describe("safe structured CRUD logs", () => {
 
   it("allow-lists operation metadata and drops financial fields", () => {
     const safe = sanitizeCrudObservabilityLog({
-      event: "s02_account_create_success",
+      event: "account_create_success",
       useCase: "accounts.create",
       operation: "create",
       entityType: "account",
@@ -29,7 +29,7 @@ describe("safe structured CRUD logs", () => {
     });
 
     expect(safe).toEqual({
-      event: "s02_account_create_success",
+      event: "account_create_success",
       useCase: "accounts.create",
       operation: "create",
       entityType: "account",
@@ -47,7 +47,7 @@ describe("safe structured CRUD logs", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
 
     logObservability("info", {
-      event: "s02_category_list_success",
+      event: "category_list_success",
       useCase: "categories.list",
       operation: "list",
       entityType: "category",

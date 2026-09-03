@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  createS04ImportOperation,
-  sanitizeS04ImportLog,
-  toS04ObservabilityContext,
-} from "./s04";
+  createCsvImportOperation,
+  sanitizeCsvImportImportLog,
+  toCsvImportObservabilityContext,
+} from "./csv-import";
 
 describe("T12 S04 observability boundary", () => {
   it("allows only opaque IDs and aggregate counters across the redaction boundary", () => {
-    const operation = createS04ImportOperation("confirmation", {
+    const operation = createCsvImportOperation("confirmation", {
       requestId: "request-t12",
       previewId: "preview-t12",
       importId: "import-t12",
@@ -31,7 +31,7 @@ describe("T12 S04 observability boundary", () => {
       },
     });
 
-    const log = sanitizeS04ImportLog({
+    const log = sanitizeCsvImportImportLog({
       ...operation,
       outcome: "success",
       amountCents: "125000",
@@ -40,7 +40,7 @@ describe("T12 S04 observability boundary", () => {
       previewToken: "bearer-token-raw",
       requestBody: { amount_cents: "125000" },
     });
-    const context = toS04ObservabilityContext(
+    const context = toCsvImportObservabilityContext(
       operation,
       "success",
       operation.counts,

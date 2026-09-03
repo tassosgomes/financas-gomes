@@ -11,7 +11,7 @@ import { addBreadcrumbSafely, captureServerException } from "./server";
  * Callers can therefore pass an adapter result to this module without being
  * able to turn a card label, a query or a request value into telemetry.
  */
-export const S06_CREDIT_CARD_OPERATIONS = [
+export const CREDIT_CARD_OPERATIONS = [
   "credit_card.create",
   "credit_card.update",
   "credit_card.archive",
@@ -31,21 +31,21 @@ export const S06_CREDIT_CARD_OPERATIONS = [
   "credit_card.payment.read",
 ] as const;
 
-export type S06CreditCardOperation =
-  (typeof S06_CREDIT_CARD_OPERATIONS)[number];
+export type CreditCardOperation =
+  (typeof CREDIT_CARD_OPERATIONS)[number];
 
 /** Stable result values used by logs, metrics, breadcrumbs and Sentry. */
-export const S06_CREDIT_CARD_OUTCOMES = [
+export const CREDIT_CARD_OUTCOMES = [
   "success",
   "expected_error",
   "unexpected_error",
 ] as const;
 
-export type S06CreditCardOutcome =
-  (typeof S06_CREDIT_CARD_OUTCOMES)[number];
+export type CreditCardOutcome =
+  (typeof CREDIT_CARD_OUTCOMES)[number];
 
 /** Stages are derived from the operation and never accepted as free text. */
-export const S06_CREDIT_CARD_STAGES = [
+export const CREDIT_CARD_STAGES = [
   "card",
   "billing_rule",
   "purchase",
@@ -55,13 +55,13 @@ export const S06_CREDIT_CARD_STAGES = [
   "payment",
 ] as const;
 
-export type S06CreditCardStage = (typeof S06_CREDIT_CARD_STAGES)[number];
+export type CreditCardStage = (typeof CREDIT_CARD_STAGES)[number];
 
 /**
  * Domain/context failures are outcomes, not incidents. This is intentionally
  * closed: a provider or database message can never become an error code.
  */
-export const S06_CREDIT_CARD_EXPECTED_ERROR_CODES = [
+export const CREDIT_CARD_EXPECTED_ERROR_CODES = [
   "UNAUTHENTICATED",
   "HOUSEHOLD_MEMBERSHIP_REQUIRED",
   "HOUSEHOLD_SELECTION_REQUIRED",
@@ -134,11 +134,11 @@ export const S06_CREDIT_CARD_EXPECTED_ERROR_CODES = [
   "PAYMENT_INSTALLMENT_FORBIDDEN",
 ] as const;
 
-export type S06CreditCardExpectedErrorCode =
-  (typeof S06_CREDIT_CARD_EXPECTED_ERROR_CODES)[number];
+export type CreditCardExpectedErrorCode =
+  (typeof CREDIT_CARD_EXPECTED_ERROR_CODES)[number];
 
 /** Technical labels are closed so SQL/provider text cannot enter telemetry. */
-export const S06_CREDIT_CARD_TECHNICAL_ERROR_CODES = [
+export const CREDIT_CARD_TECHNICAL_ERROR_CODES = [
   "CARD_PERSISTENCE_FAILED",
   "CREDIT_CARD_PERSISTENCE_FAILED",
   "BILLING_RULE_PERSISTENCE_FAILED",
@@ -156,14 +156,14 @@ export const S06_CREDIT_CARD_TECHNICAL_ERROR_CODES = [
   "UNEXPECTED_ERROR",
 ] as const;
 
-export type S06CreditCardTechnicalErrorCode =
-  (typeof S06_CREDIT_CARD_TECHNICAL_ERROR_CODES)[number];
+export type CreditCardTechnicalErrorCode =
+  (typeof CREDIT_CARD_TECHNICAL_ERROR_CODES)[number];
 
-export type S06CreditCardErrorCode =
-  | S06CreditCardExpectedErrorCode
-  | S06CreditCardTechnicalErrorCode;
+export type CreditCardErrorCode =
+  | CreditCardExpectedErrorCode
+  | CreditCardTechnicalErrorCode;
 
-export interface S06CreditCardAggregateCounts {
+export interface CreditCardAggregateCounts {
   /** Number of installments in the aggregate, never their values. */
   installmentCount?: number;
   /** Number of rows/items in a statement or projection. */
@@ -173,8 +173,8 @@ export interface S06CreditCardAggregateCounts {
   cancelledItemCount?: number;
 }
 
-export interface S06CreditCardOperationOptions
-  extends S06CreditCardAggregateCounts {
+export interface CreditCardOperationOptions
+  extends CreditCardAggregateCounts {
   requestId?: string;
   /** Alias accepted from HTTP boundaries; emitted as one request ID. */
   correlationId?: string;
@@ -191,10 +191,10 @@ export interface S06CreditCardOperationOptions
   statusCode?: number;
 }
 
-export interface S06CreditCardOperationContext
-  extends S06CreditCardAggregateCounts {
-  operation: S06CreditCardOperation;
-  stage: S06CreditCardStage;
+export interface CreditCardOperationContext
+  extends CreditCardAggregateCounts {
+  operation: CreditCardOperation;
+  stage: CreditCardStage;
   requestId?: string;
   userId?: string;
   householdId?: string;
@@ -209,11 +209,11 @@ export interface S06CreditCardOperationContext
   statusCode?: number;
 }
 
-export interface S06CreditCardLog extends S06CreditCardOperationContext {
+export interface CreditCardLog extends CreditCardOperationContext {
   event: string;
-  useCase: S06CreditCardOperation;
-  outcome: S06CreditCardOutcome;
-  errorCode?: S06CreditCardErrorCode;
+  useCase: CreditCardOperation;
+  outcome: CreditCardOutcome;
+  errorCode?: CreditCardErrorCode;
   slowQuery?: boolean;
   slowQueryThresholdMs?: number;
 }
@@ -221,10 +221,10 @@ export interface S06CreditCardLog extends S06CreditCardOperationContext {
 /**
  * Untrusted input accepted by the final allow-list.  Code-owned fields are
  * intentionally `unknown` here so a caller cannot smuggle a display label
- * into the type boundary; `sanitizeS06CreditCardLog` validates them again.
+ * into the type boundary; `sanitizeCreditCardLog` validates them again.
  */
-export type S06CreditCardLogInput =
-  Omit<Partial<S06CreditCardLog>, "event" | "useCase" | "stage" | "errorCode"> &
+export type CreditCardLogInput =
+  Omit<Partial<CreditCardLog>, "event" | "useCase" | "stage" | "errorCode"> &
   {
     event?: unknown;
     useCase?: unknown;
@@ -233,51 +233,51 @@ export type S06CreditCardLogInput =
   } &
   Record<string, unknown>;
 
-export interface S06CreditCardObservabilityHooks {
+export interface CreditCardObservabilityHooks {
   /** Receives an already allow-listed aggregate record. */
-  onRecord?: (record: S06CreditCardLog) => void;
+  onRecord?: (record: CreditCardLog) => void;
   /** Alias for metric adapters that do not emit application logs. */
-  onMetric?: (record: S06CreditCardLog) => void;
+  onMetric?: (record: CreditCardLog) => void;
 }
 
-export interface S06CreditCardCompletionOptions
-  extends S06CreditCardAggregateCounts,
-    S06CreditCardObservabilityHooks {
+export interface CreditCardCompletionOptions
+  extends CreditCardAggregateCounts,
+    CreditCardObservabilityHooks {
   durationMs?: number;
   errorCode?: string;
   technicalErrorCode?: string;
   now?: () => number;
 }
 
-export interface S06CreditCardQueryOptions
-  extends S06CreditCardAggregateCounts,
-    S06CreditCardObservabilityHooks {
+export interface CreditCardQueryOptions
+  extends CreditCardAggregateCounts,
+    CreditCardObservabilityHooks {
   thresholdMs?: number;
   now?: () => number;
   technicalErrorCode?: string;
 }
 
-export interface S06CreditCardErrorClassification {
+export interface CreditCardErrorClassification {
   outcome: "expected_error" | "unexpected_error";
-  errorCode: S06CreditCardErrorCode;
+  errorCode: CreditCardErrorCode;
 }
 
-export interface S06CreditCardSafeErrorEnvelope {
+export interface CreditCardSafeErrorEnvelope {
   ok: false;
-  error: { code: S06CreditCardErrorCode };
+  error: { code: CreditCardErrorCode };
 }
 
-export const DEFAULT_S06_SLOW_QUERY_THRESHOLD_MS = 250;
-export const MAX_S06_SLOW_QUERY_THRESHOLD_MS = 60_000;
-export const MAX_S06_AGGREGATE_COUNT = 10_000;
+export const DEFAULT_CREDIT_CARD_SLOW_QUERY_THRESHOLD_MS = 250;
+export const MAX_CREDIT_CARD_SLOW_QUERY_THRESHOLD_MS = 60_000;
+export const MAX_CREDIT_CARD_AGGREGATE_COUNT = 10_000;
 
-const OPERATION_SET = new Set<string>(S06_CREDIT_CARD_OPERATIONS);
-const OUTCOME_SET = new Set<string>(S06_CREDIT_CARD_OUTCOMES);
+const OPERATION_SET = new Set<string>(CREDIT_CARD_OPERATIONS);
+const OUTCOME_SET = new Set<string>(CREDIT_CARD_OUTCOMES);
 const EXPECTED_ERROR_SET = new Set<string>(
-  S06_CREDIT_CARD_EXPECTED_ERROR_CODES,
+  CREDIT_CARD_EXPECTED_ERROR_CODES,
 );
 const TECHNICAL_ERROR_SET = new Set<string>(
-  S06_CREDIT_CARD_TECHNICAL_ERROR_CODES,
+  CREDIT_CARD_TECHNICAL_ERROR_CODES,
 );
 const OPAQUE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}$/u;
 const ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/u;
@@ -299,7 +299,7 @@ function opaqueId(value: unknown): string | undefined {
 
 function finiteInteger(
   value: unknown,
-  maximum = MAX_S06_AGGREGATE_COUNT,
+  maximum = MAX_CREDIT_CARD_AGGREGATE_COUNT,
 ): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return undefined;
@@ -312,21 +312,21 @@ function statusCode(value: unknown): number | undefined {
   return finiteInteger(value, 999);
 }
 
-function operationValue(value: unknown): S06CreditCardOperation | undefined {
+function operationValue(value: unknown): CreditCardOperation | undefined {
   return typeof value === "string" && OPERATION_SET.has(value)
-    ? (value as S06CreditCardOperation)
+    ? (value as CreditCardOperation)
     : undefined;
 }
 
-function outcomeValue(value: unknown): S06CreditCardOutcome | undefined {
+function outcomeValue(value: unknown): CreditCardOutcome | undefined {
   return typeof value === "string" && OUTCOME_SET.has(value)
-    ? (value as S06CreditCardOutcome)
+    ? (value as CreditCardOutcome)
     : undefined;
 }
 
 function stageForOperation(
-  operation: S06CreditCardOperation,
-): S06CreditCardStage {
+  operation: CreditCardOperation,
+): CreditCardStage {
   if (operation.startsWith("credit_card.billing_rule.")) {
     return "billing_rule";
   }
@@ -351,18 +351,18 @@ function stageForOperation(
   return "card";
 }
 
-function operationSlug(operation: S06CreditCardOperation): string {
+function operationSlug(operation: CreditCardOperation): string {
   return operation.replaceAll(".", "_");
 }
 
 function eventName(
-  operation: S06CreditCardOperation,
-  outcome: S06CreditCardOutcome,
+  operation: CreditCardOperation,
+  outcome: CreditCardOutcome,
 ): string {
-  return `s06_${operationSlug(operation)}_${outcome}`;
+  return `credit_card_${operationSlug(operation)}_${outcome}`;
 }
 
-function normalizedErrorCode(value: unknown): S06CreditCardErrorCode | undefined {
+function normalizedErrorCode(value: unknown): CreditCardErrorCode | undefined {
   if (
     typeof value !== "string" ||
     !ERROR_CODE_PATTERN.test(value) ||
@@ -371,12 +371,12 @@ function normalizedErrorCode(value: unknown): S06CreditCardErrorCode | undefined
     return undefined;
   }
 
-  return value as S06CreditCardErrorCode;
+  return value as CreditCardErrorCode;
 }
 
-function technicalErrorCode(value: unknown): S06CreditCardTechnicalErrorCode {
+function technicalErrorCode(value: unknown): CreditCardTechnicalErrorCode {
   return TECHNICAL_ERROR_SET.has(value as string)
-    ? (value as S06CreditCardTechnicalErrorCode)
+    ? (value as CreditCardTechnicalErrorCode)
     : "UNEXPECTED_ERROR";
 }
 
@@ -394,15 +394,15 @@ function aggregateValue(
 }
 
 /** Keep only bounded aggregate counts; rows, values and payloads are dropped. */
-export function sanitizeS06CreditCardCounts(
+export function sanitizeCreditCardCounts(
   value: unknown,
-): S06CreditCardAggregateCounts | undefined {
+): CreditCardAggregateCounts | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
 
   const source = isRecord(value.counts) ? value.counts : value;
-  const result: S06CreditCardAggregateCounts = {};
+  const result: CreditCardAggregateCounts = {};
   const installmentCount = aggregateValue(source, [
     "installmentCount",
     "installment_count",
@@ -449,12 +449,12 @@ export function sanitizeS06CreditCardCounts(
   return Object.keys(result).length > 0 ? result : undefined;
 }
 
-function aggregateInput(value: Record<string, unknown>): S06CreditCardAggregateCounts {
-  return sanitizeS06CreditCardCounts(value) ?? {};
+function aggregateInput(value: Record<string, unknown>): CreditCardAggregateCounts {
+  return sanitizeCreditCardCounts(value) ?? {};
 }
 
 function addSafeId(
-  target: S06CreditCardOperationContext,
+  target: CreditCardOperationContext,
   key:
     | "requestId"
     | "userId"
@@ -478,10 +478,10 @@ function addSafeId(
  * Builds operation metadata and generates a correlation ID when a boundary
  * does not already have one. No command or financial field is copied.
  */
-export function createS06CreditCardOperation(
-  operation: S06CreditCardOperation,
-  options: S06CreditCardOperationOptions = {},
-): S06CreditCardOperationContext {
+export function createCreditCardOperation(
+  operation: CreditCardOperation,
+  options: CreditCardOperationOptions = {},
+): CreditCardOperationContext {
   let requestId = opaqueId(options.requestId ?? options.correlationId);
   if (!requestId) {
     try {
@@ -491,7 +491,7 @@ export function createS06CreditCardOperation(
     }
   }
 
-  const result: S06CreditCardOperationContext = {
+  const result: CreditCardOperationContext = {
     operation,
     stage: stageForOperation(operation),
     installmentCount: finiteInteger(options.installmentCount),
@@ -525,15 +525,15 @@ export function createS06CreditCardOperation(
 }
 
 /** Canonical operation/use-case identifier for adapters and metrics. */
-export function s06CreditCardUseCaseName(
-  operation: S06CreditCardOperation,
-): S06CreditCardOperation {
+export function creditCardUseCaseName(
+  operation: CreditCardOperation,
+): CreditCardOperation {
   return operation;
 }
 
-export function s06CreditCardEventName(
-  operation: S06CreditCardOperation,
-  outcome: S06CreditCardOutcome,
+export function creditCardEventName(
+  operation: CreditCardOperation,
+  outcome: CreditCardOutcome,
 ): string {
   return eventName(operation, outcome);
 }
@@ -543,9 +543,9 @@ export function s06CreditCardEventName(
  * event/use-case/stage and unknown fields are ignored and rebuilt from the
  * closed operation vocabulary.
  */
-export function sanitizeS06CreditCardLog(
-  value: S06CreditCardLogInput,
-): S06CreditCardLog | undefined {
+export function sanitizeCreditCardLog(
+  value: CreditCardLogInput,
+): CreditCardLog | undefined {
   try {
     const operation = operationValue(value.operation);
     const outcome = outcomeValue(value.outcome);
@@ -559,7 +559,7 @@ export function sanitizeS06CreditCardLog(
     }
 
     const counts = aggregateInput(value);
-    const safe: S06CreditCardLog = {
+    const safe: CreditCardLog = {
       event: eventName(operation, outcome),
       useCase: operation,
       operation,
@@ -612,7 +612,7 @@ export function sanitizeS06CreditCardLog(
     }
     const threshold = finiteInteger(
       value.slowQueryThresholdMs,
-      MAX_S06_SLOW_QUERY_THRESHOLD_MS,
+      MAX_CREDIT_CARD_SLOW_QUERY_THRESHOLD_MS,
     );
     if (threshold !== undefined) {
       safe.slowQueryThresholdMs = threshold;
@@ -624,7 +624,7 @@ export function sanitizeS06CreditCardLog(
   }
 }
 
-function primaryEntityId(value: S06CreditCardLog): string | undefined {
+function primaryEntityId(value: CreditCardLog): string | undefined {
   return (
     value.purchaseId ??
     value.paymentId ??
@@ -636,12 +636,12 @@ function primaryEntityId(value: S06CreditCardLog): string | undefined {
 }
 
 /** Converts only S06 technical metadata to the shared Sentry context shape. */
-export function toS06ObservabilityContext(
-  operation: S06CreditCardOperationContext,
-  outcome: S06CreditCardOutcome = "unexpected_error",
-  options: S06CreditCardCompletionOptions = {},
+export function toCreditCardObservabilityContext(
+  operation: CreditCardOperationContext,
+  outcome: CreditCardOutcome = "unexpected_error",
+  options: CreditCardCompletionOptions = {},
 ): ObservabilityContext {
-  const safe = sanitizeS06CreditCardLog({
+  const safe = sanitizeCreditCardLog({
     ...operation,
     ...options,
     operation: operation.operation,
@@ -675,12 +675,12 @@ export function toS06ObservabilityContext(
 }
 
 /** Adds one technical breadcrumb; no raw message, payload or query is used. */
-export function addS06CreditCardBreadcrumb(
-  operation: S06CreditCardOperationContext,
-  outcome: S06CreditCardOutcome,
-  options: S06CreditCardCompletionOptions = {},
+export function addCreditCardBreadcrumb(
+  operation: CreditCardOperationContext,
+  outcome: CreditCardOutcome,
+  options: CreditCardCompletionOptions = {},
 ): void {
-  const safe = sanitizeS06CreditCardLog({
+  const safe = sanitizeCreditCardLog({
     ...operation,
     ...options,
     operation: operation.operation,
@@ -717,13 +717,13 @@ export function addS06CreditCardBreadcrumb(
 }
 
 function emitRecord(
-  safe: S06CreditCardLog,
-  hooks: S06CreditCardObservabilityHooks = {},
+  safe: CreditCardLog,
+  hooks: CreditCardObservabilityHooks = {},
   level: "info" | "warn" | "error" =
     safe.outcome === "unexpected_error" ? "error" : "info",
 ): void {
   try {
-    addS06CreditCardBreadcrumb(
+    addCreditCardBreadcrumb(
       safe,
       safe.outcome,
       safe,
@@ -753,12 +753,12 @@ function emitRecord(
   }
 }
 
-export function logS06CreditCardOperation(
-  operation: S06CreditCardOperationContext,
-  outcome: S06CreditCardOutcome,
-  options: S06CreditCardCompletionOptions = {},
-): S06CreditCardLog | undefined {
-  const safe = sanitizeS06CreditCardLog({
+export function logCreditCardOperation(
+  operation: CreditCardOperationContext,
+  outcome: CreditCardOutcome,
+  options: CreditCardCompletionOptions = {},
+): CreditCardLog | undefined {
+  const safe = sanitizeCreditCardLog({
     ...operation,
     ...options,
     operation: operation.operation,
@@ -783,49 +783,49 @@ function errorCodeFrom(error: unknown): unknown {
   return isRecord(error.error) ? error.error.code : undefined;
 }
 
-export function expectedS06ErrorCode(
+export function expectedCreditCardErrorCode(
   error: unknown,
-): S06CreditCardExpectedErrorCode | undefined {
+): CreditCardExpectedErrorCode | undefined {
   if (error instanceof FinancialContextError) {
     return EXPECTED_ERROR_SET.has(error.code)
-      ? (error.code as S06CreditCardExpectedErrorCode)
+      ? (error.code as CreditCardExpectedErrorCode)
       : undefined;
   }
 
   const code = errorCodeFrom(error);
   return typeof code === "string" && EXPECTED_ERROR_SET.has(code)
-    ? (code as S06CreditCardExpectedErrorCode)
+    ? (code as CreditCardExpectedErrorCode)
     : undefined;
 }
 
 /** Classifies only known domain codes; error messages are never inspected. */
-export function classifyS06Error(
+export function classifyCreditCardError(
   error: unknown,
-): S06CreditCardErrorClassification {
-  const expectedCode = expectedS06ErrorCode(error);
+): CreditCardErrorClassification {
+  const expectedCode = expectedCreditCardErrorCode(error);
   return expectedCode
     ? { outcome: "expected_error", errorCode: expectedCode }
     : { outcome: "unexpected_error", errorCode: "UNEXPECTED_ERROR" };
 }
 
-export function isExpectedS06Error(error: unknown): boolean {
-  return expectedS06ErrorCode(error) !== undefined;
+export function isExpectedCreditCardError(error: unknown): boolean {
+  return expectedCreditCardErrorCode(error) !== undefined;
 }
 
-export function toS06ErrorEnvelope(
+export function toCreditCardErrorEnvelope(
   error: unknown,
-): S06CreditCardSafeErrorEnvelope {
-  const classification = classifyS06Error(error);
+): CreditCardSafeErrorEnvelope {
+  const classification = classifyCreditCardError(error);
   return { ok: false, error: { code: classification.errorCode } };
 }
 
 /** Reports one unexpected technical failure without changing caller control flow. */
-export function reportS06UnexpectedError(
+export function reportCreditCardUnexpectedError(
   error: unknown,
-  operation: S06CreditCardOperationContext,
-  options: S06CreditCardCompletionOptions = {},
-): S06CreditCardErrorClassification {
-  const classification = classifyS06Error(error);
+  operation: CreditCardOperationContext,
+  options: CreditCardCompletionOptions = {},
+): CreditCardErrorClassification {
+  const classification = classifyCreditCardError(error);
   const code =
     classification.outcome === "expected_error"
       ? classification.errorCode
@@ -834,7 +834,7 @@ export function reportS06UnexpectedError(
         );
   const safeOptions = { ...options, errorCode: code };
 
-  logS06CreditCardOperation(
+  logCreditCardOperation(
     operation,
     classification.outcome,
     safeOptions,
@@ -844,7 +844,7 @@ export function reportS06UnexpectedError(
     try {
       captureServerException(
         error,
-        toS06ObservabilityContext(operation, "unexpected_error", {
+        toCreditCardObservabilityContext(operation, "unexpected_error", {
           ...options,
           errorCode: code,
         }),
@@ -885,10 +885,10 @@ function resultFailure(value: unknown): { failed: boolean; error?: unknown } {
  * Wraps card commands and reads. Expected Result errors remain ordinary
  * outcomes; technical exceptions are captured and rethrown.
  */
-export async function withS06CreditCardObservability<T>(
-  operation: S06CreditCardOperationContext,
+export async function withCreditCardObservability<T>(
+  operation: CreditCardOperationContext,
   work: () => Promise<T> | T,
-  options: S06CreditCardCompletionOptions = {},
+  options: CreditCardCompletionOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -898,15 +898,15 @@ export async function withS06CreditCardObservability<T>(
     const failure = resultFailure(value);
     const durationMs = elapsedMs(startedAt, now);
     if (failure.failed) {
-      const classification = classifyS06Error(failure.error);
+      const classification = classifyCreditCardError(failure.error);
       if (classification.outcome === "expected_error") {
-        logS06CreditCardOperation(operation, "expected_error", {
+        logCreditCardOperation(operation, "expected_error", {
           ...options,
           durationMs,
           errorCode: classification.errorCode,
         });
       } else {
-        reportS06UnexpectedError(failure.error, operation, {
+        reportCreditCardUnexpectedError(failure.error, operation, {
           ...options,
           durationMs,
         });
@@ -914,16 +914,16 @@ export async function withS06CreditCardObservability<T>(
       return value;
     }
 
-    logS06CreditCardOperation(operation, "success", {
+    logCreditCardOperation(operation, "success", {
       ...options,
       durationMs,
     });
     return value;
   } catch (error) {
     const durationMs = elapsedMs(startedAt, now);
-    const classification = classifyS06Error(error);
+    const classification = classifyCreditCardError(error);
     if (classification.outcome === "expected_error") {
-      logS06CreditCardOperation(operation, "expected_error", {
+      logCreditCardOperation(operation, "expected_error", {
         ...options,
         durationMs,
         errorCode: classification.errorCode,
@@ -931,7 +931,7 @@ export async function withS06CreditCardObservability<T>(
       throw error;
     }
 
-    reportS06UnexpectedError(error, operation, {
+    reportCreditCardUnexpectedError(error, operation, {
       ...options,
       durationMs,
     });
@@ -942,7 +942,7 @@ export async function withS06CreditCardObservability<T>(
 function safeThreshold(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.min(
-      MAX_S06_SLOW_QUERY_THRESHOLD_MS,
+      MAX_CREDIT_CARD_SLOW_QUERY_THRESHOLD_MS,
       Math.max(0, Math.round(value)),
     );
   }
@@ -952,18 +952,22 @@ function safeThreshold(value: unknown): number | undefined {
   return undefined;
 }
 
-export function getS06SlowQueryThresholdMs(value?: unknown): number {
+export function getCreditCardSlowQueryThresholdMs(value?: unknown): number {
   return (
-    safeThreshold(value ?? process.env.S06_SLOW_QUERY_THRESHOLD_MS) ??
-    DEFAULT_S06_SLOW_QUERY_THRESHOLD_MS
+    safeThreshold(
+      value ??
+        process.env.CREDIT_CARD_SLOW_QUERY_THRESHOLD_MS ??
+        process.env.S06_SLOW_QUERY_THRESHOLD_MS,
+    ) ??
+    DEFAULT_CREDIT_CARD_SLOW_QUERY_THRESHOLD_MS
   );
 }
 
 /** Measures only duration and aggregate technical state; SQL is not accepted. */
-export async function measureS06Query<T>(
-  operation: S06CreditCardOperationContext,
+export async function measureCreditCardQuery<T>(
+  operation: CreditCardOperationContext,
   work: () => Promise<T> | T,
-  options: S06CreditCardQueryOptions = {},
+  options: CreditCardQueryOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -980,15 +984,15 @@ export async function measureS06Query<T>(
     throw error;
   } finally {
     const durationMs = elapsedMs(startedAt, now);
-    const thresholdMs = getS06SlowQueryThresholdMs(options.thresholdMs);
+    const thresholdMs = getCreditCardSlowQueryThresholdMs(options.thresholdMs);
     if (durationMs >= thresholdMs) {
       const returnedFailure = resultFailure(returnedValue);
       const classification = failed
-        ? classifyS06Error(thrownError)
+        ? classifyCreditCardError(thrownError)
         : returnedFailure.failed
-          ? classifyS06Error(returnedFailure.error)
+          ? classifyCreditCardError(returnedFailure.error)
           : undefined;
-      const safe = sanitizeS06CreditCardLog({
+      const safe = sanitizeCreditCardLog({
         ...operation,
         ...options,
         operation: operation.operation,
@@ -1006,7 +1010,7 @@ export async function measureS06Query<T>(
       });
       if (safe) {
         try {
-          addS06CreditCardBreadcrumb(safe, safe.outcome, safe);
+          addCreditCardBreadcrumb(safe, safe.outcome, safe);
           options.onRecord?.(safe);
           options.onMetric?.(safe);
           console.warn(JSON.stringify(safe));
@@ -1019,17 +1023,8 @@ export async function measureS06Query<T>(
 }
 
 /** Naming aliases keep the adapter discoverable by each S06 backend task. */
-export const S06_OPERATIONS = S06_CREDIT_CARD_OPERATIONS;
-export const S06_OUTCOMES = S06_CREDIT_CARD_OUTCOMES;
-export const S06_STAGES = S06_CREDIT_CARD_STAGES;
-export const S06_EXPECTED_ERROR_CODES = S06_CREDIT_CARD_EXPECTED_ERROR_CODES;
-export const S06_TECHNICAL_ERROR_CODES = S06_CREDIT_CARD_TECHNICAL_ERROR_CODES;
-export const createS06Operation = createS06CreditCardOperation;
-export const createS06CreditCardContext = createS06CreditCardOperation;
-export const sanitizeS06ObservabilityLog = sanitizeS06CreditCardLog;
-export const logS06Operation = logS06CreditCardOperation;
-export const withS06Observability = withS06CreditCardObservability;
-export const observeS06Operation = withS06CreditCardObservability;
-export const observeS06Query = measureS06Query;
-export const classifyS06CreditCardError = classifyS06Error;
-export const captureS06UnexpectedError = reportS06UnexpectedError;
+export const createCreditCardContext = createCreditCardOperation;
+export const sanitizeCreditCardObservabilityLog = sanitizeCreditCardLog;
+export const observeCreditCardOperation = withCreditCardObservability;
+export const observeCreditCardQuery = measureCreditCardQuery;
+export const captureCreditCardUnexpectedError = reportCreditCardUnexpectedError;

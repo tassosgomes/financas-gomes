@@ -13,7 +13,7 @@ import {
   households,
   user,
 } from "@/db/schema";
-import { S03_FIXTURES, S03_HOUSEHOLD_IDS, S03_USER_IDS } from "@/test/s03-fixtures";
+import { TRANSACTION_FIXTURES, TRANSACTION_HOUSEHOLD_IDS, TRANSACTION_USER_IDS } from "@/test/transaction-fixtures";
 
 /** T13's remaining database-level boundary check is opt-in like T03-T07. */
 const integration =
@@ -48,32 +48,32 @@ function postgresErrorCode(error: unknown): string | undefined {
 async function cleanup(database: Database): Promise<void> {
   await database
     .delete(applicationCommands)
-    .where(inArray(applicationCommands.householdId, S03_HOUSEHOLD_IDS));
+    .where(inArray(applicationCommands.householdId, TRANSACTION_HOUSEHOLD_IDS));
   await database
     .delete(accountEntries)
-    .where(inArray(accountEntries.householdId, S03_HOUSEHOLD_IDS));
+    .where(inArray(accountEntries.householdId, TRANSACTION_HOUSEHOLD_IDS));
   await database
     .delete(financialEvents)
-    .where(inArray(financialEvents.householdId, S03_HOUSEHOLD_IDS));
+    .where(inArray(financialEvents.householdId, TRANSACTION_HOUSEHOLD_IDS));
   await database
     .delete(categories)
-    .where(inArray(categories.householdId, S03_HOUSEHOLD_IDS));
+    .where(inArray(categories.householdId, TRANSACTION_HOUSEHOLD_IDS));
   await database
     .delete(accounts)
-    .where(inArray(accounts.householdId, S03_HOUSEHOLD_IDS));
+    .where(inArray(accounts.householdId, TRANSACTION_HOUSEHOLD_IDS));
   await database
     .delete(householdMembers)
-    .where(inArray(householdMembers.householdId, S03_HOUSEHOLD_IDS));
+    .where(inArray(householdMembers.householdId, TRANSACTION_HOUSEHOLD_IDS));
   await database
     .delete(households)
-    .where(inArray(households.id, S03_HOUSEHOLD_IDS));
-  await database.delete(user).where(inArray(user.id, S03_USER_IDS));
+    .where(inArray(households.id, TRANSACTION_HOUSEHOLD_IDS));
+  await database.delete(user).where(inArray(user.id, TRANSACTION_USER_IDS));
 }
 
 async function seed(database: Database): Promise<void> {
   await database.insert(households).values([
-    { id: S03_FIXTURES.households.a, name: "T13 Household A" },
-    { id: S03_FIXTURES.households.b, name: "T13 Household B" },
+    { id: TRANSACTION_FIXTURES.households.a, name: "T13 Household A" },
+    { id: TRANSACTION_FIXTURES.households.b, name: "T13 Household B" },
   ]);
 }
 
@@ -109,7 +109,7 @@ integration("T13 PostgreSQL boundary checks", () => {
     await expect(
       db.insert(financialEvents).values({
         id: negativeEventId,
-        householdId: S03_FIXTURES.households.a,
+        householdId: TRANSACTION_FIXTURES.households.a,
         kind: "EXPENSE",
         status: "POSTED",
         origin: "MANUAL",

@@ -64,7 +64,7 @@ const counts: CsvImportCounts = {
   imported: 0,
 };
 
-describe("S04 import UI components", () => {
+describe("import UI components", () => {
   it("renders only active account choices with accessible error wiring", () => {
     const html = renderToStaticMarkup(
       <CsvImportAccountSelector

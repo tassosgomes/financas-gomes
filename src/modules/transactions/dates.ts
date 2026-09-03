@@ -1,13 +1,13 @@
 import { Temporal } from "@js-temporal/polyfill";
 
-import { S03DomainError } from "./contracts";
+import { TransactionDomainError } from "./contracts";
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/u;
 
 export type FinancialDate = Temporal.PlainDate;
 
 function invalidDate(): never {
-  throw new S03DomainError("INVALID_DATE", "occurredOn");
+  throw new TransactionDomainError("INVALID_DATE", "occurredOn");
 }
 
 function ensurePlainDate(value: unknown): Temporal.PlainDate {
@@ -112,7 +112,7 @@ export function assertDateNotFuture(
   const date = typeof value === "string" ? parseFinancialDate(value) : ensurePlainDate(value);
 
   if (isFinancialDateInFuture(date, today)) {
-    throw new S03DomainError("DATE_IN_FUTURE", "occurredOn");
+    throw new TransactionDomainError("DATE_IN_FUTURE", "occurredOn");
   }
 
   return date;
@@ -154,7 +154,7 @@ export function assertDateOnOrAfter(
       : ensurePlainDate(trackingStartedOn);
 
   if (compareFinancialDates(date, start) < 0) {
-    throw new S03DomainError("TRACKING_START_DATE_VIOLATION", "occurredOn");
+    throw new TransactionDomainError("TRACKING_START_DATE_VIOLATION", "occurredOn");
   }
 
   return date;

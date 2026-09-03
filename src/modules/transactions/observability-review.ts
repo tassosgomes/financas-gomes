@@ -6,67 +6,67 @@ import {
 import { FinancialContextError } from "@/modules/households/contracts";
 import { generateUuidV7 } from "@/lib/uuidv7";
 
-import { S03_ERROR_CODES } from "./contracts";
+import { TRANSACTION_ERROR_CODES } from "./contracts";
 
 /** The four observable S05 read/write boundaries. */
-export const S05_TRANSACTION_REVIEW_OPERATIONS = [
+export const TRANSACTION_REVIEW_OPERATIONS = [
   "list",
   "summary",
   "detail",
   "update",
 ] as const;
 
-export type S05TransactionReviewOperation =
-  (typeof S05_TRANSACTION_REVIEW_OPERATIONS)[number];
+export type TransactionReviewOperation =
+  (typeof TRANSACTION_REVIEW_OPERATIONS)[number];
 
 /**
  * Query identifiers are code-owned values. They are derived from the
  * operation and are never accepted from a request, query string or SQL.
  */
-export const S05_TRANSACTION_REVIEW_QUERY_CODES = {
+export const TRANSACTION_REVIEW_QUERY_CODES = {
   list: "review_list",
   summary: "review_summary",
   detail: "review_detail",
   update: "review_update",
-} as const satisfies Record<S05TransactionReviewOperation, string>;
+} as const satisfies Record<TransactionReviewOperation, string>;
 
-export type S05TransactionReviewQueryCode =
-  (typeof S05_TRANSACTION_REVIEW_QUERY_CODES)[S05TransactionReviewOperation];
+export type TransactionReviewQueryCode =
+  (typeof TRANSACTION_REVIEW_QUERY_CODES)[TransactionReviewOperation];
 
-export const S05_TRANSACTION_REVIEW_OUTCOMES = [
+export const TRANSACTION_REVIEW_OUTCOMES = [
   "success",
   "expected_error",
   "unexpected_error",
 ] as const;
 
-export type S05TransactionReviewOutcome =
-  (typeof S05_TRANSACTION_REVIEW_OUTCOMES)[number];
+export type TransactionReviewOutcome =
+  (typeof TRANSACTION_REVIEW_OUTCOMES)[number];
 
 /** Aggregated values only; `ALL` represents a mixed/unfiltered operation. */
-export const S05_TRANSACTION_REVIEW_ORIGINS = [
+export const TRANSACTION_REVIEW_ORIGINS = [
   "MANUAL",
   "IMPORT",
   "ALL",
 ] as const;
 
-export type S05TransactionReviewOrigin =
-  (typeof S05_TRANSACTION_REVIEW_ORIGINS)[number];
+export type TransactionReviewOrigin =
+  (typeof TRANSACTION_REVIEW_ORIGINS)[number];
 
-export const S05_TRANSACTION_REVIEW_KINDS = [
+export const TRANSACTION_REVIEW_KINDS = [
   "EXPENSE",
   "INCOME",
   "ALL",
 ] as const;
 
-export type S05TransactionReviewKind =
-  (typeof S05_TRANSACTION_REVIEW_KINDS)[number];
+export type TransactionReviewKind =
+  (typeof TRANSACTION_REVIEW_KINDS)[number];
 
 /**
  * The ADR-006 expected-error vocabulary plus the S03 compatibility codes.
  * Only a code from this closed set can be classified as an expected failure.
  */
-export const S05_TRANSACTION_REVIEW_EXPECTED_ERROR_CODES = [
-  ...S03_ERROR_CODES,
+export const TRANSACTION_REVIEW_EXPECTED_ERROR_CODES = [
+  ...TRANSACTION_ERROR_CODES,
   "HOUSEHOLD_MEMBERSHIP_REQUIRED",
   "HOUSEHOLD_SELECTION_REQUIRED",
   "INVALID_FINANCIAL_CONTEXT",
@@ -76,125 +76,125 @@ export const S05_TRANSACTION_REVIEW_EXPECTED_ERROR_CODES = [
   "IMPORT_LINEAGE_INVALID",
 ] as const;
 
-export type S05TransactionReviewExpectedErrorCode =
-  (typeof S05_TRANSACTION_REVIEW_EXPECTED_ERROR_CODES)[number];
+export type TransactionReviewExpectedErrorCode =
+  (typeof TRANSACTION_REVIEW_EXPECTED_ERROR_CODES)[number];
 
 /** Technical labels are also closed so a provider/SQL message cannot become a log field. */
-export const S05_TRANSACTION_REVIEW_TECHNICAL_ERROR_CODES = [
+export const TRANSACTION_REVIEW_TECHNICAL_ERROR_CODES = [
   "QUERY_FAILED",
   "UPDATE_FAILED",
   "INVALID_READ_RESULT",
   "UNEXPECTED_ERROR",
 ] as const;
 
-export type S05TransactionReviewTechnicalErrorCode =
-  (typeof S05_TRANSACTION_REVIEW_TECHNICAL_ERROR_CODES)[number];
+export type TransactionReviewTechnicalErrorCode =
+  (typeof TRANSACTION_REVIEW_TECHNICAL_ERROR_CODES)[number];
 
-export type S05TransactionReviewErrorCode =
-  | S05TransactionReviewExpectedErrorCode
-  | S05TransactionReviewTechnicalErrorCode;
+export type TransactionReviewErrorCode =
+  | TransactionReviewExpectedErrorCode
+  | TransactionReviewTechnicalErrorCode;
 
 /**
  * Operation metadata accepted by the S05 boundary. There is deliberately no
  * query, cursor, command, source, lineage, or financial-value field here.
  */
-export interface S05TransactionReviewOperationOptions {
+export interface TransactionReviewOperationOptions {
   requestId?: string;
   eventId?: string;
   userId?: string;
   householdId?: string;
-  origin?: S05TransactionReviewOrigin;
-  transactionKind?: S05TransactionReviewKind;
+  origin?: TransactionReviewOrigin;
+  transactionKind?: TransactionReviewKind;
   statusCode?: number;
 }
 
-export interface S05TransactionReviewOperationContext
-  extends S05TransactionReviewOperationOptions {
-  operation: S05TransactionReviewOperation;
-  queryCode: S05TransactionReviewQueryCode;
+export interface TransactionReviewOperationContext
+  extends TransactionReviewOperationOptions {
+  operation: TransactionReviewOperation;
+  queryCode: TransactionReviewQueryCode;
 }
 
 /** Aggregate result metadata safe to send to logs, metrics and breadcrumbs. */
-export interface S05TransactionReviewResultMetadata {
+export interface TransactionReviewResultMetadata {
   pageSize?: number;
   resultCount?: number;
   needsReviewCount?: number;
   hasNextPage?: boolean;
-  origin?: S05TransactionReviewOrigin;
-  transactionKind?: S05TransactionReviewKind;
+  origin?: TransactionReviewOrigin;
+  transactionKind?: TransactionReviewKind;
 }
 
-export interface S05TransactionReviewLog
-  extends S05TransactionReviewResultMetadata {
+export interface TransactionReviewLog
+  extends TransactionReviewResultMetadata {
   event: string;
   useCase: string;
-  operation: S05TransactionReviewOperation;
-  queryCode: S05TransactionReviewQueryCode;
-  outcome: S05TransactionReviewOutcome;
+  operation: TransactionReviewOperation;
+  queryCode: TransactionReviewQueryCode;
+  outcome: TransactionReviewOutcome;
   requestId?: string;
   eventId?: string;
   userId?: string;
   householdId?: string;
   durationMs?: number;
   statusCode?: number;
-  errorCode?: S05TransactionReviewErrorCode;
+  errorCode?: TransactionReviewErrorCode;
   slowQuery?: boolean;
   slowQueryThresholdMs?: number;
 }
 
-export type S05TransactionReviewLogInput =
-  Partial<S05TransactionReviewLog> & Record<string, unknown>;
+export type TransactionReviewLogInput =
+  Partial<TransactionReviewLog> & Record<string, unknown>;
 
-export interface S05TransactionReviewObservabilityHooks {
+export interface TransactionReviewObservabilityHooks {
   /** Receives an already allow-listed record; suitable for metrics adapters. */
-  onRecord?: (record: S05TransactionReviewLog) => void;
+  onRecord?: (record: TransactionReviewLog) => void;
   /** Receives an already allow-listed slow-query record. */
-  onSlowQuery?: (record: S05TransactionReviewLog) => void;
+  onSlowQuery?: (record: TransactionReviewLog) => void;
 }
 
-export interface S05TransactionReviewCompletionOptions
-  extends S05TransactionReviewResultMetadata,
-    S05TransactionReviewObservabilityHooks {
+export interface TransactionReviewCompletionOptions
+  extends TransactionReviewResultMetadata,
+    TransactionReviewObservabilityHooks {
   durationMs?: number;
   errorCode?: string;
-  technicalErrorCode?: S05TransactionReviewTechnicalErrorCode;
+  technicalErrorCode?: TransactionReviewTechnicalErrorCode;
   /** Injectable monotonic clock for deterministic wrapper tests. */
   now?: () => number;
 }
 
-export interface S05TransactionReviewQueryOptions
-  extends S05TransactionReviewResultMetadata,
-    S05TransactionReviewObservabilityHooks {
+export interface TransactionReviewQueryOptions
+  extends TransactionReviewResultMetadata,
+    TransactionReviewObservabilityHooks {
   /** Overrides the environment threshold for this measurement only. */
   thresholdMs?: number;
   /** Injectable monotonic clock for deterministic tests. */
   now?: () => number;
-  technicalErrorCode?: S05TransactionReviewTechnicalErrorCode;
+  technicalErrorCode?: TransactionReviewTechnicalErrorCode;
 }
 
-export interface S05TransactionReviewErrorClassification {
+export interface TransactionReviewErrorClassification {
   outcome: "expected_error" | "unexpected_error";
-  errorCode: S05TransactionReviewErrorCode;
+  errorCode: TransactionReviewErrorCode;
 }
 
-export interface S05TransactionReviewSafeErrorEnvelope {
+export interface TransactionReviewSafeErrorEnvelope {
   ok: false;
   error: {
-    code: S05TransactionReviewErrorCode;
+    code: TransactionReviewErrorCode;
   };
 }
 
-export const DEFAULT_S05_SLOW_QUERY_THRESHOLD_MS = 250;
-export const MAX_S05_SLOW_QUERY_THRESHOLD_MS = 60_000;
-export const MAX_S05_AGGREGATE_COUNT = 1_000_000_000;
+export const DEFAULT_TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS = 250;
+export const MAX_TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS = 60_000;
+export const MAX_TRANSACTION_REVIEW_AGGREGATE_COUNT = 1_000_000_000;
 
 const OPAQUE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,159}$/u;
 const SAFE_ERROR_CODE_PATTERN = /^[A-Z][A-Z0-9_]{1,63}$/u;
 const EXPECTED_ERROR_CODE_SET = new Set<string>(
-  S05_TRANSACTION_REVIEW_EXPECTED_ERROR_CODES,
+  TRANSACTION_REVIEW_EXPECTED_ERROR_CODES,
 );
 const TECHNICAL_ERROR_CODE_SET = new Set<string>(
-  S05_TRANSACTION_REVIEW_TECHNICAL_ERROR_CODES,
+  TRANSACTION_REVIEW_TECHNICAL_ERROR_CODES,
 );
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -214,7 +214,7 @@ function opaqueId(value: unknown): string | undefined {
 
 function finiteInteger(
   value: unknown,
-  maximum = MAX_S05_AGGREGATE_COUNT,
+  maximum = MAX_TRANSACTION_REVIEW_AGGREGATE_COUNT,
 ): number | undefined {
   if (typeof value !== "number" || !Number.isFinite(value)) {
     return undefined;
@@ -240,7 +240,7 @@ function enumValue<T extends readonly string[]>(
     : undefined;
 }
 
-function safeErrorCode(value: unknown): S05TransactionReviewErrorCode | undefined {
+function safeErrorCode(value: unknown): TransactionReviewErrorCode | undefined {
   if (
     typeof value !== "string" ||
     !SAFE_ERROR_CODE_PATTERN.test(value) ||
@@ -249,58 +249,58 @@ function safeErrorCode(value: unknown): S05TransactionReviewErrorCode | undefine
     return undefined;
   }
 
-  return value as S05TransactionReviewErrorCode;
+  return value as TransactionReviewErrorCode;
 }
 
 function safeTechnicalErrorCode(
   value: unknown,
-): S05TransactionReviewTechnicalErrorCode {
+): TransactionReviewTechnicalErrorCode {
   return TECHNICAL_ERROR_CODE_SET.has(value as string)
-    ? (value as S05TransactionReviewTechnicalErrorCode)
+    ? (value as TransactionReviewTechnicalErrorCode)
     : "UNEXPECTED_ERROR";
 }
 
-function operationValue(value: unknown): S05TransactionReviewOperation | undefined {
-  return enumValue(S05_TRANSACTION_REVIEW_OPERATIONS, value);
+function operationValue(value: unknown): TransactionReviewOperation | undefined {
+  return enumValue(TRANSACTION_REVIEW_OPERATIONS, value);
 }
 
-function outcomeValue(value: unknown): S05TransactionReviewOutcome | undefined {
-  return enumValue(S05_TRANSACTION_REVIEW_OUTCOMES, value);
+function outcomeValue(value: unknown): TransactionReviewOutcome | undefined {
+  return enumValue(TRANSACTION_REVIEW_OUTCOMES, value);
 }
 
-function originValue(value: unknown): S05TransactionReviewOrigin | undefined {
-  return enumValue(S05_TRANSACTION_REVIEW_ORIGINS, value);
+function originValue(value: unknown): TransactionReviewOrigin | undefined {
+  return enumValue(TRANSACTION_REVIEW_ORIGINS, value);
 }
 
-function kindValue(value: unknown): S05TransactionReviewKind | undefined {
-  return enumValue(S05_TRANSACTION_REVIEW_KINDS, value);
+function kindValue(value: unknown): TransactionReviewKind | undefined {
+  return enumValue(TRANSACTION_REVIEW_KINDS, value);
 }
 
 function queryCodeFor(
-  operation: S05TransactionReviewOperation,
-): S05TransactionReviewQueryCode {
-  return S05_TRANSACTION_REVIEW_QUERY_CODES[operation];
+  operation: TransactionReviewOperation,
+): TransactionReviewQueryCode {
+  return TRANSACTION_REVIEW_QUERY_CODES[operation];
 }
 
 function eventName(
-  operation: S05TransactionReviewOperation,
-  outcome: S05TransactionReviewOutcome,
+  operation: TransactionReviewOperation,
+  outcome: TransactionReviewOutcome,
 ): string {
-  return `s05_transaction_review_${operation}_${outcome}`;
+  return `transaction_review_${operation}_${outcome}`;
 }
 
-function reviewUseCaseName(operation: S05TransactionReviewOperation): string {
+function reviewUseCaseName(operation: TransactionReviewOperation): string {
   return `transactions.review.${operation}`;
 }
 
 /** Canonical names exposed for metrics/query adapters. */
-export const s05TransactionReviewEventName = eventName;
-export const s05TransactionReviewUseCaseName = reviewUseCaseName;
+export const transactionReviewEventName = eventName;
+export const transactionReviewUseCaseName = reviewUseCaseName;
 
 function safeAggregateMetadata(
   value: Record<string, unknown>,
-): S05TransactionReviewResultMetadata {
-  const result: S05TransactionReviewResultMetadata = {};
+): TransactionReviewResultMetadata {
+  const result: TransactionReviewResultMetadata = {};
   const pageSize = finiteInteger(value.pageSize, 100);
   const resultCount = finiteInteger(value.resultCount);
   const needsReviewCount = finiteInteger(value.needsReviewCount);
@@ -332,7 +332,7 @@ function safeAggregateMetadata(
 
 function safeOptionalFields(
   value: Record<string, unknown>,
-  result: S05TransactionReviewLog,
+  result: TransactionReviewLog,
 ): void {
   const addId = (
     key: "requestId" | "eventId" | "userId" | "householdId",
@@ -370,7 +370,7 @@ function safeOptionalFields(
 
   const slowQueryThresholdMs = finiteInteger(
     value.slowQueryThresholdMs,
-    MAX_S05_SLOW_QUERY_THRESHOLD_MS,
+    MAX_TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS,
   );
   if (slowQueryThresholdMs !== undefined) {
     result.slowQueryThresholdMs = slowQueryThresholdMs;
@@ -382,9 +382,9 @@ function safeOptionalFields(
  * operation, so caller input such as `search`, `description`, `cursor`,
  * `externalId`, token or payload can never be serialized by this function.
  */
-export function sanitizeS05TransactionReviewLog(
-  value: S05TransactionReviewLogInput,
-): S05TransactionReviewLog | undefined {
+export function sanitizeTransactionReviewLog(
+  value: TransactionReviewLogInput,
+): TransactionReviewLog | undefined {
   try {
     const operation = operationValue(value.operation);
     const outcome = outcomeValue(value.outcome);
@@ -392,7 +392,7 @@ export function sanitizeS05TransactionReviewLog(
       return undefined;
     }
 
-    const safe: S05TransactionReviewLog = {
+    const safe: TransactionReviewLog = {
       event: eventName(operation, outcome),
       useCase: reviewUseCaseName(operation),
       operation,
@@ -409,10 +409,10 @@ export function sanitizeS05TransactionReviewLog(
 }
 
 function toLogInput(
-  operation: S05TransactionReviewOperationContext,
-  outcome: S05TransactionReviewOutcome,
-  options: S05TransactionReviewCompletionOptions = {},
-): S05TransactionReviewLogInput {
+  operation: TransactionReviewOperationContext,
+  outcome: TransactionReviewOutcome,
+  options: TransactionReviewCompletionOptions = {},
+): TransactionReviewLogInput {
   return {
     ...operation,
     ...options,
@@ -420,12 +420,12 @@ function toLogInput(
     outcome,
     durationMs: options.durationMs,
     // The sanitizer is the type/runtime allow-list for adapter-supplied codes.
-    errorCode: options.errorCode as S05TransactionReviewErrorCode | undefined,
+    errorCode: options.errorCode as TransactionReviewErrorCode | undefined,
   };
 }
 
-function addS05Breadcrumb(
-  safe: S05TransactionReviewLog,
+function addTransactionReviewBreadcrumb(
+  safe: TransactionReviewLog,
 ): void {
   addBreadcrumbSafely({
     type: "info",
@@ -446,13 +446,13 @@ function addS05Breadcrumb(
 }
 
 function emitRecord(
-  safe: S05TransactionReviewLog,
-  hooks: S05TransactionReviewObservabilityHooks = {},
+  safe: TransactionReviewLog,
+  hooks: TransactionReviewObservabilityHooks = {},
   level: "info" | "error" | "warn" =
     safe.outcome === "unexpected_error" ? "error" : "info",
 ): void {
   try {
-    addS05Breadcrumb(safe);
+    addTransactionReviewBreadcrumb(safe);
   } catch {
     // Breadcrumbs are best effort and cannot affect the read/write response.
   }
@@ -478,10 +478,10 @@ function emitRecord(
 }
 
 /** Creates an S05 operation and generates a fresh opaque request ID by default. */
-export function createS05TransactionReviewOperation(
-  operation: S05TransactionReviewOperation,
-  options: S05TransactionReviewOperationOptions = {},
-): S05TransactionReviewOperationContext {
+export function createTransactionReviewOperation(
+  operation: TransactionReviewOperation,
+  options: TransactionReviewOperationOptions = {},
+): TransactionReviewOperationContext {
   let requestId = opaqueId(options.requestId);
   if (!requestId) {
     try {
@@ -505,12 +505,12 @@ export function createS05TransactionReviewOperation(
 }
 
 /** Emits one completed S05 record without serializing its result or input. */
-export function logS05TransactionReviewOperation(
-  operation: S05TransactionReviewOperationContext,
-  outcome: S05TransactionReviewOutcome,
-  options: S05TransactionReviewCompletionOptions = {},
-): S05TransactionReviewLog | undefined {
-  const safe = sanitizeS05TransactionReviewLog(
+export function logTransactionReviewOperation(
+  operation: TransactionReviewOperationContext,
+  outcome: TransactionReviewOutcome,
+  options: TransactionReviewCompletionOptions = {},
+): TransactionReviewLog | undefined {
+  const safe = sanitizeTransactionReviewLog(
     toLogInput(operation, outcome, options),
   );
   if (!safe) {
@@ -537,40 +537,40 @@ function codeFromError(error: unknown): unknown {
 }
 
 /** Returns the expected code only when the code belongs to the ADR allow-list. */
-export function expectedS05ErrorCode(
+export function expectedTransactionReviewErrorCode(
   error: unknown,
-): S05TransactionReviewExpectedErrorCode | undefined {
+): TransactionReviewExpectedErrorCode | undefined {
   if (error instanceof FinancialContextError) {
     return EXPECTED_ERROR_CODE_SET.has(error.code)
-      ? (error.code as S05TransactionReviewExpectedErrorCode)
+      ? (error.code as TransactionReviewExpectedErrorCode)
       : undefined;
   }
 
   const code = codeFromError(error);
   return typeof code === "string" && EXPECTED_ERROR_CODE_SET.has(code)
-    ? (code as S05TransactionReviewExpectedErrorCode)
+    ? (code as TransactionReviewExpectedErrorCode)
     : undefined;
 }
 
 /** Classifies domain/context failures without inspecting an exception message. */
-export function classifyS05Error(
+export function classifyTransactionReviewError(
   error: unknown,
-): S05TransactionReviewErrorClassification {
-  const expectedCode = expectedS05ErrorCode(error);
+): TransactionReviewErrorClassification {
+  const expectedCode = expectedTransactionReviewErrorCode(error);
   return expectedCode
     ? { outcome: "expected_error", errorCode: expectedCode }
     : { outcome: "unexpected_error", errorCode: "UNEXPECTED_ERROR" };
 }
 
-export function isExpectedS05Error(error: unknown): boolean {
-  return expectedS05ErrorCode(error) !== undefined;
+export function isExpectedTransactionReviewError(error: unknown): boolean {
+  return expectedTransactionReviewErrorCode(error) !== undefined;
 }
 
 /** Safe shape for adapters that need to turn an error into a Result envelope. */
-export function toS05ErrorEnvelope(
+export function toTransactionReviewErrorEnvelope(
   error: unknown,
-): S05TransactionReviewSafeErrorEnvelope {
-  const classification = classifyS05Error(error);
+): TransactionReviewSafeErrorEnvelope {
+  const classification = classifyTransactionReviewError(error);
   return {
     ok: false,
     error: { code: classification.errorCode },
@@ -578,12 +578,12 @@ export function toS05ErrorEnvelope(
 }
 
 function completionLog(
-  operation: S05TransactionReviewOperationContext,
-  outcome: S05TransactionReviewOutcome,
+  operation: TransactionReviewOperationContext,
+  outcome: TransactionReviewOutcome,
   durationMs: number,
-  options: S05TransactionReviewCompletionOptions,
-): S05TransactionReviewLog | undefined {
-  return logS05TransactionReviewOperation(operation, outcome, {
+  options: TransactionReviewCompletionOptions,
+): TransactionReviewLog | undefined {
+  return logTransactionReviewOperation(operation, outcome, {
     ...options,
     durationMs,
     errorCode: options.errorCode,
@@ -617,10 +617,10 @@ function resultFailure(value: unknown): { failed: boolean; error?: unknown } {
  * outcome and returned unchanged; thrown technical exceptions are logged,
  * captured through the existing sanitized Sentry boundary and rethrown.
  */
-export async function withS05TransactionReviewObservability<T>(
-  operation: S05TransactionReviewOperationContext,
+export async function withTransactionReviewObservability<T>(
+  operation: TransactionReviewOperationContext,
   work: () => Promise<T> | T,
-  options: S05TransactionReviewCompletionOptions = {},
+  options: TransactionReviewCompletionOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -629,7 +629,7 @@ export async function withS05TransactionReviewObservability<T>(
     const value = await work();
     const failure = resultFailure(value);
     if (failure.failed) {
-      const classification = classifyS05Error(failure.error);
+      const classification = classifyTransactionReviewError(failure.error);
       if (classification.outcome === "expected_error") {
         completionLog(operation, classification.outcome, elapsedMs(startedAt, now), {
           ...options,
@@ -638,7 +638,7 @@ export async function withS05TransactionReviewObservability<T>(
         return value;
       }
 
-      reportS05UnexpectedError(
+      reportTransactionReviewUnexpectedError(
         failure.error,
         operation,
         elapsedMs(startedAt, now),
@@ -650,7 +650,7 @@ export async function withS05TransactionReviewObservability<T>(
     completionLog(operation, "success", elapsedMs(startedAt, now), options);
     return value;
   } catch (error) {
-    const classification = classifyS05Error(error);
+    const classification = classifyTransactionReviewError(error);
     const durationMs = elapsedMs(startedAt, now);
     if (classification.outcome === "expected_error") {
       completionLog(operation, classification.outcome, durationMs, {
@@ -660,7 +660,7 @@ export async function withS05TransactionReviewObservability<T>(
       throw error;
     }
 
-    reportS05UnexpectedError(error, operation, durationMs, options);
+    reportTransactionReviewUnexpectedError(error, operation, durationMs, options);
     throw error;
   }
 }
@@ -668,7 +668,7 @@ export async function withS05TransactionReviewObservability<T>(
 function safeThreshold(value: unknown): number | undefined {
   if (typeof value === "number" && Number.isFinite(value)) {
     return Math.min(
-      MAX_S05_SLOW_QUERY_THRESHOLD_MS,
+      MAX_TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS,
       Math.max(0, Math.round(value)),
     );
   }
@@ -680,25 +680,28 @@ function safeThreshold(value: unknown): number | undefined {
   return undefined;
 }
 
-/** Reads `S05_SLOW_QUERY_THRESHOLD_MS`, with a bounded safe default. */
-export function getS05SlowQueryThresholdMs(value?: unknown): number {
-  const configuredValue = value ?? process.env.S05_SLOW_QUERY_THRESHOLD_MS;
+/** Reads `TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS`, with a bounded safe default. */
+export function getTransactionReviewSlowQueryThresholdMs(value?: unknown): number {
+  const configuredValue =
+    value ??
+    process.env.TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS ??
+    process.env.S05_SLOW_QUERY_THRESHOLD_MS;
   return (
     safeThreshold(configuredValue) ??
     Math.min(
-      MAX_S05_SLOW_QUERY_THRESHOLD_MS,
-      DEFAULT_S05_SLOW_QUERY_THRESHOLD_MS,
+      MAX_TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS,
+      DEFAULT_TRANSACTION_REVIEW_SLOW_QUERY_THRESHOLD_MS,
     )
   );
 }
 
 function sentryContextFor(
-  operation: S05TransactionReviewOperationContext,
-  outcome: S05TransactionReviewOutcome,
-  options: S05TransactionReviewCompletionOptions,
+  operation: TransactionReviewOperationContext,
+  outcome: TransactionReviewOutcome,
+  options: TransactionReviewCompletionOptions,
 ): ObservabilityContext {
   const safeOperation = operationValue(operation.operation) ?? "list";
-  const safe = sanitizeS05TransactionReviewLog(
+  const safe = sanitizeTransactionReviewLog(
     toLogInput(operation, outcome, options),
   );
 
@@ -725,23 +728,23 @@ function sentryContextFor(
 }
 
 /** Converts only the S05 allow-listed metadata to the shared Sentry shape. */
-export function toS05ObservabilityContext(
-  operation: S05TransactionReviewOperationContext,
-  outcome: S05TransactionReviewOutcome = "unexpected_error",
-  options: S05TransactionReviewCompletionOptions = {},
+export function toTransactionReviewObservabilityContext(
+  operation: TransactionReviewOperationContext,
+  outcome: TransactionReviewOutcome = "unexpected_error",
+  options: TransactionReviewCompletionOptions = {},
 ): ObservabilityContext {
   return sentryContextFor(operation, outcome, options);
 }
 
 /** Logs expected failures and captures only unexpected technical exceptions. */
-export function reportS05UnexpectedError(
+export function reportTransactionReviewUnexpectedError(
   error: unknown,
-  operation: S05TransactionReviewOperationContext,
+  operation: TransactionReviewOperationContext,
   durationMs: number,
-  options: S05TransactionReviewCompletionOptions = {},
-): S05TransactionReviewErrorClassification {
-  const classification = classifyS05Error(error);
-  const safeOptions: S05TransactionReviewCompletionOptions = {
+  options: TransactionReviewCompletionOptions = {},
+): TransactionReviewErrorClassification {
+  const classification = classifyTransactionReviewError(error);
+  const safeOptions: TransactionReviewCompletionOptions = {
     ...options,
     durationMs,
     errorCode:
@@ -775,10 +778,10 @@ export function reportS05UnexpectedError(
  * Measures one SQL/read-model call. Only calls above the bounded threshold
  * emit a warning/metric record; SQL text and bind values are never accepted.
  */
-export async function measureS05Query<T>(
-  operation: S05TransactionReviewOperationContext,
+export async function measureTransactionReviewQuery<T>(
+  operation: TransactionReviewOperationContext,
   work: () => Promise<T> | T,
-  options: S05TransactionReviewQueryOptions = {},
+  options: TransactionReviewQueryOptions = {},
 ): Promise<T> {
   const now = options.now ?? monotonicNow;
   const startedAt = now();
@@ -795,15 +798,15 @@ export async function measureS05Query<T>(
     throw error;
   } finally {
     const durationMs = elapsedMs(startedAt, now);
-    const thresholdMs = getS05SlowQueryThresholdMs(options.thresholdMs);
+    const thresholdMs = getTransactionReviewSlowQueryThresholdMs(options.thresholdMs);
     if (durationMs >= thresholdMs) {
       const returnedFailure = resultFailure(returnedValue);
       const classification = failed
-        ? classifyS05Error(thrownError)
+        ? classifyTransactionReviewError(thrownError)
         : returnedFailure.failed
-          ? classifyS05Error(returnedFailure.error)
+          ? classifyTransactionReviewError(returnedFailure.error)
           : { outcome: "success" as const, errorCode: undefined };
-      const safe = sanitizeS05TransactionReviewLog({
+      const safe = sanitizeTransactionReviewLog({
         ...operation,
         ...options,
         operation: operation.operation,
@@ -822,7 +825,7 @@ export async function measureS05Query<T>(
 
       if (safe) {
         try {
-          addS05Breadcrumb(safe);
+          addTransactionReviewBreadcrumb(safe);
         } catch {
           // Best effort only.
         }
@@ -845,8 +848,8 @@ export async function measureS05Query<T>(
 }
 
 /** Naming aliases keep the small adapter surface discoverable. */
-export const createS05ReviewOperation = createS05TransactionReviewOperation;
-export const withS05ReviewObservability =
-  withS05TransactionReviewObservability;
-export const observeS05Query = measureS05Query;
-export const classifyS05TransactionError = classifyS05Error;
+export const createTransactionReviewReviewOperation = createTransactionReviewOperation;
+export const withTransactionReviewReviewObservability =
+  withTransactionReviewObservability;
+export const observeTransactionReviewQuery = measureTransactionReviewQuery;
+export const classifyTransactionReviewTransactionError = classifyTransactionReviewError;

@@ -46,7 +46,7 @@ describe("T08 create adapter instrumentation", () => {
     expect(captureServerException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        event: "s03_transaction_create_expense_unexpected_error",
+        event: "transaction_create_expense_unexpected_error",
         useCase: "transactions.create.expense",
         operation: "create",
         entityType: "transaction",

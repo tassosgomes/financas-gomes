@@ -8,7 +8,7 @@ import {
 } from "./feedback";
 import { CreditCardDateField, CreditCardMoneyField } from "./form-fields";
 
-describe("S06 shared feedback and field boundaries", () => {
+describe("shared feedback and field boundaries", () => {
   it("associates allow-listed field errors and removes raw exception text", () => {
     const html = renderToStaticMarkup(
       <>

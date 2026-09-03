@@ -259,10 +259,6 @@ export type CsvImportConfirmationResult =
 
 /** Alias used by report-oriented callers without introducing another shape. */
 export type CsvImportResult = CsvImportConfirmationResult;
-
-/** ADR-005 names this envelope `S04Error`; the CSV adapter uses the same shape. */
-export type S04Error = CsvImportError;
-
 export interface CsvImportParserOptions {
   /** Browser-provided MIME is informational only and never authorizes parsing. */
   mimeType?: string;

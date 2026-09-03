@@ -73,7 +73,7 @@ function timeline(overrides: Record<string, unknown> = {}): ForecastTimeline {
   } as ForecastTimeline;
 }
 
-describe("S07 T11 serializable forecast boundary", () => {
+describe("T11 serializable forecast boundary", () => {
   it("accepts only the public query fields and rejects tenant/query authority", () => {
     const query = {
       from: "2026-09-01",

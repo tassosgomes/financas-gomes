@@ -10,7 +10,7 @@ import {
   TRANSACTIONS_ROUTE,
 } from "@/modules/transactions/routes";
 import type {
-  S05Result,
+  TransactionReviewResult,
   TransactionDetailReadModel,
   TransactionListReadModel,
   TransactionReviewSummaryReadModel,
@@ -32,28 +32,28 @@ function productionHandlers() {
 /** Lists the authenticated household's reviewable transactions. */
 export async function listReviewableTransactionsAction(
   input?: unknown,
-): Promise<S05Result<TransactionListReadModel>> {
+): Promise<TransactionReviewResult<TransactionListReadModel>> {
   return productionHandlers().list(input);
 }
 
 /** Reads one reviewable transaction by an untrusted financial-event ID. */
 export async function getReviewableTransactionDetailAction(
   financialEventId: unknown,
-): Promise<S05Result<TransactionDetailReadModel>> {
+): Promise<TransactionReviewResult<TransactionDetailReadModel>> {
   return productionHandlers().detail(financialEventId);
 }
 
 /** Counts pending review items using the server-side summary query. */
 export async function getTransactionReviewSummaryAction(
   input?: unknown,
-): Promise<S05Result<TransactionReviewSummaryReadModel>> {
+): Promise<TransactionReviewResult<TransactionReviewSummaryReadModel>> {
   return productionHandlers().summary(input);
 }
 
 /** Updates only description/category through the T05 review port. */
 export async function updateReviewableTransactionAction(
   input: unknown,
-): Promise<S05Result<ReviewableTransactionUpdateReadModel>> {
+): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>> {
   return productionHandlers().update(input);
 }
 

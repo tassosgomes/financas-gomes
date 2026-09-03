@@ -1,12 +1,12 @@
 "use server";
 
 import {
-  getS02ActionHandlers,
+  getAccountsCategoriesActionHandlers,
 } from "@/modules/accounts-categories/adapters";
 import type {
   AccountReadModel,
   ListAccountsReadModel,
-  S02Result,
+  AccountsCategoriesResult,
 } from "@/modules/accounts-categories/contracts";
 
 /**
@@ -15,49 +15,49 @@ import type {
  */
 export async function createAccountAction(
   input: unknown,
-): Promise<S02Result<AccountReadModel>> {
-  return getS02ActionHandlers().createAccount(input);
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
+  return getAccountsCategoriesActionHandlers().createAccount(input);
 }
 
 export async function listAccountsAction(
   input?: unknown,
-): Promise<S02Result<ListAccountsReadModel>> {
-  return getS02ActionHandlers().listAccounts(input);
+): Promise<AccountsCategoriesResult<ListAccountsReadModel>> {
+  return getAccountsCategoriesActionHandlers().listAccounts(input);
 }
 
 export async function updateAccountAction(
   input: unknown,
-): Promise<S02Result<AccountReadModel>> {
-  return getS02ActionHandlers().updateAccount(input);
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
+  return getAccountsCategoriesActionHandlers().updateAccount(input);
 }
 
 export async function archiveAccountAction(
   input: unknown,
-): Promise<S02Result<AccountReadModel>> {
-  return getS02ActionHandlers().archiveAccount(input);
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
+  return getAccountsCategoriesActionHandlers().archiveAccount(input);
 }
 
 /** Short aliases keep call sites readable without changing the action API. */
 export async function createAccount(
   input: unknown,
-): Promise<S02Result<AccountReadModel>> {
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
   return createAccountAction(input);
 }
 
 export async function listAccounts(
   input?: unknown,
-): Promise<S02Result<ListAccountsReadModel>> {
+): Promise<AccountsCategoriesResult<ListAccountsReadModel>> {
   return listAccountsAction(input);
 }
 
 export async function updateAccount(
   input: unknown,
-): Promise<S02Result<AccountReadModel>> {
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
   return updateAccountAction(input);
 }
 
 export async function archiveAccount(
   input: unknown,
-): Promise<S02Result<AccountReadModel>> {
+): Promise<AccountsCategoriesResult<AccountReadModel>> {
   return archiveAccountAction(input);
 }

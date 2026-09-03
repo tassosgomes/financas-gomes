@@ -67,7 +67,7 @@ const payment: CreditCardPaymentStatusViewModel = {
   creditAmountCents: "0",
 };
 
-describe("S06 read-model contracts and components", () => {
+describe("read-model contracts and components", () => {
   it("parses strict server projections without converting dates or cents", () => {
     expect(parseCreditCardStatement(currentStatement)).toEqual(currentStatement);
     expect(parseCreditCardProjectionSummary(projection)).toEqual(projection);

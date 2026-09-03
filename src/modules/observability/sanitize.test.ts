@@ -212,7 +212,7 @@ describe("Sentry event sanitization", () => {
 
   it("keeps transaction correlation and kind while dropping financial context", () => {
     const safe = toSafeObservabilityContext({
-      event: "s03_transaction_create_expense_unexpected_error",
+      event: "transaction_create_expense_unexpected_error",
       useCase: "transactions.create.expense",
       operation: "create",
       entityType: "transaction",
@@ -226,7 +226,7 @@ describe("Sentry event sanitization", () => {
     } as never);
 
     expect(safe.tags).toEqual({
-      event: "s03_transaction_create_expense_unexpected_error",
+      event: "transaction_create_expense_unexpected_error",
       use_case: "transactions.create.expense",
       operation: "create",
       entity_type: "transaction",

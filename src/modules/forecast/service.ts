@@ -19,15 +19,15 @@ import {
 } from "@/modules/households/contracts";
 import { assertFinancialContext } from "@/modules/households/tenant-scoped";
 import {
-  createS07ForecastOperation,
-  measureS07Query,
-  toS07ErrorEnvelope,
-  withS07ForecastObservability,
-  type S07ForecastCompletionOptions,
-  type S07ForecastOperationContext,
-  type S07ForecastOperationOptions,
-  type S07ForecastQueryOptions,
-} from "@/modules/observability/s07";
+  createForecastOperation,
+  measureForecastQuery,
+  toForecastErrorEnvelope,
+  withForecastObservability,
+  type ForecastCompletionOptions,
+  type ForecastOperationContext,
+  type ForecastOperationOptions,
+  type ForecastQueryOptions,
+} from "@/modules/observability/forecast";
 
 import {
   buildForecastTimelineFromSources,
@@ -110,7 +110,7 @@ export interface ForecastServiceDependencies {
   maxRangeDays?: number;
   maxSourceRows?: number;
   maxItems?: number;
-  observability?: S07ForecastCompletionOptions & S07ForecastOperationOptions;
+  observability?: ForecastCompletionOptions & ForecastOperationOptions;
 }
 
 export interface ForecastServiceLimits {
@@ -459,7 +459,7 @@ function safeObservation(
   dependencies: ForecastServiceDependencies,
   query: NormalizedForecastQuery,
   context?: FinancialContext,
-): S07ForecastCompletionOptions & S07ForecastOperationOptions {
+): ForecastCompletionOptions & ForecastOperationOptions {
   const supplied = dependencies.observability ?? {};
   // Tenant/user identifiers are server-derived. A caller-provided telemetry
   // object must not become a substitute for the resolved financial context.
@@ -481,8 +481,8 @@ function safeObservation(
 
 function sourceReadOptions(
   dependencies: ForecastServiceDependencies,
-  observation: S07ForecastCompletionOptions & S07ForecastOperationOptions,
-  operation: S07ForecastOperationContext,
+  observation: ForecastCompletionOptions & ForecastOperationOptions,
+  operation: ForecastOperationContext,
   context: FinancialContext,
 ): ForecastSourceReadOptions {
   const options: ForecastSourceReadOptions = {
@@ -498,13 +498,13 @@ function sourceReadOptions(
 }
 
 function queryOptions(
-  observation: S07ForecastCompletionOptions & S07ForecastOperationOptions,
+  observation: ForecastCompletionOptions & ForecastOperationOptions,
   technicalErrorCode: string,
-): S07ForecastQueryOptions {
+): ForecastQueryOptions {
   return {
     ...observation,
     technicalErrorCode,
-  } as S07ForecastQueryOptions;
+  } as ForecastQueryOptions;
 }
 
 function mapError(
@@ -568,7 +568,7 @@ function mapError(
 
 function publicFailure<T>(error: unknown): ForecastResult<T> {
   const mapped = mapError(error);
-  const envelope = toS07ErrorEnvelope(mapped);
+  const envelope = toForecastErrorEnvelope(mapped);
   return envelope as ForecastResult<T>;
 }
 
@@ -601,7 +601,7 @@ async function runForecast(
   query: NormalizedForecastQuery,
   dependencies: ForecastServiceDependencies,
   limits: ForecastServiceLimits,
-  rootOperation: S07ForecastOperationContext,
+  rootOperation: ForecastOperationContext,
 ): Promise<ForecastTimeline> {
   const resolveContext =
     dependencies.resolveContext ??
@@ -623,9 +623,9 @@ async function runForecast(
     userId: context.userId,
     householdId: context.householdId,
   };
-  const sourceOperation = createS07ForecastOperation("source", operationOptions);
+  const sourceOperation = createForecastOperation("source", operationOptions);
   const reader = dependencies.readSources ?? readForecastSourcesForContext;
-  const bundle = await measureS07Query(
+  const bundle = await measureForecastQuery(
     sourceOperation,
     async () => {
       try {
@@ -661,23 +661,23 @@ async function runForecast(
       ...counts,
     },
   } as ForecastTimelineBuilderInput;
-  const builderOperation = createS07ForecastOperation("builder", {
+  const builderOperation = createForecastOperation("builder", {
     ...operationOptions,
     ...counts,
   });
-  const engineOperation = createS07ForecastOperation("engine", {
+  const engineOperation = createForecastOperation("engine", {
     ...operationOptions,
     ...counts,
   });
   const builder = dependencies.buildTimeline ?? buildForecastTimelineFromSources;
-  const timeline = await measureS07Query(
+  const timeline = await measureForecastQuery(
     builderOperation,
     async () => {
       try {
         // T04 composes the pure engine internally. Keep an engine measurement
         // around that composition so slow-stage telemetry remains attributable
         // without moving persistence into T05.
-        return await measureS07Query(
+        return await measureForecastQuery(
           engineOperation,
           () => builder(builderInput),
           queryOptions(observation, "FORECAST_ENGINE_FAILED"),
@@ -719,12 +719,12 @@ export async function getForecast(
     return publicFailure(error);
   }
 
-  const rootOperation = createS07ForecastOperation("query", {
+  const rootOperation = createForecastOperation("query", {
     ...safeObservation(dependencies, query),
   });
 
   try {
-    const value = await withS07ForecastObservability(
+    const value = await withForecastObservability(
       rootOperation,
       () => runForecast(query, dependencies, limits, rootOperation),
       safeObservation(dependencies, query),

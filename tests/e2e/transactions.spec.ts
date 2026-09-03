@@ -329,7 +329,7 @@ async function runScenario(
   await expect(page).not.toHaveURL(detailUrl);
 }
 
-test.describe("S03 transações manuais", () => {
+test.describe("transações manuais", () => {
   test("despesa: cria, lista, edita, cancela e preserva o histórico", async ({
     page,
   }) => {

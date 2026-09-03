@@ -38,8 +38,8 @@ import type {
   CategoryKind,
   CategoryReadModel,
   CategoryStatus,
-  S02Error,
-  S02Result,
+  AccountsCategoriesError,
+  AccountsCategoriesResult,
 } from "@/modules/accounts-categories/contracts";
 import { CATEGORIES_SETTINGS_ROUTE } from "@/modules/accounts-categories/routes";
 
@@ -59,14 +59,14 @@ const CATEGORY_KIND_LABELS: Record<CategoryKind, string> = {
   INCOME: "Receita",
 };
 
-function safeUnexpectedError(): S02Error {
+function safeUnexpectedError(): AccountsCategoriesError {
   return {
     code: "INVALID_COMMAND",
     message: "Não foi possível concluir a operação. Tente novamente.",
   };
 }
 
-function actionErrorMessage(error: S02Error): string {
+function actionErrorMessage(error: AccountsCategoriesError): string {
   return error.message || "Não foi possível concluir a operação. Tente novamente.";
 }
 
@@ -260,8 +260,8 @@ export function CategoriesScreen({ initialCategories }: CategoriesScreenProps) {
   const [editingCategory, setEditingCategory] = useState<
     CategoryReadModel | undefined
   >();
-  const [loadError, setLoadError] = useState<S02Error | null>(null);
-  const [operationError, setOperationError] = useState<S02Error | null>(null);
+  const [loadError, setLoadError] = useState<AccountsCategoriesError | null>(null);
+  const [operationError, setOperationError] = useState<AccountsCategoriesError | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const requestSequence = useRef(0);
 
@@ -325,7 +325,7 @@ export function CategoriesScreen({ initialCategories }: CategoriesScreenProps) {
 
   async function handleFormSubmit(
     values: CategoryFormValues,
-  ): Promise<S02Result<CategoryReadModel>> {
+  ): Promise<AccountsCategoriesResult<CategoryReadModel>> {
     setOperationError(null);
     setSuccessMessage(null);
 

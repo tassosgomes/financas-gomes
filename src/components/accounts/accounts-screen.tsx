@@ -36,8 +36,8 @@ import type {
   AccountStatus,
   AccountType,
   Liquidity,
-  S02Error,
-  S02Result,
+  AccountsCategoriesError,
+  AccountsCategoriesResult,
   Spendability,
 } from "@/modules/accounts-categories/contracts";
 import { ACCOUNTS_ROUTE } from "@/modules/accounts-categories/routes";
@@ -70,14 +70,14 @@ const LIQUIDITY_LABELS: Record<Liquidity, string> = {
   RESTRICTED: "Restrita",
 };
 
-function safeUnexpectedError(): S02Error {
+function safeUnexpectedError(): AccountsCategoriesError {
   return {
     code: "INVALID_COMMAND",
     message: "Não foi possível concluir a operação. Tente novamente.",
   };
 }
 
-function actionErrorMessage(error: S02Error): string {
+function actionErrorMessage(error: AccountsCategoriesError): string {
   return error.message || "Não foi possível concluir a operação. Tente novamente.";
 }
 
@@ -194,8 +194,8 @@ export function AccountsScreen({ initialAccounts }: AccountsScreenProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<AccountReadModel | undefined>();
-  const [loadError, setLoadError] = useState<S02Error | null>(null);
-  const [operationError, setOperationError] = useState<S02Error | null>(null);
+  const [loadError, setLoadError] = useState<AccountsCategoriesError | null>(null);
+  const [operationError, setOperationError] = useState<AccountsCategoriesError | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const requestSequence = useRef(0);
 
@@ -257,7 +257,7 @@ export function AccountsScreen({ initialAccounts }: AccountsScreenProps) {
     setEditingAccount(undefined);
   }
 
-  async function handleFormSubmit(values: AccountFormValues): Promise<S02Result<AccountReadModel>> {
+  async function handleFormSubmit(values: AccountFormValues): Promise<AccountsCategoriesResult<AccountReadModel>> {
     setOperationError(null);
     setSuccessMessage(null);
 

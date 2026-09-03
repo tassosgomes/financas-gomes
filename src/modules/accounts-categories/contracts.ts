@@ -62,7 +62,7 @@ export const DEFAULT_ACCOUNT_INCLUDE_IN_NET_WORTH = true;
 
 export const ACCOUNT_NAME_MAX_LENGTH = 120;
 export const CATEGORY_NAME_MAX_LENGTH = 120;
-export const S02_NAME_MAX_LENGTH = 120;
+export const ACCOUNTS_CATEGORIES_NAME_MAX_LENGTH = 120;
 export const COMMAND_ID_MAX_LENGTH = 128;
 
 export interface CreateAccountCommand {
@@ -156,7 +156,7 @@ export interface ListCategoriesReadModel {
  * Stable expected-error vocabulary for the S02 boundary. These codes are
  * intentionally independent of PostgreSQL/Drizzle error strings.
  */
-export const S02_ERROR_CODES = [
+export const ACCOUNTS_CATEGORIES_ERROR_CODES = [
   "UNAUTHENTICATED",
   "INVALID_COMMAND",
   "INVALID_COMMAND_ID",
@@ -182,9 +182,9 @@ export const S02_ERROR_CODES = [
   "CATEGORY_HAS_ACTIVE_CHILDREN",
 ] as const;
 
-export type S02ErrorCode = (typeof S02_ERROR_CODES)[number];
+export type AccountsCategoriesErrorCode = (typeof ACCOUNTS_CATEGORIES_ERROR_CODES)[number];
 
-export const S02_ERROR_MESSAGES: Record<S02ErrorCode, string> = {
+export const ACCOUNTS_CATEGORIES_ERROR_MESSAGES: Record<AccountsCategoriesErrorCode, string> = {
   UNAUTHENTICATED: "É necessário entrar para acessar este recurso.",
   INVALID_COMMAND: "Os dados da operação são inválidos.",
   INVALID_COMMAND_ID: "O identificador da operação é inválido.",
@@ -214,7 +214,7 @@ export const S02_ERROR_MESSAGES: Record<S02ErrorCode, string> = {
     "Arquive as categorias filhas ativas antes de arquivar esta categoria.",
 };
 
-export type S02ErrorField =
+export type AccountsCategoriesErrorField =
   | "commandId"
   | "name"
   | "type"
@@ -226,17 +226,17 @@ export type S02ErrorField =
   | "kind"
   | "parentId";
 
-export interface S02Error {
-  code: S02ErrorCode;
+export interface AccountsCategoriesError {
+  code: AccountsCategoriesErrorCode;
   message: string;
-  field?: S02ErrorField;
+  field?: AccountsCategoriesErrorField;
 }
 
-export type S02Result<T> =
+export type AccountsCategoriesResult<T> =
   | { ok: true; value: T }
-  | { ok: false; error: S02Error };
+  | { ok: false; error: AccountsCategoriesError };
 
-function statusForS02Error(code: S02ErrorCode): number {
+function statusForAccountsCategoriesError(code: AccountsCategoriesErrorCode): number {
   switch (code) {
     case "UNAUTHENTICATED":
       return 401;
@@ -262,21 +262,21 @@ function statusForS02Error(code: S02ErrorCode): number {
 }
 
 /** Safe, expected domain error used before an operation reaches persistence. */
-export class S02DomainError extends Error {
-  readonly code: S02ErrorCode;
-  readonly field: S02ErrorField | undefined;
+export class AccountsCategoriesDomainError extends Error {
+  readonly code: AccountsCategoriesErrorCode;
+  readonly field: AccountsCategoriesErrorField | undefined;
   readonly status: number;
   readonly expected = true;
 
-  constructor(code: S02ErrorCode, field?: S02ErrorField) {
-    super(S02_ERROR_MESSAGES[code]);
-    this.name = "S02DomainError";
+  constructor(code: AccountsCategoriesErrorCode, field?: AccountsCategoriesErrorField) {
+    super(ACCOUNTS_CATEGORIES_ERROR_MESSAGES[code]);
+    this.name = "AccountsCategoriesDomainError";
     this.code = code;
     this.field = field;
-    this.status = statusForS02Error(code);
+    this.status = statusForAccountsCategoriesError(code);
   }
 
-  toError(): S02Error {
+  toError(): AccountsCategoriesError {
     return {
       code: this.code,
       message: this.message,
@@ -286,20 +286,19 @@ export class S02DomainError extends Error {
 }
 
 /** Compatibility aliases for callers that use a more specific error name. */
-export const DomainValidationError = S02DomainError;
-export const AccountsCategoriesDomainError = S02DomainError;
+export const DomainValidationError = AccountsCategoriesDomainError;
 
-export function ok<T>(value: T): S02Result<T> {
+export function ok<T>(value: T): AccountsCategoriesResult<T> {
   return { ok: true, value };
 }
 
 export function failure<T = never>(
-  code: S02ErrorCode,
-  field?: S02ErrorField,
-): S02Result<T> {
+  code: AccountsCategoriesErrorCode,
+  field?: AccountsCategoriesErrorField,
+): AccountsCategoriesResult<T> {
   return {
     ok: false,
-    error: new S02DomainError(code, field).toError(),
+    error: new AccountsCategoriesDomainError(code, field).toError(),
   };
 }
 

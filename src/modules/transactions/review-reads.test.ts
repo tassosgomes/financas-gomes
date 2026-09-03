@@ -28,7 +28,7 @@ const account = {
   updatedAt: "2026-08-01T00:00:00.000Z",
 };
 
-function expectS05Error(action: () => unknown, code: string): void {
+function expectTransactionReviewError(action: () => unknown, code: string): void {
   let error: unknown;
   try {
     action();
@@ -71,7 +71,7 @@ function row(
   };
 }
 
-describe("S05 review read helpers", () => {
+describe("review read helpers", () => {
   it("normalizes aliases and null category while rejecting household authority", () => {
     expect(
       normalizeReviewReadQuery({
@@ -86,7 +86,7 @@ describe("S05 review read helpers", () => {
       categoryId: null,
       limit: 3,
     });
-    expectS05Error(
+    expectTransactionReviewError(
       () => normalizeReviewReadQuery({ householdId: HOUSEHOLD_ID }),
       "INVALID_QUERY",
     );
@@ -114,7 +114,7 @@ describe("S05 review read helpers", () => {
       },
     });
     expect(isReviewableEventShape(row("IMPORT", null))).toBe(false);
-    expectS05Error(
+    expectTransactionReviewError(
       () =>
         projectReviewRow(
           row("MANUAL", {
@@ -141,7 +141,7 @@ describe("S05 review read helpers", () => {
         expectedLimit: 2,
       }),
     ).toMatchObject({ occurredOn: "2026-08-05", id: EVENT_ID, limit: 2 });
-    expectS05Error(
+    expectTransactionReviewError(
       () => decodeReviewPageCursor(cursor, { ...query, search: "outro" }),
       "INVALID_CURSOR",
     );

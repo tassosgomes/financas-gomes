@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  S05DomainError,
+  TransactionReviewDomainError,
   parseUpdateReviewableTransactionCommand,
   projectTransactionReview,
 } from "./review-contracts";
@@ -39,13 +39,13 @@ describe("T05 review update use-case boundary", () => {
         amountCents: "100",
         categoryId: null,
       }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseUpdateReviewableTransactionCommand({
         commandId: "review-3",
         financialEventId: eventId,
       }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
   });
 
   it("hashes only the effective normalized payload and excludes commandId", () => {
@@ -111,7 +111,7 @@ describe("T05 review update use-case boundary", () => {
       { status: "POSTED", kind: "EXPENSE", origin: "SYSTEM" },
     ]) {
       expect(() => assertReviewableUpdatePolicy(event, 0)).toThrowError(
-        S05DomainError,
+        TransactionReviewDomainError,
       );
     }
 
@@ -120,13 +120,13 @@ describe("T05 review update use-case boundary", () => {
         { status: "POSTED", kind: "INCOME", origin: "IMPORT" },
         0,
       ),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       assertReviewableUpdatePolicy(
         { status: "POSTED", kind: "INCOME", origin: "IMPORT" },
         2,
       ),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
   });
 
   it("projects category null as a pending review without changing money", () => {

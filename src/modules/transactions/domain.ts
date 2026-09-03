@@ -1,5 +1,5 @@
 import {
-  S03DomainError,
+  TransactionDomainError,
   type FinancialEventOrigin,
   type FinancialEventStatus,
   type ManualTransactionKind,
@@ -85,11 +85,11 @@ export function assertAccountReference(
     (input.accountId !== undefined && account.id !== input.accountId) ||
     account.householdId !== input.householdId
   ) {
-    throw new S03DomainError("ACCOUNT_NOT_FOUND", "accountId");
+    throw new TransactionDomainError("ACCOUNT_NOT_FOUND", "accountId");
   }
 
   if (account.status === "ARCHIVED") {
-    throw new S03DomainError("RESOURCE_ARCHIVED", "accountId");
+    throw new TransactionDomainError("RESOURCE_ARCHIVED", "accountId");
   }
 
   const occurredOn =
@@ -118,15 +118,15 @@ export function assertCategoryReference(
     category.id !== input.categoryId ||
     category.householdId !== input.householdId
   ) {
-    throw new S03DomainError("CATEGORY_NOT_FOUND", "categoryId");
+    throw new TransactionDomainError("CATEGORY_NOT_FOUND", "categoryId");
   }
 
   if (category.status === "ARCHIVED") {
-    throw new S03DomainError("RESOURCE_ARCHIVED", "categoryId");
+    throw new TransactionDomainError("RESOURCE_ARCHIVED", "categoryId");
   }
 
   if (category.kind !== input.kind) {
-    throw new S03DomainError("CATEGORY_KIND_MISMATCH", "categoryId");
+    throw new TransactionDomainError("CATEGORY_KIND_MISMATCH", "categoryId");
   }
 
   return category;
@@ -192,7 +192,7 @@ function assertEventInHousehold(
     event.id !== input.financialEventId ||
     event.householdId !== input.householdId
   ) {
-    throw new S03DomainError("EVENT_NOT_FOUND", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_FOUND", "financialEventId");
   }
   return event;
 }
@@ -203,13 +203,13 @@ export function assertManualEventCanUpdate(
 ): ManualEventReference {
   const event = assertEventInHousehold(input);
   if (event.origin !== "MANUAL") {
-    throw new S03DomainError("EVENT_NOT_MANUAL", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_MANUAL", "financialEventId");
   }
   if (event.status === "CANCELLED") {
-    throw new S03DomainError("EVENT_ALREADY_CANCELLED", "financialEventId");
+    throw new TransactionDomainError("EVENT_ALREADY_CANCELLED", "financialEventId");
   }
   if (event.status !== "POSTED") {
-    throw new S03DomainError("EVENT_NOT_POSTED", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_POSTED", "financialEventId");
   }
   return event;
 }
@@ -220,16 +220,16 @@ export function assertManualEventCanCancel(
 ): ManualEventReference {
   const event = assertEventInHousehold(input);
   if (event.origin !== "MANUAL") {
-    throw new S03DomainError("EVENT_NOT_MANUAL", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_MANUAL", "financialEventId");
   }
   if (event.status === "CANCELLED") {
-    throw new S03DomainError("EVENT_ALREADY_CANCELLED", "financialEventId");
+    throw new TransactionDomainError("EVENT_ALREADY_CANCELLED", "financialEventId");
   }
   if (event.status !== "POSTED") {
-    throw new S03DomainError("EVENT_NOT_POSTED", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_POSTED", "financialEventId");
   }
   if (input.hasReversal) {
-    throw new S03DomainError("REVERSAL_ALREADY_EXISTS", "financialEventId");
+    throw new TransactionDomainError("REVERSAL_ALREADY_EXISTS", "financialEventId");
   }
   return event;
 }

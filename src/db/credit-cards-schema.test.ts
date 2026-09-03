@@ -50,7 +50,7 @@ function indexMetadata(table: DrizzleTable, name: string) {
   return tableMetadata(table).indexes.find((index) => index.name === name);
 }
 
-describe("S06 credit-card schema metadata", () => {
+describe("credit-card schema metadata", () => {
   it("declares the card, billing-rule, purchase, plan and installment tables", () => {
     expect(
       [

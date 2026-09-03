@@ -11,11 +11,11 @@ import {
   DEFAULT_ACCOUNT_LIQUIDITY,
   DEFAULT_ACCOUNT_SPENDABILITY,
   LIQUIDITIES,
-  S02_ERROR_CODES,
-  S02_NAME_MAX_LENGTH,
+  ACCOUNTS_CATEGORIES_ERROR_CODES,
+  ACCOUNTS_CATEGORIES_NAME_MAX_LENGTH,
   SPENDABILITIES,
   STATUS_FILTERS,
-  S02DomainError,
+  AccountsCategoriesDomainError,
   type AccountStatus,
   type AccountArchiveValidationInput,
   type AccountType,
@@ -29,10 +29,10 @@ import {
   type CreateAccountCommand,
   type CreateCategoryCommand,
   type ListQuery,
-  type S02Error,
-  type S02ErrorCode,
-  type S02ErrorField,
-  type S02Result,
+  type AccountsCategoriesError,
+  type AccountsCategoriesErrorCode,
+  type AccountsCategoriesErrorField,
+  type AccountsCategoriesResult,
   type Spendability,
   type Liquidity,
   type UpdateAccountCommand,
@@ -47,7 +47,7 @@ import {
 const CONTROL_OR_FORMAT_CHARACTER = /[\p{Cc}\p{Cf}]/u;
 
 function invalidName(): never {
-  throw new S02DomainError("INVALID_NAME", "name");
+  throw new AccountsCategoriesDomainError("INVALID_NAME", "name");
 }
 
 function normalizeNameValue(value: string): string | null {
@@ -64,7 +64,7 @@ function normalizeNameValue(value: string): string | null {
 
   if (
     codePointLength < 1 ||
-    codePointLength > S02_NAME_MAX_LENGTH
+    codePointLength > ACCOUNTS_CATEGORIES_NAME_MAX_LENGTH
   ) {
     return null;
   }
@@ -278,7 +278,7 @@ export function applyAccountDefaults(
 export const withAccountDefaults = applyAccountDefaults;
 export const normalizeCreateAccountCommand = applyAccountDefaults;
 
-function fieldForPath(path: readonly (string | number)[]): S02ErrorField | undefined {
+function fieldForPath(path: readonly (string | number)[]): AccountsCategoriesErrorField | undefined {
   const field = path[0];
   switch (field) {
     case "commandId":
@@ -299,8 +299,8 @@ function fieldForPath(path: readonly (string | number)[]): S02ErrorField | undef
 
 function codeForZodIssue(
   issue: z.ZodIssue,
-  fallback: S02ErrorCode,
-): S02ErrorCode {
+  fallback: AccountsCategoriesErrorCode,
+): AccountsCategoriesErrorCode {
   if (issue.path[0] === "status") {
     return "INVALID_STATUS_FILTER";
   }
@@ -327,18 +327,18 @@ function codeForZodIssue(
 }
 
 /** Converts Zod/unknown failures into the allow-listed S02 error envelope. */
-export function toS02DomainError(
+export function toAccountsCategoriesDomainError(
   error: unknown,
-  fallback: S02ErrorCode = "INVALID_COMMAND",
-): S02DomainError {
-  if (error instanceof S02DomainError) {
+  fallback: AccountsCategoriesErrorCode = "INVALID_COMMAND",
+): AccountsCategoriesDomainError {
+  if (error instanceof AccountsCategoriesDomainError) {
     return error;
   }
 
   if (error instanceof z.ZodError) {
     const issue = error.issues[0];
     const code = issue ? codeForZodIssue(issue, fallback) : fallback;
-    return new S02DomainError(code, issue ? fieldForPath(issue.path) : undefined);
+    return new AccountsCategoriesDomainError(code, issue ? fieldForPath(issue.path) : undefined);
   }
 
   if (
@@ -349,7 +349,7 @@ export function toS02DomainError(
     const candidate = (error as { code?: unknown }).code;
     if (
       typeof candidate === "string" &&
-      S02_ERROR_CODES.includes(candidate as S02ErrorCode)
+      ACCOUNTS_CATEGORIES_ERROR_CODES.includes(candidate as AccountsCategoriesErrorCode)
     ) {
       const field =
         "field" in error &&
@@ -366,86 +366,86 @@ export function toS02DomainError(
           "kind",
           "parentId",
         ].includes((error as { field: string }).field)
-          ? ((error as { field: S02ErrorField }).field)
+          ? ((error as { field: AccountsCategoriesErrorField }).field)
           : undefined;
-      return new S02DomainError(candidate as S02ErrorCode, field);
+      return new AccountsCategoriesDomainError(candidate as AccountsCategoriesErrorCode, field);
     }
   }
 
-  return new S02DomainError(fallback);
+  return new AccountsCategoriesDomainError(fallback);
 }
 
-export function toS02Error(
+export function toAccountsCategoriesError(
   error: unknown,
-  fallback: S02ErrorCode = "INVALID_COMMAND",
-): S02Error {
-  return toS02DomainError(error, fallback).toError();
+  fallback: AccountsCategoriesErrorCode = "INVALID_COMMAND",
+): AccountsCategoriesError {
+  return toAccountsCategoriesDomainError(error, fallback).toError();
 }
 
 /** Throws a stable domain error for malformed command input. */
-export function parseS02Command<T extends z.ZodTypeAny>(
+export function parseAccountsCategoriesCommand<T extends z.ZodTypeAny>(
   schema: T,
   input: unknown,
 ): z.output<T> {
   const result = schema.safeParse(input);
   if (!result.success) {
-    throw toS02DomainError(result.error);
+    throw toAccountsCategoriesDomainError(result.error);
   }
 
   return result.data;
 }
 
-export function safeParseS02Command<T extends z.ZodTypeAny>(
+export function safeParseAccountsCategoriesCommand<T extends z.ZodTypeAny>(
   schema: T,
   input: unknown,
-): S02Result<z.output<T>> {
+): AccountsCategoriesResult<z.output<T>> {
   const result = schema.safeParse(input);
   return result.success
     ? { ok: true, value: result.data }
-    : { ok: false, error: toS02Error(result.error) };
+    : { ok: false, error: toAccountsCategoriesError(result.error) };
 }
 
-export const parseCommand = parseS02Command;
-export const safeParseCommand = safeParseS02Command;
+export const parseCommand = parseAccountsCategoriesCommand;
+export const safeParseCommand = safeParseAccountsCategoriesCommand;
 
 export function parseCreateAccountCommand(
   input: unknown,
 ): CreateAccountCommand {
-  return parseS02Command(createAccountCommandSchema, input);
+  return parseAccountsCategoriesCommand(createAccountCommandSchema, input);
 }
 
 export function parseUpdateAccountCommand(
   input: unknown,
 ): UpdateAccountCommand {
-  return parseS02Command(updateAccountCommandSchema, input);
+  return parseAccountsCategoriesCommand(updateAccountCommandSchema, input);
 }
 
 export function parseArchiveAccountCommand(
   input: unknown,
 ): ArchiveAccountCommand {
-  return parseS02Command(archiveAccountCommandSchema, input);
+  return parseAccountsCategoriesCommand(archiveAccountCommandSchema, input);
 }
 
 export function parseCreateCategoryCommand(
   input: unknown,
 ): CreateCategoryCommand {
-  return parseS02Command(createCategoryCommandSchema, input);
+  return parseAccountsCategoriesCommand(createCategoryCommandSchema, input);
 }
 
 export function parseUpdateCategoryCommand(
   input: unknown,
 ): UpdateCategoryCommand {
-  return parseS02Command(updateCategoryCommandSchema, input);
+  return parseAccountsCategoriesCommand(updateCategoryCommandSchema, input);
 }
 
 export function parseArchiveCategoryCommand(
   input: unknown,
 ): ArchiveCategoryCommand {
-  return parseS02Command(archiveCategoryCommandSchema, input);
+  return parseAccountsCategoriesCommand(archiveCategoryCommandSchema, input);
 }
 
 export function parseListQuery(input: unknown = {}): ListQuery {
-  return parseS02Command(listQuerySchema, input);
+  return parseAccountsCategoriesCommand(listQuerySchema, input);
 }
 
 export const parseListAccountsQuery = parseListQuery;
@@ -453,26 +453,26 @@ export const parseListCategoriesQuery = parseListQuery;
 
 export function validateCreateAccountCommand(
   input: unknown,
-): S02Result<CreateAccountCommand> {
-  return safeParseS02Command(createAccountCommandSchema, input);
+): AccountsCategoriesResult<CreateAccountCommand> {
+  return safeParseAccountsCategoriesCommand(createAccountCommandSchema, input);
 }
 
 export function validateUpdateAccountCommand(
   input: unknown,
-): S02Result<UpdateAccountCommand> {
-  return safeParseS02Command(updateAccountCommandSchema, input);
+): AccountsCategoriesResult<UpdateAccountCommand> {
+  return safeParseAccountsCategoriesCommand(updateAccountCommandSchema, input);
 }
 
 export function validateCreateCategoryCommand(
   input: unknown,
-): S02Result<CreateCategoryCommand> {
-  return safeParseS02Command(createCategoryCommandSchema, input);
+): AccountsCategoriesResult<CreateCategoryCommand> {
+  return safeParseAccountsCategoriesCommand(createCategoryCommandSchema, input);
 }
 
 export function validateUpdateCategoryCommand(
   input: unknown,
-): S02Result<UpdateCategoryCommand> {
-  return safeParseS02Command(updateCategoryCommandSchema, input);
+): AccountsCategoriesResult<UpdateCategoryCommand> {
+  return safeParseAccountsCategoriesCommand(updateCategoryCommandSchema, input);
 }
 
 function normalizedParentId(value: string | null | undefined): string | null {
@@ -504,28 +504,28 @@ export function assertCategoryParent(
 
   const parent = input.parent;
   if (!parent) {
-    throw new S02DomainError("CATEGORY_PARENT_NOT_FOUND", "parentId");
+    throw new AccountsCategoriesDomainError("CATEGORY_PARENT_NOT_FOUND", "parentId");
   }
 
   if (input.categoryId !== undefined && parent.id === input.categoryId) {
-    throw new S02DomainError("CATEGORY_SELF_PARENT", "parentId");
+    throw new AccountsCategoriesDomainError("CATEGORY_SELF_PARENT", "parentId");
   }
 
   if (parent.id !== parentId || parent.householdId !== input.householdId) {
     // Cross-household IDs intentionally look exactly like missing parents.
-    throw new S02DomainError("CATEGORY_PARENT_NOT_FOUND", "parentId");
+    throw new AccountsCategoriesDomainError("CATEGORY_PARENT_NOT_FOUND", "parentId");
   }
 
   if (parent.status === "ARCHIVED") {
-    throw new S02DomainError("CATEGORY_PARENT_ARCHIVED", "parentId");
+    throw new AccountsCategoriesDomainError("CATEGORY_PARENT_ARCHIVED", "parentId");
   }
 
   if (parent.kind !== input.kind) {
-    throw new S02DomainError("CATEGORY_PARENT_KIND_MISMATCH", "parentId");
+    throw new AccountsCategoriesDomainError("CATEGORY_PARENT_KIND_MISMATCH", "parentId");
   }
 
   if (parent.parentId !== null && parent.parentId !== undefined) {
-    throw new S02DomainError("CATEGORY_MAX_DEPTH", "parentId");
+    throw new AccountsCategoriesDomainError("CATEGORY_MAX_DEPTH", "parentId");
   }
 }
 
@@ -534,12 +534,12 @@ export const validateCategoryParent = assertCategoryParent;
 
 export function categoryParentResult(
   input: CategoryParentValidationInput,
-): S02Result<void> {
+): AccountsCategoriesResult<void> {
   try {
     assertCategoryParent(input);
     return { ok: true, value: undefined };
   } catch (error) {
-    return { ok: false, error: toS02Error(error) };
+    return { ok: false, error: toAccountsCategoriesError(error) };
   }
 }
 
@@ -562,7 +562,7 @@ export function assertCategoryReparenting(
     input.hasFinancialUsage ?? input.isUsed ?? input.used ?? false;
 
   if (changed && used) {
-    throw new S02DomainError("CATEGORY_REPARENTING_FORBIDDEN", "parentId");
+    throw new AccountsCategoriesDomainError("CATEGORY_REPARENTING_FORBIDDEN", "parentId");
   }
 }
 
@@ -571,19 +571,19 @@ export const validateCategoryReparenting = assertCategoryReparenting;
 
 export function categoryReparentingResult(
   input: CategoryReparentingValidationInput,
-): S02Result<void> {
+): AccountsCategoriesResult<void> {
   try {
     assertCategoryReparenting(input);
     return { ok: true, value: undefined };
   } catch (error) {
-    return { ok: false, error: toS02Error(error) };
+    return { ok: false, error: toAccountsCategoriesError(error) };
   }
 }
 
 /** Archived resources are immutable in S02; no reactivation is implicit. */
 export function assertResourceIsActive(status: AccountStatus): void {
   if (status === "ARCHIVED") {
-    throw new S02DomainError("RESOURCE_ARCHIVED");
+    throw new AccountsCategoriesDomainError("RESOURCE_ARCHIVED");
   }
 }
 
@@ -602,7 +602,7 @@ export function assertCategoryCanArchive(
     input.hasActiveChildren === true ||
     (input.activeChildCount !== undefined && input.activeChildCount > 0);
   if (hasActiveChildren) {
-    throw new S02DomainError("CATEGORY_HAS_ACTIVE_CHILDREN");
+    throw new AccountsCategoriesDomainError("CATEGORY_HAS_ACTIVE_CHILDREN");
   }
 }
 
@@ -702,11 +702,11 @@ export function assertCategoryUpdateInvariants(
 /** Convenience conversion for adapters that want a Result instead of throw. */
 export function categoryUpdateInvariantResult(
   input: CategoryUpdateInvariantInput,
-): S02Result<UpdateCategoryCommand> {
+): AccountsCategoriesResult<UpdateCategoryCommand> {
   try {
     return { ok: true, value: assertCategoryUpdateInvariants(input) };
   } catch (error) {
-    return { ok: false, error: toS02Error(error) };
+    return { ok: false, error: toAccountsCategoriesError(error) };
   }
 }
 

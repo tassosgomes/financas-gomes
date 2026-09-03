@@ -22,7 +22,7 @@ import type { FinancialContext } from "@/modules/households/contracts";
 
 import {
   REVIEWABLE_TRANSACTION_UPDATE_OPERATION,
-  S05DomainError,
+  TransactionReviewDomainError,
   failure,
   ok,
   parseUpdateReviewableTransactionCommand,
@@ -32,12 +32,12 @@ import {
   type ReviewableTransactionKind,
   type ReviewableTransactionOrigin,
   type ReviewableTransactionStatus,
-  type S05Result,
+  type TransactionReviewResult,
   type TransactionReviewProjection,
   type TransactionSource,
 } from "./review-contracts";
 import { assertCategoryReference } from "./domain";
-import { S03DomainError } from "./contracts";
+import { TransactionDomainError } from "./contracts";
 import type { TransactionReferenceTransaction } from "./references";
 
 /** Delegates to the strict S05 command schema and its protected-field errors. */
@@ -133,11 +133,11 @@ export function assertReviewableUpdatePolicy(
     (event.kind !== "EXPENSE" && event.kind !== "INCOME") ||
     (event.origin !== "MANUAL" && event.origin !== "IMPORT")
   ) {
-    throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+    throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
   }
 
   if (event.origin === "IMPORT" && lineageCount !== 1) {
-    throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+    throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
   }
 }
 
@@ -196,7 +196,7 @@ export interface ReviewableTransactionUseCasePort {
   updateReviewableTransaction(
     context: FinancialContext,
     input: unknown,
-  ): Promise<S05Result<ReviewableTransactionUpdateReadModel>>;
+  ): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>>;
 }
 
 /** Compatibility vocabulary for consumers that call this the review port. */
@@ -240,7 +240,7 @@ function toReviewOptions(
 
 function assertReviewContext(value: unknown): asserts value is FinancialContext {
   if (!isFinancialContext(value)) {
-    throw new S05DomainError("INVALID_FINANCIAL_CONTEXT");
+    throw new TransactionReviewDomainError("INVALID_FINANCIAL_CONTEXT");
   }
 }
 
@@ -298,7 +298,7 @@ async function reserveReviewCommand(
     existing.operation !== REVIEWABLE_TRANSACTION_UPDATE_OPERATION ||
     existing.payloadHash !== hash
   ) {
-    throw new S05DomainError("COMMAND_ID_REUSED", "commandId");
+    throw new TransactionReviewDomainError("COMMAND_ID_REUSED", "commandId");
   }
 
   if (!existing.resourceId) {
@@ -328,7 +328,7 @@ async function findLockedReviewEvent(
   const event = rows[0];
 
   if (!event) {
-    throw new S05DomainError("EVENT_NOT_FOUND", "financialEventId");
+    throw new TransactionReviewDomainError("EVENT_NOT_FOUND", "financialEventId");
   }
 
   return event;
@@ -368,13 +368,13 @@ function assertReviewableEventIdentity(
     (event.origin !== "MANUAL" && event.origin !== "IMPORT") ||
     (event.status !== "POSTED" && event.status !== "CANCELLED")
   ) {
-    throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+    throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
   }
 }
 
 function assertManualLineageIsEmpty(lineage: readonly ReviewLineage[]): void {
   if (lineage.length !== 0) {
-    throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+    throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
   }
 }
 
@@ -393,7 +393,7 @@ function reviewSourceFromLineage(
   }
 
   if (lineage.length !== 1) {
-    throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+    throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
   }
 
   return parseReviewableTransactionSource({
@@ -423,15 +423,15 @@ function toReviewUpdateReadModel(
   };
 }
 
-function toS05CategoryError(error: unknown): never {
-  if (error instanceof S03DomainError) {
+function toTransactionReviewCategoryError(error: unknown): never {
+  if (error instanceof TransactionDomainError) {
     switch (error.code) {
       case "CATEGORY_NOT_FOUND":
-        throw new S05DomainError("CATEGORY_NOT_FOUND", "categoryId");
+        throw new TransactionReviewDomainError("CATEGORY_NOT_FOUND", "categoryId");
       case "RESOURCE_ARCHIVED":
-        throw new S05DomainError("RESOURCE_ARCHIVED", "categoryId");
+        throw new TransactionReviewDomainError("RESOURCE_ARCHIVED", "categoryId");
       case "CATEGORY_KIND_MISMATCH":
-        throw new S05DomainError("CATEGORY_KIND_MISMATCH", "categoryId");
+        throw new TransactionReviewDomainError("CATEGORY_KIND_MISMATCH", "categoryId");
       default:
         break;
     }
@@ -461,7 +461,7 @@ async function validateReviewCategory(
   const category = rows[0];
 
   if (!category) {
-    throw new S05DomainError("CATEGORY_NOT_FOUND", "categoryId");
+    throw new TransactionReviewDomainError("CATEGORY_NOT_FOUND", "categoryId");
   }
 
   try {
@@ -477,7 +477,7 @@ async function validateReviewCategory(
       kind,
     });
   } catch (error) {
-    toS05CategoryError(error);
+    toTransactionReviewCategoryError(error);
   }
 
   return category.id;
@@ -548,7 +548,7 @@ async function executeReviewableTransactionUpdate(
     const updatedEvent = updatedRows[0];
 
     if (!updatedEvent) {
-      throw new S05DomainError("EVENT_NOT_FOUND", "financialEventId");
+      throw new TransactionReviewDomainError("EVENT_NOT_FOUND", "financialEventId");
     }
 
     return toReviewUpdateReadModel(updatedEvent, lineage);
@@ -559,7 +559,7 @@ async function runReviewableTransactionUpdate(
   context: FinancialContext,
   input: unknown,
   options: ReviewableTransactionUseCaseOptions,
-): Promise<S05Result<ReviewableTransactionUpdateReadModel>> {
+): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>> {
   try {
     // Boundary parsing is deliberately before context/database resolution.
     const command = parseReviewUpdateCommand(input);
@@ -573,7 +573,7 @@ async function runReviewableTransactionUpdate(
     );
     return ok(value);
   } catch (error) {
-    if (error instanceof S05DomainError) {
+    if (error instanceof TransactionReviewDomainError) {
       return failure(error.code, error.field);
     }
 
@@ -618,7 +618,7 @@ export async function updateReviewableTransaction(
   context: FinancialContext,
   input: unknown,
   databaseOrOptions?: Database | ReviewableTransactionUseCaseOptions,
-): Promise<S05Result<ReviewableTransactionUpdateReadModel>> {
+): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>> {
   return createReviewableTransactionUseCases(databaseOrOptions).updateReviewableTransaction(
     context,
     input,

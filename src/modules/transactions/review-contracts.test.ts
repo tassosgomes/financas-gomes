@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   DEFAULT_REVIEW_PAGE_LIMIT,
   REVIEWABLE_TRANSACTION_ORIGINS,
-  S05DomainError,
+  TransactionReviewDomainError,
   createReviewCursor,
   decodeReviewCursor,
   encodeReviewCursor,
@@ -24,7 +24,7 @@ const EVENT_ID = "00000000-0000-7000-8000-000000051301";
 const IMPORT_ID = "00000000-0000-7000-8000-000000051401";
 const HOUSEHOLD_ID = "00000000-0000-7000-8000-000000051501";
 
-describe("S05 review contract", () => {
+describe("review contract", () => {
   it("narrows the public origin to MANUAL and IMPORT", () => {
     const origin: ReviewableTransactionOrigin = "IMPORT";
 
@@ -132,28 +132,28 @@ describe("S05 review contract", () => {
 
     expect(() =>
       parseListReviewableTransactionsQuery({ householdId: HOUSEHOLD_ID }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseListReviewableTransactionsQuery({ limit: 0 }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseListReviewableTransactionsQuery({ limit: 101 }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseListReviewableTransactionsQuery({
         from: "2026-08-31",
         to: "2026-08-01",
       }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseListReviewableTransactionsQuery({ categoryId: "null" }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseListReviewableTransactionsQuery({ origin: "SYSTEM" }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseListReviewableTransactionsQuery({ search: "\u0000" }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
   });
 
   it("keeps summary filters independent of review pagination", () => {
@@ -192,7 +192,7 @@ describe("S05 review contract", () => {
         commandId: "review-command-3",
         financialEventId: EVENT_ID,
       }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     try {
       parseUpdateReviewableTransactionCommand({
         commandId: "\u0000",
@@ -209,7 +209,7 @@ describe("S05 review contract", () => {
         financialEventId: EVENT_ID,
         source: { origin: "MANUAL", import: null },
       }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     try {
       parseUpdateReviewableTransactionCommand({
         commandId: "review-command-5",
@@ -251,21 +251,21 @@ describe("S05 review contract", () => {
 
     expect(() =>
       parseListReviewableTransactionsQuery({ ...query, limit: 3, cursor }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() =>
       parseListReviewableTransactionsQuery({
         ...query,
         search: "different",
         cursor,
       }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
     expect(() => decodeReviewCursor("not-a-cursor")).toThrowError(
-      S05DomainError,
+      TransactionReviewDomainError,
     );
     expect(() => {
       const invalidJson = "eyJ2IjoxLCI=";
       decodeReviewCursor(invalidJson);
-    }).toThrowError(S05DomainError);
+    }).toThrowError(TransactionReviewDomainError);
     expect(() =>
       encodeReviewCursor({
         v: 1,
@@ -274,7 +274,7 @@ describe("S05 review contract", () => {
         filterHash: "0".repeat(64),
         limit: 0,
       }),
-    ).toThrowError(S05DomainError);
+    ).toThrowError(TransactionReviewDomainError);
   });
 
   it("validates read-model review consistency and serializable fields", () => {

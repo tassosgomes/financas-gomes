@@ -12,7 +12,7 @@ import {
 } from "./fixtures";
 import { normalizeSpendableTimeline } from "./timeline";
 
-describe("S08 T02 reusable fixture matrix", () => {
+describe("T02 reusable fixture matrix", () => {
   it("publishes unique IDs for every acceptance scenario", () => {
     expect(SPENDABLE_FIXTURES).toHaveLength(SPENDABLE_FIXTURE_IDS.length);
     expect(new Set(SPENDABLE_FIXTURES.map(({ id }) => id)).size).toBe(

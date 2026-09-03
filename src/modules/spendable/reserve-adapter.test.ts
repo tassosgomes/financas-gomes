@@ -38,7 +38,7 @@ function box(overrides: Partial<ReserveBoxInput> = {}): ReserveBoxInput {
   };
 }
 
-describe("S08 ↔ S09 reserve adapter", () => {
+describe("↔ S09 reserve adapter", () => {
   it("returns an explicit unavailable zero snapshot before S09", () => {
     const snapshot = new ZeroReserveAdapter().getReserve(context);
     const serialized = serializeReserveSnapshot(snapshot);

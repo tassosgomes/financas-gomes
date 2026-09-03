@@ -173,7 +173,7 @@ async function uploadAndPreview(
   await expect(page.getByTestId("csv-import-preview")).toBeVisible();
 }
 
-test.describe("S04 importação CSV", () => {
+test.describe("importação CSV", () => {
   test("executa conta → upload → preview → confirmação → resultado → transações e reenvio idempotente", async ({
     page,
   }) => {

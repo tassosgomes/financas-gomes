@@ -34,7 +34,7 @@ function fakeDatabase(rows: unknown[] = []): Database {
   } as unknown as Database;
 }
 
-describe("S03 tenant-scoped reference access", () => {
+describe("tenant-scoped reference access", () => {
   beforeEach(() => {
     requireFinancialContextMock.mockReset();
     requireFinancialContextMock.mockResolvedValue(context);

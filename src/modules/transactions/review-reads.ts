@@ -64,14 +64,14 @@ import {
   type ReviewableTransactionKind,
   type ReviewableTransactionOrigin,
   type ReviewableTransactionStatus,
-  type S05Result,
+  type TransactionReviewResult,
   type TransactionDetailReadModel,
   type TransactionListItemReadModel,
   type TransactionListReadModel,
   type TransactionReviewSummaryReadModel,
   type TransactionSource,
 } from "./review-contracts";
-import { S05DomainError } from "./review-contracts";
+import { TransactionReviewDomainError } from "./review-contracts";
 
 export type ReviewReadQuery =
   | ListReviewableTransactionsQuery
@@ -173,7 +173,7 @@ function buildReviewSource(
 ): TransactionSource {
   if (origin === "MANUAL") {
     if (lineage !== null) {
-      throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+      throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
     }
     return parseReviewableTransactionSource({
       origin: "MANUAL",
@@ -183,7 +183,7 @@ function buildReviewSource(
 
   if (origin === "IMPORT") {
     if (lineage === null) {
-      throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+      throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
     }
     return parseReviewableTransactionSource({
       origin: "IMPORT",
@@ -191,7 +191,7 @@ function buildReviewSource(
     });
   }
 
-  throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+  throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
 }
 
 /**
@@ -219,7 +219,7 @@ export function isReviewableEventShape(
  */
 export function projectReviewRow(row: ReviewReadRow): TransactionListItemReadModel {
   if (!isRecord(row) || !hasReviewableEventDiscriminator(row)) {
-    throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+    throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
   }
 
   // `ReviewReadRow` is intentionally broad enough for the discriminator
@@ -227,16 +227,16 @@ export function projectReviewRow(row: ReviewReadRow): TransactionListItemReadMod
   // after that validation before returning the reviewable read model.
   const kind = row.kind;
   if (kind !== "EXPENSE" && kind !== "INCOME") {
-    throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+    throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
   }
   const origin = row.origin;
   if (origin !== "MANUAL" && origin !== "IMPORT") {
-    throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+    throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
   }
 
   const source = buildReviewSource(row.origin, row.lineage);
   if (!isReviewableEventShape(row)) {
-    throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+    throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
   }
 
   const base = Object.fromEntries(
@@ -292,7 +292,7 @@ function assertReviewableSqlEvent(
     (event.status !== "POSTED" && event.status !== "CANCELLED") ||
     (event.origin !== "MANUAL" && event.origin !== "IMPORT")
   ) {
-    throw new S05DomainError("EVENT_NOT_REVIEWABLE");
+    throw new TransactionReviewDomainError("EVENT_NOT_REVIEWABLE");
   }
 }
 
@@ -370,7 +370,7 @@ function lineageFromReviewSqlRow(row: ReviewSqlRow): ReviewImportLineageRow | nu
     row.lineageBatchAccountId === null ||
     row.lineageBatchAccountId !== row.account.id
   ) {
-    throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+    throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
   }
 
   return {
@@ -601,7 +601,7 @@ async function validateReviewFilterResources(
       )
       .limit(1);
     if (!account[0]) {
-      throw new S05DomainError("ACCOUNT_NOT_FOUND", "accountId");
+      throw new TransactionReviewDomainError("ACCOUNT_NOT_FOUND", "accountId");
     }
   }
 
@@ -617,7 +617,7 @@ async function validateReviewFilterResources(
       )
       .limit(1);
     if (!category[0]) {
-      throw new S05DomainError("CATEGORY_NOT_FOUND", "categoryId");
+      throw new TransactionReviewDomainError("CATEGORY_NOT_FOUND", "categoryId");
     }
   }
 }
@@ -765,7 +765,7 @@ export async function getReviewableTransactionForContext(
     financialEventId,
   );
   if (!value) {
-    throw new S05DomainError("EVENT_NOT_FOUND", "financialEventId");
+    throw new TransactionReviewDomainError("EVENT_NOT_FOUND", "financialEventId");
   }
   return value;
 }
@@ -832,7 +832,7 @@ export async function getTransactionReviewSummaryForContext(
   const invalidManualLineageCount = Number(aggregate.invalidManualLineageCount ?? 0);
   const invalidBatchAccountCount = Number(aggregate.invalidBatchAccountCount ?? 0);
   if (invalidImportLineageCount > 0 || invalidManualLineageCount > 0 || invalidBatchAccountCount > 0) {
-    throw new S05DomainError("IMPORT_LINEAGE_INVALID");
+    throw new TransactionReviewDomainError("IMPORT_LINEAGE_INVALID");
   }
 
   return {
@@ -903,11 +903,11 @@ export const createReviewableTransactionReadQueries =
 export const createReviewReads = createTransactionReviewReadQueries;
 export const transactionReviewReadQueries = createTransactionReviewReadQueries();
 
-function reviewReadResult<T>(operation: () => Promise<T>): Promise<S05Result<T>> {
+function reviewReadResult<T>(operation: () => Promise<T>): Promise<TransactionReviewResult<T>> {
   return operation()
     .then((value) => ({ ok: true as const, value }))
     .catch((error: unknown) => {
-      if (error instanceof S05DomainError) {
+      if (error instanceof TransactionReviewDomainError) {
         return {
           ok: false as const,
           error: error.toError(),
@@ -921,15 +921,15 @@ export interface TransactionReviewReadUseCasePort {
   list(
     context: FinancialContext,
     query?: ListReviewableTransactionsQuery,
-  ): Promise<S05Result<TransactionListReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionListReadModel>>;
   detail(
     context: FinancialContext,
     financialEventId: unknown,
-  ): Promise<S05Result<TransactionDetailReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionDetailReadModel>>;
   summary(
     context: FinancialContext,
     query?: ListReviewableTransactionsQuery,
-  ): Promise<S05Result<TransactionReviewSummaryReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionReviewSummaryReadModel>>;
 }
 
 export function createTransactionReviewReadUseCases(

@@ -12,18 +12,18 @@ import {
 import { FinancialContextError } from "@/modules/households/contracts";
 
 import {
-  S06_CREDIT_CARD_OPERATIONS,
-  classifyS06Error,
-  createS06CreditCardOperation,
-  isExpectedS06Error,
-  logS06CreditCardOperation,
-  measureS06Query,
-  reportS06UnexpectedError,
-  sanitizeS06CreditCardLog,
-  toS06ErrorEnvelope,
-  toS06ObservabilityContext,
-  withS06CreditCardObservability,
-} from "./s06";
+  CREDIT_CARD_OPERATIONS,
+  classifyCreditCardError,
+  createCreditCardOperation,
+  isExpectedCreditCardError,
+  logCreditCardOperation,
+  measureCreditCardQuery,
+  reportCreditCardUnexpectedError,
+  sanitizeCreditCardLog,
+  toCreditCardErrorEnvelope,
+  toCreditCardObservabilityContext,
+  withCreditCardObservability,
+} from "./credit-cards";
 
 const requestId = "request-opaque";
 const householdId = "household-opaque";
@@ -31,7 +31,7 @@ const cardId = "card-opaque";
 const purchaseId = "purchase-opaque";
 const eventId = "event-opaque";
 
-describe("S06 credit-card observability", () => {
+describe("credit-card observability", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.mocked(addBreadcrumbSafely).mockClear();
@@ -39,7 +39,7 @@ describe("S06 credit-card observability", () => {
   });
 
   it("keeps the operation contract technical and drops financial fields", () => {
-    const operation = createS06CreditCardOperation(
+    const operation = createCreditCardOperation(
       "credit_card.purchase.create",
       {
         requestId,
@@ -91,7 +91,7 @@ describe("S06 credit-card observability", () => {
   });
 
   it("derives event/use-case/stage and allow-lists IDs, counts and timing", () => {
-    const safe = sanitizeS06CreditCardLog({
+    const safe = sanitizeCreditCardLog({
       operation: "credit_card.statement.read",
       stage: "statement",
       outcome: "success",
@@ -116,7 +116,7 @@ describe("S06 credit-card observability", () => {
     });
 
     expect(safe).toEqual({
-      event: "s06_credit_card_statement_read_success",
+      event: "credit_card_statement_read_success",
       useCase: "credit_card.statement.read",
       operation: "credit_card.statement.read",
       stage: "statement",
@@ -148,7 +148,7 @@ describe("S06 credit-card observability", () => {
 
   it("classifies archived/validation/context failures as expected without Sentry", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS06CreditCardOperation("credit_card.create", {
+    const operation = createCreditCardOperation("credit_card.create", {
       requestId,
       householdId,
     });
@@ -160,9 +160,9 @@ describe("S06 credit-card observability", () => {
     ];
 
     for (const error of errors) {
-      expect(isExpectedS06Error(error)).toBe(true);
-      expect(classifyS06Error(error).outcome).toBe("expected_error");
-      reportS06UnexpectedError(error, operation, { durationMs: 4 });
+      expect(isExpectedCreditCardError(error)).toBe(true);
+      expect(classifyCreditCardError(error).outcome).toBe("expected_error");
+      reportCreditCardUnexpectedError(error, operation, { durationMs: 4 });
     }
 
     expect(captureServerException).not.toHaveBeenCalled();
@@ -172,7 +172,7 @@ describe("S06 credit-card observability", () => {
     expect(serialized).toContain('"errorCode":"CREDIT_CARD_ARCHIVED"');
     expect(serialized).not.toContain("private");
     expect(serialized).not.toContain("999999");
-    expect(toS06ErrorEnvelope({ code: "CREDIT_CARD_ARCHIVED" })).toEqual({
+    expect(toCreditCardErrorEnvelope({ code: "CREDIT_CARD_ARCHIVED" })).toEqual({
       ok: false,
       error: { code: "CREDIT_CARD_ARCHIVED" },
     });
@@ -183,7 +183,7 @@ describe("S06 credit-card observability", () => {
     const error = new Error(
       "database failure amount=999999 description=private card name=private",
     );
-    const operation = createS06CreditCardOperation(
+    const operation = createCreditCardOperation(
       "credit_card.purchase.cancel",
       {
         requestId,
@@ -194,7 +194,7 @@ describe("S06 credit-card observability", () => {
       },
     );
 
-    const classification = reportS06UnexpectedError(error, operation, {
+    const classification = reportCreditCardUnexpectedError(error, operation, {
       durationMs: 27,
       technicalErrorCode: "CANCEL_PERSISTENCE_FAILED",
     });
@@ -206,7 +206,7 @@ describe("S06 credit-card observability", () => {
     expect(captureServerException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        event: "s06_credit_card_purchase_cancel_unexpected_error",
+        event: "credit_card_purchase_cancel_unexpected_error",
         useCase: "credit_card.purchase.cancel",
         operation: "credit_card.purchase.cancel",
         entityType: "credit_card",
@@ -226,7 +226,7 @@ describe("S06 credit-card observability", () => {
     expect(serialized).not.toContain("999999");
     expect(serialized).not.toContain("private");
 
-    const context = toS06ObservabilityContext(operation, "unexpected_error", {
+    const context = toCreditCardObservabilityContext(operation, "unexpected_error", {
       durationMs: 27,
       technicalErrorCode: "CANCEL_PERSISTENCE_FAILED",
     });
@@ -235,9 +235,9 @@ describe("S06 credit-card observability", () => {
   });
 
   it("exposes the closed operation vocabulary and rejects unknown stages", () => {
-    expect(S06_CREDIT_CARD_OPERATIONS).toContain("credit_card.payment.create");
+    expect(CREDIT_CARD_OPERATIONS).toContain("credit_card.payment.create");
     expect(
-      sanitizeS06CreditCardLog({
+      sanitizeCreditCardLog({
         operation: "credit_card.payment.create",
         stage: "purchase",
         outcome: "success",
@@ -245,7 +245,7 @@ describe("S06 credit-card observability", () => {
       }),
     ).toBeUndefined();
     expect(
-      sanitizeS06CreditCardLog({
+      sanitizeCreditCardLog({
         operation: "credit_card.delete" as never,
         outcome: "success",
       }),
@@ -254,7 +254,7 @@ describe("S06 credit-card observability", () => {
 
   it("sends breadcrumbs through the same technical allow-list", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS06CreditCardOperation("credit_card.payment.create", {
+    const operation = createCreditCardOperation("credit_card.payment.create", {
       requestId,
       householdId,
       cardId,
@@ -262,7 +262,7 @@ describe("S06 credit-card observability", () => {
       installmentCount: 1,
     });
 
-    logS06CreditCardOperation(operation, "success", { durationMs: 12 });
+    logCreditCardOperation(operation, "success", { durationMs: 12 });
 
     expect(addBreadcrumbSafely).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -290,7 +290,7 @@ describe("S06 credit-card observability", () => {
       "INSTALLMENT_MUTATION_FORBIDDEN",
       "PAYMENT_INSTALLMENT_FORBIDDEN",
     ]) {
-      expect(classifyS06Error({ code, message: "SQL/private payload" })).toEqual({
+      expect(classifyCreditCardError({ code, message: "SQL/private payload" })).toEqual({
         outcome: "expected_error",
         errorCode: code,
       });
@@ -299,11 +299,11 @@ describe("S06 credit-card observability", () => {
 
   it("wraps Result failures without duplicating client instrumentation", async () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS06CreditCardOperation("credit_card.create", {
+    const operation = createCreditCardOperation("credit_card.create", {
       requestId,
       householdId,
     });
-    const value = await withS06CreditCardObservability(
+    const value = await withCreditCardObservability(
       operation,
       async () => ({
         ok: false as const,
@@ -328,14 +328,14 @@ describe("S06 credit-card observability", () => {
 
   it("captures thrown technical failures with generated correlation and safe IDs", async () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const operation = createS06CreditCardOperation("credit_card.payment.create", {
+    const operation = createCreditCardOperation("credit_card.payment.create", {
       householdId,
       cardId,
       paymentId: "payment-opaque",
     });
 
     await expect(
-      withS06CreditCardObservability(
+      withCreditCardObservability(
         operation,
         () => {
           throw new Error("query amount=999999 description=private");
@@ -370,13 +370,13 @@ describe("S06 credit-card observability", () => {
   it("emits only aggregate metadata for slow reads and never accepts SQL", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const records: unknown[] = [];
-    const operation = createS06CreditCardOperation("credit_card.statement.read", {
+    const operation = createCreditCardOperation("credit_card.statement.read", {
       requestId,
       householdId,
       cardId,
     });
 
-    await measureS06Query(
+    await measureCreditCardQuery(
       operation,
       () => ({ rows: [{ amountCents: "999999", description: "private" }] }),
       {

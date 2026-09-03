@@ -15,7 +15,7 @@ import {
   parseFinancialDate,
   parseMoneyBRL,
 } from "./domain";
-import { S03DomainError } from "./contracts";
+import { TransactionDomainError } from "./contracts";
 
 const householdId = "018f47b7-6c3a-7abc-8def-1234567890aa";
 const otherHouseholdId = "018f47b7-6c3a-7abc-8def-1234567890ab";
@@ -23,15 +23,15 @@ const accountId = "018f47b7-6c3a-7abc-8def-1234567890ac";
 const categoryId = "018f47b7-6c3a-7abc-8def-1234567890ad";
 
 function expectCode(run: () => unknown, code: string): void {
-  expect(run).toThrowError(S03DomainError);
+  expect(run).toThrowError(TransactionDomainError);
   try {
     run();
   } catch (error) {
-    expect((error as S03DomainError).code).toBe(code);
+    expect((error as TransactionDomainError).code).toBe(code);
   }
 }
 
-describe("S03 Money", () => {
+describe("Money", () => {
   it("keeps Brazilian cents exact through the serialized boundary", () => {
     const money = Money.fromCents("123456");
 
@@ -63,7 +63,7 @@ describe("S03 Money", () => {
   });
 });
 
-describe("S03 financial dates", () => {
+describe("financial dates", () => {
   it("round-trips strict YYYY-MM-DD as Temporal.PlainDate", () => {
     const date = parseFinancialDate("2026-08-29");
     expect(formatFinancialDate(date)).toBe("2026-08-29");
@@ -88,7 +88,7 @@ describe("S03 financial dates", () => {
   });
 });
 
-describe("S03 tenant and reference invariants", () => {
+describe("tenant and reference invariants", () => {
   const account = {
     id: accountId,
     householdId,
@@ -158,7 +158,7 @@ describe("S03 tenant and reference invariants", () => {
   });
 });
 
-describe("S03 identifier boundary", () => {
+describe("identifier boundary", () => {
   it("delegates command IDs to the central UUIDv7 generator", () => {
     expect(isUuidV7(generateTransactionCommandId())).toBe(true);
   });

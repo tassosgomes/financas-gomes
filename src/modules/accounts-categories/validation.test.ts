@@ -7,8 +7,8 @@ import {
   CATEGORY_KINDS,
   LIQUIDITIES,
   SPENDABILITIES,
-  S02DomainError,
-  type S02Result,
+  AccountsCategoriesDomainError,
+  type AccountsCategoriesResult,
 } from "./contracts";
 import {
   applyAccountDefaults,
@@ -41,8 +41,8 @@ import {
   parseUpdateAccountCommand,
   parseUpdateCategoryCommand,
   normalizeName,
-  safeParseS02Command,
-  toS02Error,
+  safeParseAccountsCategoriesCommand,
+  toAccountsCategoriesError,
 } from "./validation";
 
 const rootId = "018f47b7-6c3a-7abc-8def-1234567890ab";
@@ -62,12 +62,12 @@ function expectDomainCode(
   code: string,
   field?: string,
 ): void {
-  expect(run).toThrowError(S02DomainError);
+  expect(run).toThrowError(AccountsCategoriesDomainError);
 
   try {
     run();
   } catch (error) {
-    const mapped = toS02Error(error);
+    const mapped = toAccountsCategoriesError(error);
     expect(mapped.code).toBe(code);
     if (field !== undefined) {
       expect(mapped.field).toBe(field);
@@ -76,7 +76,7 @@ function expectDomainCode(
 }
 
 function expectFailedResult(
-  result: S02Result<unknown>,
+  result: AccountsCategoriesResult<unknown>,
   code: string,
   field?: string,
 ): void {
@@ -89,7 +89,7 @@ function expectFailedResult(
   }
 }
 
-describe("S02 boundary normalization and schemas", () => {
+describe("boundary normalization and schemas", () => {
   it("normalizes NFKC, edge whitespace and internal whitespace without changing case", () => {
     expect(normalizeName("  Ｃafé\u00a0\u00a0da\u2003Manhã  ")).toBe(
       "Café da Manhã",
@@ -98,12 +98,12 @@ describe("S02 boundary normalization and schemas", () => {
 
   it("counts Unicode code points and rejects controls", () => {
     expect(() => normalizeName("\u0007valid")).toThrowError(
-      S02DomainError,
+      AccountsCategoriesDomainError,
     );
     expect(() => normalizeName("😀".repeat(121))).toThrowError(
-      S02DomainError,
+      AccountsCategoriesDomainError,
     );
-    expect(() => normalizeName(" \n ")).toThrowError(S02DomainError);
+    expect(() => normalizeName(" \n ")).toThrowError(AccountsCategoriesDomainError);
   });
 
   it("accepts only the contract enums and applies defaults in one place", () => {
@@ -147,7 +147,7 @@ describe("S02 boundary normalization and schemas", () => {
     expect(() => parseUpdateAccountCommand({
       commandId: "update-1",
       accountId: rootId,
-    })).toThrowError(S02DomainError);
+    })).toThrowError(AccountsCategoriesDomainError);
 
     try {
       parseUpdateAccountCommand({
@@ -157,7 +157,7 @@ describe("S02 boundary normalization and schemas", () => {
       });
       throw new Error("expected immutable field rejection");
     } catch (error) {
-      expect(toS02Error(error).code).toBe("INVALID_COMMAND");
+      expect(toAccountsCategoriesError(error).code).toBe("INVALID_COMMAND");
     }
   });
 
@@ -167,12 +167,12 @@ describe("S02 boundary normalization and schemas", () => {
       parseListQuery({ status: "DELETED" });
       throw new Error("expected status rejection");
     } catch (error) {
-      expect(toS02Error(error).code).toBe("INVALID_STATUS_FILTER");
+      expect(toAccountsCategoriesError(error).code).toBe("INVALID_STATUS_FILTER");
     }
   });
 });
 
-describe("S02 account domain rules", () => {
+describe("account domain rules", () => {
   const validCreate = {
     commandId: "account-create-1",
     name: "Conta principal",
@@ -331,7 +331,7 @@ describe("S02 account domain rules", () => {
   });
 });
 
-describe("S02 category invariants", () => {
+describe("category invariants", () => {
   const validCreate = {
     commandId: "category-create-1",
     name: "Alimentação",
@@ -461,7 +461,7 @@ describe("S02 category invariants", () => {
         parentId: rootId,
         categoryId: childId,
         parent,
-      })).toThrowError(S02DomainError);
+      })).toThrowError(AccountsCategoriesDomainError);
 
       try {
         assertCategoryParent({
@@ -472,7 +472,7 @@ describe("S02 category invariants", () => {
           parent,
         });
       } catch (error) {
-        expect(toS02Error(error).code).toBe("CATEGORY_PARENT_NOT_FOUND");
+        expect(toAccountsCategoriesError(error).code).toBe("CATEGORY_PARENT_NOT_FOUND");
       }
     }
   });
@@ -493,7 +493,7 @@ describe("S02 category invariants", () => {
       });
       throw new Error("expected parent rejection");
     } catch (error) {
-      expect(toS02Error(error).code).toBe(expectedCode);
+      expect(toAccountsCategoriesError(error).code).toBe(expectedCode);
     }
   });
 
@@ -507,7 +507,7 @@ describe("S02 category invariants", () => {
       currentParentId: null,
       requestedParentId: rootId,
       hasFinancialUsage: true,
-    })).toThrowError(S02DomainError);
+    })).toThrowError(AccountsCategoriesDomainError);
   });
 
   it("keeps an explicit root request idempotent for an already-root used category", () => {
@@ -609,7 +609,7 @@ describe("S02 category invariants", () => {
     expect(() => assertCategoryCanArchive({
       status: "ACTIVE",
       hasActiveChildren: true,
-    })).toThrowError(S02DomainError);
+    })).toThrowError(AccountsCategoriesDomainError);
     expectDomainCode(
       () => assertCategoryCanArchive({ status: "ARCHIVED" }),
       "RESOURCE_ARCHIVED",
@@ -624,7 +624,7 @@ describe("S02 category invariants", () => {
   });
 });
 
-describe("S02 shared domain contracts", () => {
+describe("shared domain contracts", () => {
   it("keeps account and category name boundaries on the same normalizer", () => {
     const raw = "  Ｃaixa\u00a0\u00a0de\u2003emergência  ";
     const normalized = "Caixa de emergência";
@@ -667,7 +667,7 @@ describe("S02 shared domain contracts", () => {
   });
 
   it("returns typed, stable failures from safe command parsing", () => {
-    const result = safeParseS02Command(createAccountCommandSchema, {
+    const result = safeParseAccountsCategoriesCommand(createAccountCommandSchema, {
       commandId: "account-create-invalid",
       name: "",
       type: "CHECKING",
@@ -682,14 +682,14 @@ describe("S02 shared domain contracts", () => {
   });
 
   it("preserves the domain error type while mapping to a serializable contract", () => {
-    const domainError = new S02DomainError("INVALID_NAME", "name");
+    const domainError = new AccountsCategoriesDomainError("INVALID_NAME", "name");
 
-    expect(toS02Error(domainError)).toEqual({
+    expect(toAccountsCategoriesError(domainError)).toEqual({
       code: "INVALID_NAME",
       message: domainError.message,
       field: "name",
     });
-    expect(toS02Error(new Error("driver detail"), "INVALID_STATUS_FILTER").code).toBe(
+    expect(toAccountsCategoriesError(new Error("driver detail"), "INVALID_STATUS_FILTER").code).toBe(
       "INVALID_STATUS_FILTER",
     );
   });
@@ -704,8 +704,8 @@ describe("S02 shared domain contracts", () => {
     expect(parseCreateAccountCommand(input)).toEqual(
       parseCreateAccountCommand(input),
     );
-    expect(safeParseS02Command(createAccountCommandSchema, input)).toEqual(
-      safeParseS02Command(createAccountCommandSchema, input),
+    expect(safeParseAccountsCategoriesCommand(createAccountCommandSchema, input)).toEqual(
+      safeParseAccountsCategoriesCommand(createAccountCommandSchema, input),
     );
   });
 });

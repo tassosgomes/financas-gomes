@@ -13,14 +13,22 @@ import {
 } from "react-hook-form";
 import type { z } from "zod";
 
-import type { S02Result } from "@/modules/accounts-categories/contracts";
+export interface DomainActionError {
+  code: string;
+  message: string;
+  field?: string;
+}
 
-export interface S02FormProps<TFieldValues extends FieldValues> {
+export type DomainActionResult<T = unknown> =
+  | { ok: true; value: T }
+  | { ok: false; error: DomainActionError };
+
+export interface DomainFormProps<TFieldValues extends FieldValues> {
   schema: z.ZodTypeAny;
   defaultValues?: DefaultValues<TFieldValues>;
   onSubmit: (
     values: TFieldValues,
-  ) => Promise<S02Result<unknown> | void> | S02Result<unknown> | void;
+  ) => Promise<DomainActionResult<unknown> | void> | DomainActionResult<unknown> | void;
   children:
     | React.ReactNode
     | ((form: UseFormReturn<TFieldValues>) => React.ReactNode);
@@ -49,7 +57,7 @@ function errorMessage(error: unknown): string | null {
  * validation. Expected action errors are reflected in the form without
  * exposing database or tenancy details.
  */
-export function S02Form<TFieldValues extends FieldValues>({
+export function DomainForm<TFieldValues extends FieldValues>({
   schema,
   defaultValues,
   onSubmit,
@@ -57,8 +65,8 @@ export function S02Form<TFieldValues extends FieldValues>({
   submitLabel = "Salvar",
   pendingLabel = "Salvando…",
   className,
-  testId = "s02-form",
-}: S02FormProps<TFieldValues>) {
+  testId = "domain-form",
+}: DomainFormProps<TFieldValues>) {
   const form = useForm<TFieldValues>({
     defaultValues,
     resolver: zodResolver(schema) as Resolver<TFieldValues>,
@@ -115,7 +123,7 @@ export function S02Form<TFieldValues extends FieldValues>({
   );
 }
 
-export interface S02FormFieldProps<TFieldValues extends FieldValues> {
+export interface FormFieldProps<TFieldValues extends FieldValues> {
   form: UseFormReturn<TFieldValues>;
   name: Path<TFieldValues>;
   label: string;
@@ -124,13 +132,13 @@ export interface S02FormFieldProps<TFieldValues extends FieldValues> {
 }
 
 /** Field wrapper with labels and server/client error presentation. */
-export function S02FormField<TFieldValues extends FieldValues>({
+export function FormField<TFieldValues extends FieldValues>({
   form,
   name,
   label,
   description,
   children,
-}: S02FormFieldProps<TFieldValues>) {
+}: FormFieldProps<TFieldValues>) {
   const id = String(name).replaceAll(".", "-");
   const message = errorMessage(form.formState.errors[name]);
   const field = form.register(name);
@@ -177,6 +185,3 @@ export function FormError({
   const message = errorMessage(error);
   return message ? <p className="text-xs text-destructive" role="alert">{message}</p> : null;
 }
-
-export const DomainForm = S02Form;
-export const FormField = S02FormField;

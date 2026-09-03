@@ -1,22 +1,22 @@
 import { FinancialContextError } from "@/modules/households/contracts";
 import type { FinancialContext } from "@/modules/households/contracts";
 import {
-  S03_ERROR_CODES,
-  S03_ERROR_MESSAGES,
-  type S03Error,
-  type S03ErrorCode,
-  type S03ErrorField,
+  TRANSACTION_ERROR_CODES,
+  TRANSACTION_ERROR_MESSAGES,
+  type TransactionError,
+  type TransactionErrorCode,
+  type TransactionErrorField,
 } from "@/modules/transactions/contracts";
 
 export {
-  S03_ERROR_CODES,
-  S03_ERROR_MESSAGES,
+  TRANSACTION_ERROR_CODES,
+  TRANSACTION_ERROR_MESSAGES,
 } from "@/modules/transactions/contracts";
 export type {
-  S03Error,
-  S03ErrorCode,
-  S03ErrorField,
-  S03Result,
+  TransactionError,
+  TransactionErrorCode,
+  TransactionErrorField,
+  TransactionResult,
 } from "@/modules/transactions/contracts";
 
 import { addBreadcrumbSafely, captureServerException } from "./server";
@@ -33,30 +33,30 @@ import {
  * kept separately so logs can aggregate create/update/cancel without ever
  * receiving a command or a financial value.
  */
-export const S03_TRANSACTION_OPERATIONS = [
+export const TRANSACTION_OBSERVABILITY_OPERATIONS = [
   "create",
   "update",
   "cancel",
 ] as const;
 
-export type S03TransactionOperation =
-  (typeof S03_TRANSACTION_OPERATIONS)[number];
+export type TransactionObservabilityOperation =
+  (typeof TRANSACTION_OBSERVABILITY_OPERATIONS)[number];
 
-export const S03_TRANSACTION_KINDS = ["EXPENSE", "INCOME", "MANUAL"] as const;
+export const TRANSACTION_OBSERVABILITY_KINDS = ["EXPENSE", "INCOME", "MANUAL"] as const;
 
-export type S03TransactionKind = (typeof S03_TRANSACTION_KINDS)[number];
+export type TransactionObservabilityKind = (typeof TRANSACTION_OBSERVABILITY_KINDS)[number];
 
-export interface S03TransactionObservabilityContext
+export interface TransactionObservabilityContext
   extends CrudObservabilityContext {
-  operation: S03TransactionOperation;
+  operation: TransactionObservabilityOperation;
   entityType: "transaction";
-  transactionKind: S03TransactionKind;
+  transactionKind: TransactionObservabilityKind;
   /** The FinancialEvent ID, never a description or a command payload. */
   eventId?: string;
 }
 
-export type S03TransactionObservabilityOptions = Omit<
-  Partial<S03TransactionObservabilityContext>,
+export type TransactionObservabilityOptions = Omit<
+  Partial<TransactionObservabilityContext>,
   "operation" | "entityType" | "transactionKind"
 >;
 
@@ -77,11 +77,11 @@ function opaqueTechnicalId(value: unknown): string | undefined {
  * database write succeeds. `entityId` is accepted as a compatibility alias,
  * but both values are still treated as opaque technical identifiers.
  */
-export function createS03TransactionOperation(
-  operation: S03TransactionOperation,
-  transactionKind: S03TransactionKind,
-  options: S03TransactionObservabilityOptions = {},
-): S03TransactionObservabilityContext {
+export function createTransactionObservabilityOperation(
+  operation: TransactionObservabilityOperation,
+  transactionKind: TransactionObservabilityKind,
+  options: TransactionObservabilityOptions = {},
+): TransactionObservabilityContext {
   const eventId = opaqueTechnicalId(options.eventId ?? options.entityId);
   const context = buildCrudObservabilityContext(operation, "transaction", {
     entityId: eventId,
@@ -108,41 +108,41 @@ export function createS03TransactionOperation(
   };
 }
 
-function kindSegment(kind: S03TransactionKind): string {
+function kindSegment(kind: TransactionObservabilityKind): string {
   return kind.toLowerCase();
 }
 
 /** Names match the application command operations fixed by ADR-004. */
-export function s03TransactionUseCaseName(
-  operation: S03TransactionOperation,
-  transactionKind: S03TransactionKind,
+export function transactionObservabilityUseCaseName(
+  operation: TransactionObservabilityOperation,
+  transactionKind: TransactionObservabilityKind,
 ): string {
   return operation === "create"
     ? `transactions.create.${kindSegment(transactionKind)}`
     : `transactions.${operation}.manual`;
 }
 
-export function s03TransactionEventName(
-  operation: S03TransactionOperation,
-  transactionKind: S03TransactionKind,
+export function transactionObservabilityEventName(
+  operation: TransactionObservabilityOperation,
+  transactionKind: TransactionObservabilityKind,
   outcome: ObservabilityOutcome,
 ): string {
-  return `s03_transaction_${operation}_${kindSegment(transactionKind)}_${outcome}`;
+  return `transaction_${operation}_${kindSegment(transactionKind)}_${outcome}`;
 }
 
 /**
  * Adds a flow breadcrumb containing only the same technical allow-list used
  * by the Sentry event boundary. It is safe to call even when Sentry is off.
  */
-export function addS03TransactionBreadcrumb(
-  operation: S03TransactionObservabilityContext,
+export function addTransactionObservabilityBreadcrumb(
+  operation: TransactionObservabilityContext,
   outcome: ObservabilityOutcome,
   durationMs?: number,
   errorCode?: string,
 ): void {
   addBreadcrumbSafely({
     type: "info",
-    category: s03TransactionUseCaseName(
+    category: transactionObservabilityUseCaseName(
       operation.operation,
       operation.transactionKind,
     ),
@@ -161,16 +161,16 @@ export function addS03TransactionBreadcrumb(
 }
 
 function contextForOperation(
-  operation: S03TransactionObservabilityContext,
+  operation: TransactionObservabilityContext,
   durationMs: number,
   financialContext?: FinancialContext,
-): S03TransactionObservabilityContext {
+): TransactionObservabilityContext {
   const safeDurationMs =
     typeof durationMs === "number" && Number.isFinite(durationMs)
       ? Math.max(0, Math.round(durationMs))
       : 0;
 
-  return createS03TransactionOperation(
+  return createTransactionObservabilityOperation(
     operation.operation,
     operation.transactionKind,
     {
@@ -189,8 +189,8 @@ function contextForOperation(
  * are intentionally absent; expected errors are represented by their stable
  * code only.
  */
-export function logS03TransactionOperation(
-  operation: S03TransactionObservabilityContext,
+export function logTransactionObservabilityOperation(
+  operation: TransactionObservabilityContext,
   outcome: ObservabilityOutcome,
   durationMs: number,
   financialContext?: FinancialContext,
@@ -198,18 +198,18 @@ export function logS03TransactionOperation(
 ): void {
   const context = contextForOperation(operation, durationMs, financialContext);
   try {
-    addS03TransactionBreadcrumb(context, outcome, durationMs, errorCode);
+    addTransactionObservabilityBreadcrumb(context, outcome, durationMs, errorCode);
   } catch {
     // A breadcrumb implementation/configuration failure is non-blocking.
   }
   logObservability(outcome === "unexpected_error" ? "error" : "info", {
     ...context,
-    event: s03TransactionEventName(
+    event: transactionObservabilityEventName(
       operation.operation,
       operation.transactionKind,
       outcome,
     ),
-    useCase: s03TransactionUseCaseName(
+    useCase: transactionObservabilityUseCaseName(
       operation.operation,
       operation.transactionKind,
     ),
@@ -223,27 +223,27 @@ export function logS03TransactionOperation(
  * passed to the Sentry boundary for technical stack diagnostics; its
  * sanitizer removes message, request and payload data before transport.
  */
-export function reportS03UnexpectedError(
+export function reportTransactionUnexpectedError(
   error: unknown,
-  operation: S03TransactionObservabilityContext,
+  operation: TransactionObservabilityContext,
   durationMs: number,
   financialContext?: FinancialContext,
 ): void {
   const context = contextForOperation(operation, durationMs, financialContext);
   const sentryContext = {
     ...toCrudObservabilityContext(context),
-    event: s03TransactionEventName(
+    event: transactionObservabilityEventName(
       operation.operation,
       operation.transactionKind,
       "unexpected_error",
     ),
-    useCase: s03TransactionUseCaseName(
+    useCase: transactionObservabilityUseCaseName(
       operation.operation,
       operation.transactionKind,
     ),
   };
 
-  logS03TransactionOperation(
+  logTransactionObservabilityOperation(
     operation,
     "unexpected_error",
     durationMs,
@@ -257,7 +257,7 @@ export function reportS03UnexpectedError(
   }
 }
 
-const S03_ERROR_FIELDS = new Set<S03ErrorField>([
+const TRANSACTION_ERROR_FIELDS = new Set<TransactionErrorField>([
   "commandId",
   "amountCents",
   "occurredOn",
@@ -268,7 +268,7 @@ const S03_ERROR_FIELDS = new Set<S03ErrorField>([
 ]);
 
 /** Returns a status suitable for an HTTP adapter without exposing details. */
-export function statusForS03Error(code: S03ErrorCode): number {
+export function statusForTransactionError(code: TransactionErrorCode): number {
   switch (code) {
     case "UNAUTHENTICATED":
       return 401;
@@ -305,47 +305,47 @@ function codeFromError(error: unknown): string | undefined {
 }
 
 /** Only these codes may be treated as an expected business failure. */
-export function isExpectedS03Error(error: unknown): boolean {
+export function isExpectedTransactionError(error: unknown): boolean {
   if (error instanceof FinancialContextError) {
     return true;
   }
 
   const code = codeFromError(error);
-  return typeof code === "string" && S03_ERROR_CODES.includes(code as S03ErrorCode);
+  return typeof code === "string" && TRANSACTION_ERROR_CODES.includes(code as TransactionErrorCode);
 }
 
 /**
  * Converts an expected exception/result error into the public stable shape.
- * Callers should use {@link isExpectedS03Error} before invoking this helper;
+ * Callers should use {@link isExpectedTransactionError} before invoking this helper;
  * unknown technical exceptions intentionally fall back to a generic message.
  */
-export function toS03Error(error: unknown): S03Error {
+export function toTransactionError(error: unknown): TransactionError {
   if (error instanceof FinancialContextError) {
     return {
       code: "UNAUTHENTICATED",
-      message: S03_ERROR_MESSAGES.UNAUTHENTICATED,
+      message: TRANSACTION_ERROR_MESSAGES.UNAUTHENTICATED,
     };
   }
 
   const code = codeFromError(error);
-  const safeCode = S03_ERROR_CODES.includes(code as S03ErrorCode)
-    ? (code as S03ErrorCode)
+  const safeCode = TRANSACTION_ERROR_CODES.includes(code as TransactionErrorCode)
+    ? (code as TransactionErrorCode)
     : "INVALID_COMMAND";
   const candidateField =
     error && typeof error === "object" && "field" in error
       ? (error as { field?: unknown }).field
       : undefined;
   const field =
-    typeof candidateField === "string" && S03_ERROR_FIELDS.has(candidateField as S03ErrorField)
-      ? (candidateField as S03ErrorField)
+    typeof candidateField === "string" && TRANSACTION_ERROR_FIELDS.has(candidateField as TransactionErrorField)
+      ? (candidateField as TransactionErrorField)
       : undefined;
 
   return {
     code: safeCode,
-    message: S03_ERROR_MESSAGES[safeCode],
+    message: TRANSACTION_ERROR_MESSAGES[safeCode],
     ...(field ? { field } : {}),
   };
 }
 
 /** Names the adapter-facing alias explicitly for use in Server Actions. */
-export const toS03ActionError = toS03Error;
+export const toTransactionActionError = toTransactionError;

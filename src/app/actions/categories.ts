@@ -1,12 +1,12 @@
 "use server";
 
 import {
-  getS02ActionHandlers,
+  getAccountsCategoriesActionHandlers,
 } from "@/modules/accounts-categories/adapters";
 import type {
   CategoryReadModel,
   ListCategoriesReadModel,
-  S02Result,
+  AccountsCategoriesResult,
 } from "@/modules/accounts-categories/contracts";
 
 /**
@@ -15,48 +15,48 @@ import type {
  */
 export async function createCategoryAction(
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
-  return getS02ActionHandlers().createCategory(input);
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
+  return getAccountsCategoriesActionHandlers().createCategory(input);
 }
 
 export async function listCategoriesAction(
   input?: unknown,
-): Promise<S02Result<ListCategoriesReadModel>> {
-  return getS02ActionHandlers().listCategories(input);
+): Promise<AccountsCategoriesResult<ListCategoriesReadModel>> {
+  return getAccountsCategoriesActionHandlers().listCategories(input);
 }
 
 export async function updateCategoryAction(
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
-  return getS02ActionHandlers().updateCategory(input);
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
+  return getAccountsCategoriesActionHandlers().updateCategory(input);
 }
 
 export async function archiveCategoryAction(
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
-  return getS02ActionHandlers().archiveCategory(input);
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
+  return getAccountsCategoriesActionHandlers().archiveCategory(input);
 }
 
 export async function createCategory(
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   return createCategoryAction(input);
 }
 
 export async function listCategories(
   input?: unknown,
-): Promise<S02Result<ListCategoriesReadModel>> {
+): Promise<AccountsCategoriesResult<ListCategoriesReadModel>> {
   return listCategoriesAction(input);
 }
 
 export async function updateCategory(
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   return updateCategoryAction(input);
 }
 
 export async function archiveCategory(
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   return archiveCategoryAction(input);
 }

@@ -40,7 +40,7 @@ import {
   ACCOUNT_ENTRY_STATUSES,
   FINANCIAL_EVENT_KINDS,
   MANUAL_TRANSACTION_KINDS,
-  S03DomainError,
+  TransactionDomainError,
   failure,
   ok,
   type AccountBalanceReadModel,
@@ -56,7 +56,7 @@ import {
   type ManualTransactionListItemReadModel,
   type ManualTransactionReadModel,
   type ManualTransactionKind,
-  type S03Result,
+  type TransactionResult,
 } from "./contracts";
 import {
   compareFinancialDates,
@@ -87,8 +87,9 @@ type ManualTransactionJoinRow = {
  * public boundary explicit instead of allowing those values to leak through
  * a broad Drizzle row type.
  */
-const S03_FINANCIAL_EVENT_STATUSES = ["POSTED", "CANCELLED"] as const;
-type S03FinancialEventStatus = (typeof S03_FINANCIAL_EVENT_STATUSES)[number];
+const MANUAL_TRANSACTION_READ_STATUSES = ["POSTED", "CANCELLED"] as const;
+type ManualTransactionReadStatus =
+  (typeof MANUAL_TRANSACTION_READ_STATUSES)[number];
 
 interface NormalizedDateRange {
   from?: string;
@@ -100,14 +101,14 @@ interface NormalizedManualTransactionQuery extends NormalizedDateRange {
   categoryId?: string;
   categoryIsNull: boolean;
   kind?: (typeof MANUAL_TRANSACTION_KINDS)[number];
-  status?: S03FinancialEventStatus;
+  status?: ManualTransactionReadStatus;
 }
 
 interface NormalizedMovementQuery extends NormalizedDateRange {
   categoryId?: string;
   categoryIsNull: boolean;
   kind?: FinancialEventKind;
-  status?: S03FinancialEventStatus;
+  status?: ManualTransactionReadStatus;
 }
 
 function resolveDatabase(database?: Database): Database {
@@ -187,7 +188,7 @@ function assertManualEvent(
 ): asserts event is FinancialEventRecord & {
   kind: ManualTransactionKind;
   origin: "MANUAL";
-  status: S03FinancialEventStatus;
+  status: ManualTransactionReadStatus;
 } {
   if (
     (event.kind !== "EXPENSE" && event.kind !== "INCOME") ||
@@ -238,25 +239,25 @@ function toManualTransactionReadModel(
   };
 }
 
-type S03FinancialEventRecord = FinancialEventRecord & {
+type StatementEventRecord = FinancialEventRecord & {
   kind: FinancialEventKind;
   status: FinancialEventStatus;
 };
 
-function assertS03FinancialEvent(
+function assertStatementEvent(
   event: FinancialEventRecord,
-): asserts event is S03FinancialEventRecord {
+): asserts event is StatementEventRecord {
   if (
     (event.kind !== "EXPENSE" &&
       event.kind !== "INCOME" &&
       event.kind !== "REVERSAL") ||
     (event.status !== "POSTED" && event.status !== "CANCELLED")
   ) {
-    throw new Error("O extrato recebeu um evento fora do contrato S03.");
+    throw new Error("O extrato recebeu um evento fora do contrato de transações.");
   }
 }
 
-function toEventMovementSummary(event: S03FinancialEventRecord) {
+function toEventMovementSummary(event: StatementEventRecord) {
   return {
     id: event.id,
     kind: event.kind,
@@ -278,7 +279,7 @@ function toAccountMovementReadModel(
   account: AccountRecord,
   category: CategoryRecord | null,
 ): AccountMovementReadModel {
-  assertS03FinancialEvent(event);
+  assertStatementEvent(event);
 
   if (entry.status !== "POSTED") {
     throw new Error("O extrato recebeu um entry não POSTED.");
@@ -310,7 +311,7 @@ function scalarQueryValue(
 ): unknown {
   const value = query[key];
   if (Array.isArray(value)) {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
   return value;
 }
@@ -324,7 +325,7 @@ function firstDefinedQueryValue(
     .filter((value): value is string => value !== undefined);
 
   if (values.length > 1 && values.some((value) => value !== values[0])) {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
   return values[0];
 }
@@ -334,7 +335,7 @@ function normalizeDateFilter(value: unknown): string | undefined {
     return undefined;
   }
   if (typeof value !== "string") {
-    throw new S03DomainError("INVALID_DATE", "occurredOn");
+    throw new TransactionDomainError("INVALID_DATE", "occurredOn");
   }
   return formatFinancialDate(parseFinancialDate(value));
 }
@@ -349,13 +350,13 @@ function normalizeDateRange(query: Record<string, unknown>): NormalizedDateRange
       rawPeriod === null ||
       Array.isArray(rawPeriod)
     ) {
-      throw new S03DomainError("INVALID_COMMAND");
+      throw new TransactionDomainError("INVALID_COMMAND");
     }
     const period = rawPeriod as Record<string, unknown>;
     periodFrom = period.from;
     periodTo = period.to;
     if (Object.keys(period).some((key) => key !== "from" && key !== "to")) {
-      throw new S03DomainError("INVALID_COMMAND");
+      throw new TransactionDomainError("INVALID_COMMAND");
     }
   }
   const queryWithPeriodAliases: Record<string, unknown> = {
@@ -391,7 +392,7 @@ function normalizeDateRange(query: Record<string, unknown>): NormalizedDateRange
     to !== undefined &&
     compareFinancialDates(parseFinancialDate(from), parseFinancialDate(to)) > 0
   ) {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
 
   return { from, to };
@@ -405,7 +406,7 @@ function normalizeResourceFilter(
     return undefined;
   }
   if (typeof value !== "string") {
-    throw new S03DomainError("INVALID_COMMAND", field);
+    throw new TransactionDomainError("INVALID_COMMAND", field);
   }
 
   const normalized = value.trim();
@@ -413,17 +414,17 @@ function normalizeResourceFilter(
     return undefined;
   }
   if (!isUuidV7(normalized)) {
-    throw new S03DomainError("INVALID_COMMAND", field);
+    throw new TransactionDomainError("INVALID_COMMAND", field);
   }
   return normalized;
 }
 
-function normalizeStatus(value: unknown): S03FinancialEventStatus | undefined {
+function normalizeStatus(value: unknown): ManualTransactionReadStatus | undefined {
   if (value === undefined || value === "ALL") {
     return undefined;
   }
   if (value !== "POSTED" && value !== "CANCELLED") {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
   return value;
 }
@@ -438,7 +439,7 @@ function normalizeManualKind(value: unknown): (typeof MANUAL_TRANSACTION_KINDS)[
       value as (typeof MANUAL_TRANSACTION_KINDS)[number],
     )
   ) {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
   return value as (typeof MANUAL_TRANSACTION_KINDS)[number];
 }
@@ -451,7 +452,7 @@ function normalizeMovementKind(value: unknown): FinancialEventKind | undefined {
     typeof value !== "string" ||
     !FINANCIAL_EVENT_KINDS.includes(value as FinancialEventKind)
   ) {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
   return value as FinancialEventKind;
 }
@@ -474,7 +475,7 @@ function normalizeListManualTransactionsQuery(
 ): NormalizedManualTransactionQuery {
   const query = (input ?? {}) as unknown;
   if (typeof query !== "object" || query === null || Array.isArray(query)) {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
 
   const values = query as Record<string, unknown>;
@@ -485,7 +486,7 @@ function normalizeListManualTransactionsQuery(
   );
   const origin = scalarQueryValue(values, "origin");
   if (origin !== undefined && origin !== "MANUAL") {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
 
   return {
@@ -505,7 +506,7 @@ function normalizeListAccountMovementsQuery(
 ): NormalizedMovementQuery {
   const query = (input ?? {}) as unknown;
   if (typeof query !== "object" || query === null || Array.isArray(query)) {
-    throw new S03DomainError("INVALID_COMMAND");
+    throw new TransactionDomainError("INVALID_COMMAND");
   }
 
   const values = query as Record<string, unknown>;
@@ -548,7 +549,7 @@ function buildManualTransactionPredicates(
     eq(financialEvents.householdId, context.householdId),
     eq(financialEvents.origin, "MANUAL"),
     inArray(financialEvents.kind, MANUAL_TRANSACTION_KINDS),
-    inArray(financialEvents.status, S03_FINANCIAL_EVENT_STATUSES),
+    inArray(financialEvents.status, MANUAL_TRANSACTION_READ_STATUSES),
   ];
 
   if (query.from !== undefined) {
@@ -675,7 +676,7 @@ export async function findManualTransactionForContext(
     eq(financialEvents.householdId, context.householdId),
     eq(financialEvents.origin, "MANUAL"),
     inArray(financialEvents.kind, MANUAL_TRANSACTION_KINDS),
-    inArray(financialEvents.status, S03_FINANCIAL_EVENT_STATUSES),
+    inArray(financialEvents.status, MANUAL_TRANSACTION_READ_STATUSES),
   ]);
   const row = rows[0];
   if (!row) {
@@ -706,7 +707,7 @@ export async function getManualTransactionForContext(
     financialEventId,
   );
   if (!value) {
-    throw new S03DomainError("EVENT_NOT_FOUND", "financialEventId");
+    throw new TransactionDomainError("EVENT_NOT_FOUND", "financialEventId");
   }
   return value;
 }
@@ -721,7 +722,7 @@ export async function getAccountBalanceForContext(
   assertFinancialContext(context);
   const accountIdValue = normalizeEventId(accountId);
   if (!accountIdValue) {
-    throw new S03DomainError("ACCOUNT_NOT_FOUND", "accountId");
+    throw new TransactionDomainError("ACCOUNT_NOT_FOUND", "accountId");
   }
 
   const accountRows = await executor
@@ -735,7 +736,7 @@ export async function getAccountBalanceForContext(
     )
     .limit(1);
   if (!accountRows[0]) {
-    throw new S03DomainError("ACCOUNT_NOT_FOUND", "accountId");
+    throw new TransactionDomainError("ACCOUNT_NOT_FOUND", "accountId");
   }
 
   const date = normalizeReadDate(asOf);
@@ -773,7 +774,7 @@ export async function listAccountMovementsForContext(
   assertFinancialContext(context);
   const accountIdValue = normalizeEventId(accountId);
   if (!accountIdValue) {
-    throw new S03DomainError("ACCOUNT_NOT_FOUND", "accountId");
+    throw new TransactionDomainError("ACCOUNT_NOT_FOUND", "accountId");
   }
 
   const accountRows = await executor
@@ -788,7 +789,7 @@ export async function listAccountMovementsForContext(
     .limit(1);
   const account = accountRows[0];
   if (!account) {
-    throw new S03DomainError("ACCOUNT_NOT_FOUND", "accountId");
+    throw new TransactionDomainError("ACCOUNT_NOT_FOUND", "accountId");
   }
 
   const normalized = normalizeListAccountMovementsQuery(query);
@@ -797,7 +798,7 @@ export async function listAccountMovementsForContext(
     eq(accountEntries.accountId, accountIdValue),
     eq(accountEntries.status, ACCOUNT_ENTRY_STATUSES[0]),
     inArray(financialEvents.kind, FINANCIAL_EVENT_KINDS),
-    inArray(financialEvents.status, S03_FINANCIAL_EVENT_STATUSES),
+    inArray(financialEvents.status, MANUAL_TRANSACTION_READ_STATUSES),
   ];
   if (normalized.from !== undefined) {
     predicates.push(gte(accountEntries.postedOn, normalized.from));
@@ -1009,11 +1010,11 @@ export async function getAccountBalanceCents(
   return balance.balanceCents;
 }
 
-function asReadResult<T>(operation: () => Promise<T>): Promise<S03Result<T>> {
+function asReadResult<T>(operation: () => Promise<T>): Promise<TransactionResult<T>> {
   return operation()
     .then((value) => ok(value))
     .catch((error: unknown) => {
-      if (error instanceof S03DomainError) {
+      if (error instanceof TransactionDomainError) {
         return failure<T>(error.code, error.field);
       }
       throw error;
@@ -1024,7 +1025,7 @@ export function listManualTransactionsResultForContext(
   executor: TransactionReadExecutor,
   context: FinancialContext,
   query: ListManualTransactionsQuery = {},
-): Promise<S03Result<ListManualTransactionsReadModel>> {
+): Promise<TransactionResult<ListManualTransactionsReadModel>> {
   return asReadResult(() =>
     listManualTransactionsForContext(executor, context, query),
   );
@@ -1034,7 +1035,7 @@ export function getManualTransactionResultForContext(
   executor: TransactionReadExecutor,
   context: FinancialContext,
   financialEventId: unknown,
-): Promise<S03Result<ManualTransactionDetailReadModel>> {
+): Promise<TransactionResult<ManualTransactionDetailReadModel>> {
   return asReadResult(() =>
     getManualTransactionForContext(executor, context, financialEventId),
   );
@@ -1045,7 +1046,7 @@ export function getAccountBalanceResultForContext(
   context: FinancialContext,
   accountId: unknown,
   asOf?: string | FinancialDate,
-): Promise<S03Result<AccountBalanceReadModel>> {
+): Promise<TransactionResult<AccountBalanceReadModel>> {
   return asReadResult(() =>
     getAccountBalanceForContext(executor, context, accountId, asOf),
   );
@@ -1056,21 +1057,21 @@ export interface TransactionReadUseCasePort {
   list(
     context: FinancialContext,
     query?: ListManualTransactionsQuery,
-  ): Promise<S03Result<ListManualTransactionsReadModel>>;
+  ): Promise<TransactionResult<ListManualTransactionsReadModel>>;
   detail(
     context: FinancialContext,
     financialEventId: unknown,
-  ): Promise<S03Result<ManualTransactionDetailReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionDetailReadModel>>;
   balance(
     context: FinancialContext,
     accountId: unknown,
     asOf?: string | FinancialDate,
-  ): Promise<S03Result<AccountBalanceReadModel>>;
+  ): Promise<TransactionResult<AccountBalanceReadModel>>;
   movements(
     context: FinancialContext,
     accountId: unknown,
     query?: ListAccountMovementsQuery,
-  ): Promise<S03Result<ListAccountMovementsReadModel>>;
+  ): Promise<TransactionResult<ListAccountMovementsReadModel>>;
 }
 
 export function createTransactionReadUseCases(
@@ -1104,21 +1105,21 @@ export interface TransactionReadAccess {
   list(
     query?: ListManualTransactionsQuery,
     options?: RequireFinancialContextOptions,
-  ): Promise<S03Result<ListManualTransactionsReadModel>>;
+  ): Promise<TransactionResult<ListManualTransactionsReadModel>>;
   detail(
     financialEventId: unknown,
     options?: RequireFinancialContextOptions,
-  ): Promise<S03Result<ManualTransactionDetailReadModel>>;
+  ): Promise<TransactionResult<ManualTransactionDetailReadModel>>;
   balance(
     accountId: unknown,
     asOf?: string | FinancialDate,
     options?: RequireFinancialContextOptions,
-  ): Promise<S03Result<AccountBalanceReadModel>>;
+  ): Promise<TransactionResult<AccountBalanceReadModel>>;
   movements(
     accountId: unknown,
     query?: ListAccountMovementsQuery,
     options?: RequireFinancialContextOptions,
-  ): Promise<S03Result<ListAccountMovementsReadModel>>;
+  ): Promise<TransactionResult<ListAccountMovementsReadModel>>;
 }
 
 export function createTransactionReadAccess(

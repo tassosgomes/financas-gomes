@@ -24,7 +24,7 @@ function expectCommandError(
   }
 }
 
-describe("S07 recurring command boundary", () => {
+describe("recurring command boundary", () => {
   it("normalizes a create command before it reaches persistence", () => {
     expect(
       parseCreateRecurringRuleCommand({

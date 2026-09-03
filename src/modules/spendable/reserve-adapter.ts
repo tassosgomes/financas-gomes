@@ -18,9 +18,8 @@ import {
 } from "./contracts";
 
 /** The version owned by the future S09 reserve provider. */
-export const S09_RESERVE_CONTRACT_VERSION = "s09.v1" as const;
-export const RESERVE_CONTRACT_VERSION = S09_RESERVE_CONTRACT_VERSION;
-export const SPENDABLE_RESERVE_CONTRACT_VERSION = S09_RESERVE_CONTRACT_VERSION;
+export const RESERVE_CONTRACT_VERSION = "s09.v1" as const;
+export const SPENDABLE_RESERVE_CONTRACT_VERSION = RESERVE_CONTRACT_VERSION;
 
 /**
  * A rule is deliberately a closed vocabulary in v1.  A new rule must be
@@ -132,13 +131,10 @@ export interface ProtectedReserveComponent {
 }
 
 export type SpendableReserveComponentDomain = ProtectedReserveComponent;
-export type S09ReserveComponent = ProtectedReserveComponent;
-export type S09ReserveMovement = ReserveMovement;
-export type S09ReserveBox = ReserveBox;
 
 /** Internal snapshot used between server adapters and the S08 pure engine. */
 export interface ReserveSnapshotDomain {
-  readonly contractVersion: typeof S09_RESERVE_CONTRACT_VERSION;
+  readonly contractVersion: typeof RESERVE_CONTRACT_VERSION;
   readonly status: ReserveAdapterStatus;
   readonly protectedAmount: SpendableMoney;
   readonly appliedOpeningAdjustment: SpendableMoney;
@@ -167,14 +163,13 @@ export type ReserveSnapshotInput =
  * know about S09 tables, CRUD, or a persisted box balance.
  */
 export interface SpendableReserveAdapter {
-  readonly contractVersion: typeof S09_RESERVE_CONTRACT_VERSION;
+  readonly contractVersion: typeof RESERVE_CONTRACT_VERSION;
   getReserve(
     context: ReserveAdapterContext,
   ): ReserveSnapshotDomain | Promise<ReserveSnapshotDomain>;
 }
 
 export type ReserveAdapter = SpendableReserveAdapter;
-export type S09ReserveAdapter = SpendableReserveAdapter;
 
 const ZERO = BigInt(0);
 const MAX_HORIZON_DAYS = 3_660;
@@ -392,7 +387,7 @@ function isActiveAt(box: ReserveBox, asOf: Temporal.PlainDate): boolean {
 
 function emptySnapshot(): ReserveSnapshotDomain {
   return {
-    contractVersion: S09_RESERVE_CONTRACT_VERSION,
+    contractVersion: RESERVE_CONTRACT_VERSION,
     status: "UNAVAILABLE",
     protectedAmount: spendableMoney(ZERO),
     appliedOpeningAdjustment: spendableMoney(ZERO),
@@ -488,7 +483,7 @@ export function deriveReserveSnapshot(input: ReserveSnapshotInput): ReserveSnaps
   }
 
   return {
-    contractVersion: S09_RESERVE_CONTRACT_VERSION,
+    contractVersion: RESERVE_CONTRACT_VERSION,
     status: "AVAILABLE",
     protectedAmount: spendableMoney(protectedAmount),
     appliedOpeningAdjustment: spendableMoney(appliedOpeningAdjustment),
@@ -503,7 +498,7 @@ export type ReserveBoxSource = (
 ) => readonly ReserveBoxInput[] | readonly ReserveBox[] | Promise<readonly ReserveBoxInput[] | readonly ReserveBox[]>;
 
 export class MovementReserveAdapter implements SpendableReserveAdapter {
-  readonly contractVersion = S09_RESERVE_CONTRACT_VERSION;
+  readonly contractVersion = RESERVE_CONTRACT_VERSION;
 
   constructor(private readonly source: ReserveBoxSource) {}
 
@@ -522,7 +517,7 @@ export const createMovementReserveAdapter = (source: ReserveBoxSource): Spendabl
  * was applied.
  */
 export class ZeroReserveAdapter implements SpendableReserveAdapter {
-  readonly contractVersion = S09_RESERVE_CONTRACT_VERSION;
+  readonly contractVersion = RESERVE_CONTRACT_VERSION;
 
   getReserve(context: ReserveAdapterContext): ReserveSnapshotDomain {
     void context;
@@ -581,7 +576,6 @@ export function serializeReserveSnapshot(
 }
 
 export const toSerializableReserveSnapshot = serializeReserveSnapshot;
-export const serializeS09ReserveSnapshot = serializeReserveSnapshot;
 
 /** Resolves either sync or async implementations at the S08 server boundary. */
 export async function readReserveSnapshot(
@@ -589,7 +583,7 @@ export async function readReserveSnapshot(
   context: ReserveAdapterContext,
 ): Promise<ReserveSnapshotDomain> {
   const snapshot = await adapter.getReserve(context);
-  if (snapshot.contractVersion !== S09_RESERVE_CONTRACT_VERSION) {
+  if (snapshot.contractVersion !== RESERVE_CONTRACT_VERSION) {
     return fail(
       "SPENDABLE_INCONSISTENT",
       "A versão do contrato de reserva é incompatível.",

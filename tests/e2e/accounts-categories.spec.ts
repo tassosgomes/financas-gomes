@@ -9,7 +9,7 @@ async function signIn(page: Page): Promise<void> {
   ).toBeVisible();
 }
 
-test.describe("S02 contas e categorias", () => {
+test.describe("contas e categorias", () => {
   test("cria conta e gerencia uma categoria pelo fluxo autenticado", async ({
     page,
   }) => {

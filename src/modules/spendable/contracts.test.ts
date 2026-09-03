@@ -56,7 +56,7 @@ function breakdown(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe("S08 T02 serializable contracts", () => {
+describe("T02 serializable contracts", () => {
   it("validates the ADR-011 DTO and its cent invariants", () => {
     const value = breakdown();
     expect(parseSpendableBreakdown(value)).toEqual(value);

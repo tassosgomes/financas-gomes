@@ -261,8 +261,7 @@ export function crudEventName(
   operation: ObservabilityOperation,
   outcome: ObservabilityOutcome,
 ): string {
-  const prefix = entityType === "transaction" ? "s03" : "s02";
-  return `${prefix}_${entityType}_${operation}_${outcome}`;
+  return `${entityType}_${operation}_${outcome}`;
 }
 
 /** Converts CRUD metadata to the shared Sentry context shape. */

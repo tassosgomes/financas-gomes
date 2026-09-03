@@ -16,23 +16,23 @@ import { requireFinancialContext } from "@/modules/households/context";
 import { isFinancialContext } from "@/modules/households/tenant-scoped";
 
 import {
-  createS05TransactionReviewOperation,
-  isExpectedS05Error,
-  withS05TransactionReviewObservability,
-} from "./observability-s05";
+  createTransactionReviewOperation,
+  isExpectedTransactionReviewError,
+  withTransactionReviewObservability,
+} from "./observability-review";
 import {
-  S05_ERROR_CODES,
-  S05_ERROR_MESSAGES,
+  TRANSACTION_REVIEW_ERROR_CODES,
+  TRANSACTION_REVIEW_ERROR_MESSAGES,
   failure,
   ok,
   parseListReviewableTransactionsQuery,
   parseTransactionReviewSummaryQuery,
   parseUpdateReviewableTransactionCommand,
-  toS05Error,
+  toTransactionReviewError,
   type NormalizedListReviewableTransactionsQuery,
   type NormalizedTransactionReviewSummaryQuery,
-  type S05Error,
-  type S05Result,
+  type TransactionReviewError,
+  type TransactionReviewResult,
   type TransactionDetailReadModel,
   type TransactionListReadModel,
   type TransactionReviewSummaryReadModel,
@@ -51,7 +51,7 @@ type MaybePromise<T> = T | Promise<T>;
  * is behind its own domain boundary. Supporting both keeps this adapter thin
  * and avoids duplicating read-side error translation.
  */
-export type ReviewReadPortValue<T> = T | S05Result<T>;
+export type ReviewReadPortValue<T> = T | TransactionReviewResult<T>;
 
 export interface TransactionReviewReadUseCasePort {
   list(
@@ -104,40 +104,40 @@ export interface TransactionReviewActionDependencies
 export interface TransactionReviewReadActionHandlers {
   list(
     input?: unknown,
-  ): Promise<S05Result<TransactionListReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionListReadModel>>;
   listReviewableTransactions(
     input?: unknown,
-  ): Promise<S05Result<TransactionListReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionListReadModel>>;
   detail(
     input: unknown,
-  ): Promise<S05Result<TransactionDetailReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionDetailReadModel>>;
   getDetail(
     input: unknown,
-  ): Promise<S05Result<TransactionDetailReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionDetailReadModel>>;
   getTransactionDetail(
     input: unknown,
-  ): Promise<S05Result<TransactionDetailReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionDetailReadModel>>;
   summary(
     input?: unknown,
-  ): Promise<S05Result<TransactionReviewSummaryReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionReviewSummaryReadModel>>;
   getSummary(
     input?: unknown,
-  ): Promise<S05Result<TransactionReviewSummaryReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionReviewSummaryReadModel>>;
   getTransactionReviewSummary(
     input?: unknown,
-  ): Promise<S05Result<TransactionReviewSummaryReadModel>>;
+  ): Promise<TransactionReviewResult<TransactionReviewSummaryReadModel>>;
 }
 
 export interface TransactionReviewUpdateActionHandlers {
   update(
     input: unknown,
-  ): Promise<S05Result<ReviewableTransactionUpdateReadModel>>;
+  ): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>>;
   updateReviewableTransaction(
     input: unknown,
-  ): Promise<S05Result<ReviewableTransactionUpdateReadModel>>;
+  ): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>>;
   updateTransactionReview(
     input: unknown,
-  ): Promise<S05Result<ReviewableTransactionUpdateReadModel>>;
+  ): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>>;
 }
 
 export interface TransactionReviewActionHandlers
@@ -148,14 +148,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isS05ErrorCode(value: unknown): value is (typeof S05_ERROR_CODES)[number] {
+function isTransactionReviewErrorCode(value: unknown): value is (typeof TRANSACTION_REVIEW_ERROR_CODES)[number] {
   return (
     typeof value === "string" &&
-    S05_ERROR_CODES.includes(value as (typeof S05_ERROR_CODES)[number])
+    TRANSACTION_REVIEW_ERROR_CODES.includes(value as (typeof TRANSACTION_REVIEW_ERROR_CODES)[number])
   );
 }
 
-function isS05Result<T>(value: unknown): value is S05Result<T> {
+function isTransactionReviewResult<T>(value: unknown): value is TransactionReviewResult<T> {
   if (!isRecord(value) || typeof value.ok !== "boolean") {
     return false;
   }
@@ -166,7 +166,7 @@ function isS05Result<T>(value: unknown): value is S05Result<T> {
 
   return (
     isRecord(value.error) &&
-    isS05ErrorCode(value.error.code)
+    isTransactionReviewErrorCode(value.error.code)
   );
 }
 
@@ -215,12 +215,12 @@ function isSerializable(value: unknown, seen = new Set<unknown>()): boolean {
   return Object.values(value).every((item) => isSerializable(item, seen));
 }
 
-function normalizePortValue<T>(value: unknown): S05Result<T> {
-  if (isS05Result<T>(value)) {
+function normalizePortValue<T>(value: unknown): TransactionReviewResult<T> {
+  if (isTransactionReviewResult<T>(value)) {
     if (!value.ok) {
       return {
         ok: false,
-        error: toS05Error(value.error),
+        error: toTransactionReviewError(value.error),
       };
     }
     if (!isSerializable(value.value)) {
@@ -240,7 +240,7 @@ function normalizePortValue<T>(value: unknown): S05Result<T> {
   return ok(value as T);
 }
 
-function publicContextError(error: unknown): S05Error | undefined {
+function publicContextError(error: unknown): TransactionReviewError | undefined {
   const code =
     isRecord(error) && typeof error.code === "string" ? error.code : undefined;
 
@@ -261,39 +261,39 @@ function publicContextError(error: unknown): S05Error | undefined {
         : "UNAUTHENTICATED";
     return {
       code: mapped,
-      message: S05_ERROR_MESSAGES[mapped],
+      message: TRANSACTION_REVIEW_ERROR_MESSAGES[mapped],
     };
   }
 
   return undefined;
 }
 
-function contextFailure<T>(error: unknown): S05Result<T> | undefined {
+function contextFailure<T>(error: unknown): TransactionReviewResult<T> | undefined {
   const safe = publicContextError(error);
   return safe ? { ok: false, error: safe } : undefined;
 }
 
 function parseListInput(
   input: unknown,
-): S05Result<NormalizedListReviewableTransactionsQuery> {
+): TransactionReviewResult<NormalizedListReviewableTransactionsQuery> {
   try {
     return ok(parseListReviewableTransactionsQuery(input ?? {}));
   } catch (error) {
-    return { ok: false, error: toS05Error(error, "INVALID_QUERY") };
+    return { ok: false, error: toTransactionReviewError(error, "INVALID_QUERY") };
   }
 }
 
 function parseSummaryInput(
   input: unknown,
-): S05Result<NormalizedTransactionReviewSummaryQuery> {
+): TransactionReviewResult<NormalizedTransactionReviewSummaryQuery> {
   try {
     return ok(parseTransactionReviewSummaryQuery(input ?? {}));
   } catch (error) {
-    return { ok: false, error: toS05Error(error, "INVALID_QUERY") };
+    return { ok: false, error: toTransactionReviewError(error, "INVALID_QUERY") };
   }
 }
 
-function parseDetailId(input: unknown): S05Result<string> {
+function parseDetailId(input: unknown): TransactionReviewResult<string> {
   const value =
     typeof input === "string"
       ? input
@@ -323,17 +323,17 @@ function parseDetailId(input: unknown): S05Result<string> {
 
 function parseUpdateInput(
   input: unknown,
-): S05Result<ReturnType<typeof parseUpdateReviewableTransactionCommand>> {
+): TransactionReviewResult<ReturnType<typeof parseUpdateReviewableTransactionCommand>> {
   try {
     return ok(parseUpdateReviewableTransactionCommand(input));
   } catch (error) {
-    return { ok: false, error: toS05Error(error, "INVALID_COMMAND") };
+    return { ok: false, error: toTransactionReviewError(error, "INVALID_COMMAND") };
   }
 }
 
 async function resolveActionContext(
   resolveContext: () => Promise<FinancialContext>,
-): Promise<S05Result<FinancialContext>> {
+): Promise<TransactionReviewResult<FinancialContext>> {
   try {
     const context = await resolveContext();
     return isFinancialContext(context)
@@ -360,7 +360,7 @@ function operationFor(
           : undefined
       : undefined;
 
-  return createS05TransactionReviewOperation(operation, {
+  return createTransactionReviewOperation(operation, {
     requestId: undefined,
     eventId,
     userId: context?.userId,
@@ -372,15 +372,15 @@ async function runRead<TInput, TResult>(
   operation: "list" | "summary" | "detail",
   input: unknown,
   dependencies: Pick<TransactionReviewActionDependencies, "resolveContext">,
-  parse: (input: unknown) => S05Result<TInput>,
+  parse: (input: unknown) => TransactionReviewResult<TInput>,
   invoke: (
     context: FinancialContext,
     input: TInput,
   ) => MaybePromise<ReviewReadPortValue<TResult>>,
-): Promise<S05Result<TResult>> {
+): Promise<TransactionReviewResult<TResult>> {
   const initialOperation = operationFor(operation, input);
 
-  return withS05TransactionReviewObservability(
+  return withTransactionReviewObservability(
     initialOperation,
     async () => {
       const parsed = parse(input);
@@ -402,8 +402,8 @@ async function runRead<TInput, TResult>(
       try {
         result = await invoke(contextResult.value, parsed.value);
       } catch (error) {
-        if (isExpectedS05ErrorLike(error)) {
-          return { ok: false, error: toS05Error(error) };
+        if (isExpectedTransactionReviewErrorLike(error)) {
+          return { ok: false, error: toTransactionReviewError(error) };
         }
         throw error;
       }
@@ -420,10 +420,10 @@ async function runUpdate(
   input: unknown,
   dependencies: TransactionReviewActionDependencies,
   port: ReviewableTransactionUseCasePort,
-): Promise<S05Result<ReviewableTransactionUpdateReadModel>> {
+): Promise<TransactionReviewResult<ReviewableTransactionUpdateReadModel>> {
   const operation = operationFor("update", input);
 
-  return withS05TransactionReviewObservability(operation, async () => {
+  return withTransactionReviewObservability(operation, async () => {
     const parsed = parseUpdateInput(input);
     if (!parsed.ok) {
       return parsed;
@@ -441,8 +441,8 @@ async function runUpdate(
         parsed.value,
       );
     } catch (error) {
-      if (isExpectedS05ErrorLike(error)) {
-        return { ok: false, error: toS05Error(error) };
+      if (isExpectedTransactionReviewErrorLike(error)) {
+        return { ok: false, error: toTransactionReviewError(error) };
       }
       throw error;
     }
@@ -464,11 +464,11 @@ async function runUpdate(
   });
 }
 
-function isExpectedS05ErrorLike(error: unknown): boolean {
-  if (isExpectedS05Error(error)) {
+function isExpectedTransactionReviewErrorLike(error: unknown): boolean {
+  if (isExpectedTransactionReviewError(error)) {
     return true;
   }
-  return isRecord(error) && isS05ErrorCode(error.code);
+  return isRecord(error) && isTransactionReviewErrorCode(error.code);
 }
 
 function requireReadPort(
@@ -500,7 +500,7 @@ export function createTransactionReviewReadActionHandlers(
       parseListInput,
       (context, query) => port.list(context, query),
     );
-  const detail = (input: unknown): Promise<S05Result<TransactionDetailReadModel>> =>
+  const detail = (input: unknown): Promise<TransactionReviewResult<TransactionDetailReadModel>> =>
     runRead<string, TransactionDetailReadModel>(
       "detail",
       input,
@@ -511,7 +511,7 @@ export function createTransactionReviewReadActionHandlers(
           await port.detail(context, eventId),
         );
         if (!result.ok) {
-          return result as S05Result<TransactionDetailReadModel>;
+          return result as TransactionReviewResult<TransactionDetailReadModel>;
         }
         return result.value === undefined
           ? failure("EVENT_NOT_FOUND", "financialEventId")

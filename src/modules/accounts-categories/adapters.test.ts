@@ -7,13 +7,13 @@ vi.mock("@/modules/observability/server", () => ({
 }));
 
 import {
-  createS02ActionHandlers,
-  type S02UseCasePorts,
+  createAccountsCategoriesActionHandlers,
+  type AccountsCategoriesUseCasePorts,
 } from "./adapters";
 import {
   type AccountReadModel,
   type CategoryReadModel,
-  type S02Result,
+  type AccountsCategoriesResult,
 } from "./contracts";
 import { captureServerException } from "@/modules/observability/server";
 
@@ -47,17 +47,17 @@ const category: CategoryReadModel = {
   updatedAt: "2026-08-29T00:00:00.000Z",
 };
 
-function ok<T>(value: T): S02Result<T> {
+function ok<T>(value: T): AccountsCategoriesResult<T> {
   return { ok: true, value };
 }
 
-function createPorts(): S02UseCasePorts {
+function createPorts(): AccountsCategoriesUseCasePorts {
   return {
     accounts: {
       create: vi.fn(async () => ok(account)),
       list: vi.fn(async () => ok({ items: [account] })),
       update: vi.fn(async () => ok(account)),
-      archive: vi.fn(async (): Promise<S02Result<AccountReadModel>> =>
+      archive: vi.fn(async (): Promise<AccountsCategoriesResult<AccountReadModel>> =>
         ok({ ...account, status: "ARCHIVED" }),
       ),
     },
@@ -65,14 +65,14 @@ function createPorts(): S02UseCasePorts {
       create: vi.fn(async () => ok(category)),
       list: vi.fn(async () => ok({ items: [category] })),
       update: vi.fn(async () => ok(category)),
-      archive: vi.fn(async (): Promise<S02Result<CategoryReadModel>> =>
+      archive: vi.fn(async (): Promise<AccountsCategoriesResult<CategoryReadModel>> =>
         ok({ ...category, status: "ARCHIVED" }),
       ),
     },
   };
 }
 
-describe("S02 action adapters", () => {
+describe("action adapters", () => {
   afterEach(() => {
     vi.mocked(captureServerException).mockClear();
   });
@@ -80,7 +80,7 @@ describe("S02 action adapters", () => {
   it("rejects tenant authority before resolving financial context", async () => {
     const resolveContext = vi.fn(async () => context);
     const ports = createPorts();
-    const handlers = createS02ActionHandlers({ resolveContext, ports });
+    const handlers = createAccountsCategoriesActionHandlers({ resolveContext, ports });
 
     const result = await handlers.createAccount({
       commandId: "account-create-1",
@@ -103,7 +103,7 @@ describe("S02 action adapters", () => {
   it("passes only the server context and parsed command to a use case", async () => {
     const resolveContext = vi.fn(async () => context);
     const ports = createPorts();
-    const handlers = createS02ActionHandlers({ resolveContext, ports });
+    const handlers = createAccountsCategoriesActionHandlers({ resolveContext, ports });
 
     const result = await handlers.createAccount({
       commandId: "account-create-2",
@@ -120,7 +120,7 @@ describe("S02 action adapters", () => {
   });
 
   it("maps context and expected use-case errors to safe serializable envelopes", async () => {
-    const contextErrorHandlers = createS02ActionHandlers({
+    const contextErrorHandlers = createAccountsCategoriesActionHandlers({
       resolveContext: async () => {
         throw new FinancialContextError("HOUSEHOLD_MEMBERSHIP_REQUIRED");
       },
@@ -138,7 +138,7 @@ describe("S02 action adapters", () => {
     });
 
     const ports = createPorts();
-    ports.accounts.create = vi.fn(async (): Promise<S02Result<AccountReadModel>> => ({
+    ports.accounts.create = vi.fn(async (): Promise<AccountsCategoriesResult<AccountReadModel>> => ({
       ok: false as const,
       error: {
         code: "ACCOUNT_NAME_CONFLICT" as const,
@@ -146,7 +146,7 @@ describe("S02 action adapters", () => {
         field: "name" as const,
       },
     }));
-    const handlers = createS02ActionHandlers({
+    const handlers = createAccountsCategoriesActionHandlers({
       resolveContext: async () => context,
       ports,
     });
@@ -174,7 +174,7 @@ describe("S02 action adapters", () => {
     ports.accounts.create = vi.fn(async () => {
       throw expectedError;
     });
-    const handlers = createS02ActionHandlers({ resolveContext, ports });
+    const handlers = createAccountsCategoriesActionHandlers({ resolveContext, ports });
 
     await expect(
       handlers.createAccount({

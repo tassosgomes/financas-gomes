@@ -21,12 +21,12 @@ import type { CategoriesUseCasePort } from "@/modules/accounts-categories/adapte
 import {
   failure,
   ok,
-  S02DomainError,
+  AccountsCategoriesDomainError,
   type CategoryReadModel,
   type CreateCategoryCommand,
   type ListCategoriesReadModel,
   type ListCategoriesQuery,
-  type S02Result,
+  type AccountsCategoriesResult,
   type UpdateCategoryCommand,
   type ArchiveCategoryCommand,
 } from "@/modules/accounts-categories/contracts";
@@ -175,8 +175,8 @@ function isForeignKeyViolation(error: unknown): boolean {
   return databaseErrorCode(error) === "23503";
 }
 
-function expectedErrorResult<T>(error: unknown): S02Result<T> | undefined {
-  if (error instanceof S02DomainError) {
+function expectedErrorResult<T>(error: unknown): AccountsCategoriesResult<T> | undefined {
+  if (error instanceof AccountsCategoriesDomainError) {
     return failure(error.code, error.field);
   }
   return undefined;
@@ -185,7 +185,7 @@ function expectedErrorResult<T>(error: unknown): S02Result<T> | undefined {
 function mapPersistenceError<T>(
   error: unknown,
   field: "name" | "parentId" = "name",
-): S02Result<T> | undefined {
+): AccountsCategoriesResult<T> | undefined {
   const expected = expectedErrorResult<T>(error);
   if (expected) {
     return expected;
@@ -280,7 +280,7 @@ async function claimCommand(
   }
 
   if (record.operation !== operation || record.payloadHash !== hash) {
-    throw new S02DomainError("COMMAND_ID_REUSED", "commandId");
+    throw new AccountsCategoriesDomainError("COMMAND_ID_REUSED", "commandId");
   }
 
   if (!record.resourceId) {
@@ -332,7 +332,7 @@ async function resultForClaim(
     // A category is never hard-deleted by this slice. A missing row therefore
     // indicates an external invariant violation, but the opaque public code
     // is still safer than exposing a raw database error.
-    throw new S02DomainError("CATEGORY_NOT_FOUND", "categoryId");
+    throw new AccountsCategoriesDomainError("CATEGORY_NOT_FOUND", "categoryId");
   }
   return toReadModel(record);
 }
@@ -383,7 +383,7 @@ async function createCategoryForContext(
   database: Database | undefined,
   context: FinancialContext,
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   try {
     const command = parseCreateCategoryCommand(input);
     const hash = categoryCreateHash(command);
@@ -425,7 +425,7 @@ async function createCategoryForContext(
       } catch (error) {
         const mapped = mapPersistenceError<CategoryReadModel>(error);
         if (mapped && !mapped.ok) {
-          throw new S02DomainError(mapped.error.code, mapped.error.field);
+          throw new AccountsCategoriesDomainError(mapped.error.code, mapped.error.field);
         }
         throw error;
       }
@@ -460,7 +460,7 @@ async function listCategoriesForContext(
   database: Database | undefined,
   context: FinancialContext,
   input: unknown,
-): Promise<S02Result<ListCategoriesReadModel>> {
+): Promise<AccountsCategoriesResult<ListCategoriesReadModel>> {
   try {
     const query = parseListCategoriesQuery(input);
     const status = query.status ?? "ACTIVE";
@@ -499,7 +499,7 @@ async function updateCategoryForContext(
   context: FinancialContext,
   input: unknown,
   hasFinancialUsage: CategoryUsageChecker,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   try {
     const command = parseUpdateCategoryCommand(input);
     const hash = categoryUpdateHash(command);
@@ -522,10 +522,10 @@ async function updateCategoryForContext(
         true,
       );
       if (!current) {
-        throw new S02DomainError("CATEGORY_NOT_FOUND", "categoryId");
+        throw new AccountsCategoriesDomainError("CATEGORY_NOT_FOUND", "categoryId");
       }
       if (current.status === "ARCHIVED") {
-        throw new S02DomainError("RESOURCE_ARCHIVED", "categoryId");
+        throw new AccountsCategoriesDomainError("RESOURCE_ARCHIVED", "categoryId");
       }
 
       let parent: CategoryRecord | null | undefined;
@@ -585,14 +585,14 @@ async function updateCategoryForContext(
       } catch (error) {
         const mapped = mapPersistenceError<CategoryReadModel>(error);
         if (mapped && !mapped.ok) {
-          throw new S02DomainError(mapped.error.code, mapped.error.field);
+          throw new AccountsCategoriesDomainError(mapped.error.code, mapped.error.field);
         }
         throw error;
       }
 
       const row = rows[0];
       if (!row) {
-        throw new S02DomainError("CATEGORY_NOT_FOUND", "categoryId");
+        throw new AccountsCategoriesDomainError("CATEGORY_NOT_FOUND", "categoryId");
       }
 
       await completeCommand(
@@ -620,7 +620,7 @@ async function archiveCategoryForContext(
   database: Database | undefined,
   context: FinancialContext,
   input: unknown,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   try {
     const command = parseArchiveCategoryCommand(input);
     const hash = categoryArchiveHash(command);
@@ -643,10 +643,10 @@ async function archiveCategoryForContext(
         true,
       );
       if (!current) {
-        throw new S02DomainError("CATEGORY_NOT_FOUND", "categoryId");
+        throw new AccountsCategoriesDomainError("CATEGORY_NOT_FOUND", "categoryId");
       }
       if (current.status === "ARCHIVED") {
-        throw new S02DomainError("RESOURCE_ARCHIVED", "categoryId");
+        throw new AccountsCategoriesDomainError("RESOURCE_ARCHIVED", "categoryId");
       }
 
       const activeChild = await selectActiveChild(
@@ -671,7 +671,7 @@ async function archiveCategoryForContext(
         .returning();
       const row = rows[0];
       if (!row) {
-        throw new S02DomainError("CATEGORY_NOT_FOUND", "categoryId");
+        throw new AccountsCategoriesDomainError("CATEGORY_NOT_FOUND", "categoryId");
       }
 
       await completeCommand(
@@ -794,7 +794,7 @@ export async function createCategory(
   context: FinancialContext,
   command: CreateCategoryCommand,
   databaseOrOptions?: Database | CategoryUseCaseOptions,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   return createCategoriesUseCases(databaseOrOptions).create(context, command);
 }
 
@@ -802,7 +802,7 @@ export async function listCategories(
   context: FinancialContext,
   query: ListCategoriesQuery = {},
   databaseOrOptions?: Database | CategoryUseCaseOptions,
-): Promise<S02Result<ListCategoriesReadModel>> {
+): Promise<AccountsCategoriesResult<ListCategoriesReadModel>> {
   return createCategoriesUseCases(databaseOrOptions).list(context, query);
 }
 
@@ -810,7 +810,7 @@ export async function listCategories(
 export async function listActiveCategories(
   context: FinancialContext,
   databaseOrOptions?: Database | CategoryUseCaseOptions,
-): Promise<S02Result<ListCategoriesReadModel>> {
+): Promise<AccountsCategoriesResult<ListCategoriesReadModel>> {
   return createCategoriesUseCases(databaseOrOptions).list(context, {
     status: "ACTIVE",
   });
@@ -820,7 +820,7 @@ export async function updateCategory(
   context: FinancialContext,
   command: UpdateCategoryCommand,
   databaseOrOptions?: Database | CategoryUseCaseOptions,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   return createCategoriesUseCases(databaseOrOptions).update(context, command);
 }
 
@@ -828,7 +828,7 @@ export async function archiveCategory(
   context: FinancialContext,
   command: ArchiveCategoryCommand,
   databaseOrOptions?: Database | CategoryUseCaseOptions,
-): Promise<S02Result<CategoryReadModel>> {
+): Promise<AccountsCategoriesResult<CategoryReadModel>> {
   return createCategoriesUseCases(databaseOrOptions).archive(context, command);
 }
 

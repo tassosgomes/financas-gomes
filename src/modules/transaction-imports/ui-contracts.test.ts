@@ -54,7 +54,7 @@ const preview: CsvImportPreview = {
   ],
 };
 
-describe("S04 UI contracts", () => {
+describe("UI contracts", () => {
   it("keeps valid rows and invalid row errors in one preview model", () => {
     const model = toCsvImportPreviewViewModel(preview, "2026-08-30T10:00:00.000Z");
 

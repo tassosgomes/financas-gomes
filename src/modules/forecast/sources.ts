@@ -48,10 +48,10 @@ import type { FinancialContext } from "@/modules/households/contracts";
 import { assertFinancialContext } from "@/modules/households/tenant-scoped";
 import type { TransactionReferenceExecutor } from "@/modules/transactions/references";
 import {
-  createS07ForecastOperation,
-  measureS07Query,
-  type S07ForecastOperationOptions,
-} from "@/modules/observability/s07";
+  createForecastOperation,
+  measureForecastQuery,
+  type ForecastOperationOptions,
+} from "@/modules/observability/forecast";
 
 /** A database or an already-open Drizzle transaction. */
 export type ForecastReadExecutor = TransactionReferenceExecutor;
@@ -66,7 +66,7 @@ export interface ForecastSourceReadOptions extends Partial<ForecastSourceDateRan
   database?: ForecastReadExecutor;
   /** Technical-only hooks; no source row or query payload is accepted. */
   observability?: Omit<
-    S07ForecastOperationOptions,
+    ForecastOperationOptions,
     "householdId" | "sourceKind" | "periodBucket"
   >;
 }
@@ -177,7 +177,7 @@ function optionsFor(
     | "ALL",
   range: ForecastSourceDateRange,
 ) {
-  const operation = createS07ForecastOperation("source", {
+  const operation = createForecastOperation("source", {
     ...options.observability,
     householdId: context.householdId,
     sourceKind,
@@ -188,7 +188,7 @@ function optionsFor(
     queryOptions: {
       ...options.observability,
       technicalErrorCode: "FORECAST_SOURCE_QUERY_FAILED",
-    } as Parameters<typeof measureS07Query>[2],
+    } as Parameters<typeof measureForecastQuery>[2],
   };
 }
 
@@ -204,7 +204,7 @@ function periodBucket(range: ForecastSourceDateRange): "SINGLE_PERIOD" | "SHORT"
 
 async function measured<T>(
   executor: ForecastReadExecutor,
-  operation: ReturnType<typeof createS07ForecastOperation>,
+  operation: ReturnType<typeof createForecastOperation>,
   work: () => Promise<T>,
   options: ForecastSourceReadOptions,
 ): Promise<T> {
@@ -214,8 +214,8 @@ async function measured<T>(
   const queryOptions = {
     ...options.observability,
     technicalErrorCode: "FORECAST_SOURCE_QUERY_FAILED",
-  } as Parameters<typeof measureS07Query>[2];
-  return measureS07Query(operation, work, queryOptions);
+  } as Parameters<typeof measureForecastQuery>[2];
+  return measureForecastQuery(operation, work, queryOptions);
 }
 
 function groupedRows<K, T extends { entry: AccountEntryRecord | null }>(

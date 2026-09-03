@@ -11,27 +11,27 @@ import {
 } from "@/modules/observability/server";
 import { FinancialContextError } from "@/modules/households/contracts";
 import {
-  S08_SPENDABLE_EXPECTED_ERROR_CODES,
-  S08_SPENDABLE_OPERATIONS,
-  classifyS08Error,
-  createS08SpendableOperation,
-  getS08QueryBudgetMs,
-  getS08SlowQueryThresholdMs,
-  logS08SpendableOperation,
-  measureS08Query,
-  reportS08UnexpectedError,
-  sanitizeS08SpendableCounts,
-  sanitizeS08SpendableLog,
-  toS08ErrorEnvelope,
-  toS08ObservabilityContext,
-  withS08SpendableObservability,
-} from "./s08";
+  SPENDABLE_EXPECTED_ERROR_CODES,
+  SPENDABLE_OPERATIONS,
+  classifySpendableError,
+  createSpendableOperation,
+  getSpendableQueryBudgetMs,
+  getSpendableSlowQueryThresholdMs,
+  logSpendableOperation,
+  measureSpendableQuery,
+  reportSpendableUnexpectedError,
+  sanitizeSpendableCounts,
+  sanitizeSpendableLog,
+  toSpendableErrorEnvelope,
+  toSpendableObservabilityContext,
+  withSpendableObservability,
+} from "./spendable";
 import {
   sanitizeSentryBreadcrumb,
   toSafeObservabilityContext,
 } from "./sanitize";
 
-describe("S08 spendable observability", () => {
+describe("spendable observability", () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.mocked(addBreadcrumbSafely).mockClear();
@@ -39,7 +39,7 @@ describe("S08 spendable observability", () => {
   });
 
   it("creates versioned stage metadata and drops financial payload fields", () => {
-    const operation = createS08SpendableOperation("engine", {
+    const operation = createSpendableOperation("engine", {
       requestId: "request-opaque",
       householdId: "household-opaque",
       scenario: "EXPECTED",
@@ -91,7 +91,7 @@ describe("S08 spendable observability", () => {
   });
 
   it("rebuilds code-owned fields and retains only bounded aggregates", () => {
-    const safe = sanitizeS08SpendableLog({
+    const safe = sanitizeSpendableLog({
       operation: "spendable.read",
       stage: "read",
       outcome: "success",
@@ -128,7 +128,7 @@ describe("S08 spendable observability", () => {
     });
 
     expect(safe).toEqual({
-      event: "s08_spendable_read_success",
+      event: "spendable_read_success",
       useCase: "spendable.read",
       operation: "spendable.read",
       stage: "read",
@@ -170,7 +170,7 @@ describe("S08 spendable observability", () => {
       expect(serialized).not.toContain(forbidden);
     }
     expect(
-      sanitizeS08SpendableLog({
+      sanitizeSpendableLog({
         operation: "spendable.read",
         outcome: "success",
         contractVersion: "s08.v2",
@@ -180,7 +180,7 @@ describe("S08 spendable observability", () => {
 
   it("bounds aggregate counters and rejects non-scalar rows", () => {
     expect(
-      sanitizeS08SpendableCounts({
+      sanitizeSpendableCounts({
         source_count: 3.4,
         forecast_items: 2,
         dayCount: -1,
@@ -195,26 +195,26 @@ describe("S08 spendable observability", () => {
       serializedFieldCount: 2,
     });
     expect(
-      sanitizeS08SpendableCounts({ sourceCount: 9_999_999_999 }),
+      sanitizeSpendableCounts({ sourceCount: 9_999_999_999 }),
     ).toEqual({ sourceCount: 1_000_000_000 });
   });
 
   it("classifies validation, context and configuration absence as expected", () => {
-    for (const code of S08_SPENDABLE_EXPECTED_ERROR_CODES) {
-      expect(classifyS08Error({ code, message: "amount=999999 private" })).toEqual({
+    for (const code of SPENDABLE_EXPECTED_ERROR_CODES) {
+      expect(classifySpendableError({ code, message: "amount=999999 private" })).toEqual({
         outcome: "expected_error",
         errorCode: code,
       });
     }
-    expect(classifyS08Error(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
+    expect(classifySpendableError(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
       outcome: "expected_error",
       errorCode: "UNAUTHENTICATED",
     });
-    expect(classifyS08Error({ code: "SPENDABLE_INCONSISTENT", message: "private" })).toEqual({
+    expect(classifySpendableError({ code: "SPENDABLE_INCONSISTENT", message: "private" })).toEqual({
       outcome: "unexpected_error",
       errorCode: "SPENDABLE_INCONSISTENT",
     });
-    expect(classifyS08Error(new Error("database amount=999999"))).toEqual({
+    expect(classifySpendableError(new Error("database amount=999999"))).toEqual({
       outcome: "unexpected_error",
       errorCode: "UNEXPECTED_ERROR",
     });
@@ -222,7 +222,7 @@ describe("S08 spendable observability", () => {
 
   it("returns a public code/field-only error envelope", () => {
     expect(
-      toS08ErrorEnvelope({
+      toSpendableErrorEnvelope({
         code: "INVALID_HORIZON",
         field: "horizonDays",
         message: "private date/value",
@@ -231,11 +231,11 @@ describe("S08 spendable observability", () => {
       ok: false,
       error: { code: "INVALID_HORIZON", field: "horizon" },
     });
-    expect(toS08ErrorEnvelope(new Error("private technical message"))).toEqual({
+    expect(toSpendableErrorEnvelope(new Error("private technical message"))).toEqual({
       ok: false,
       error: { code: "UNEXPECTED_ERROR", field: null },
     });
-    expect(toS08ErrorEnvelope(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
+    expect(toSpendableErrorEnvelope(new FinancialContextError("UNAUTHENTICATED"))).toEqual({
       ok: false,
       error: { code: "FINANCIAL_CONTEXT_REQUIRED", field: null },
     });
@@ -244,7 +244,7 @@ describe("S08 spendable observability", () => {
   it("captures unexpected technical failures with safe versioned context", () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const error = new Error("query failed amount=999999 description=private");
-    const operation = createS08SpendableOperation("engine", {
+    const operation = createSpendableOperation("engine", {
       requestId: "request-opaque",
       householdId: "household-opaque",
       scenario: "CONSERVATIVE",
@@ -253,7 +253,7 @@ describe("S08 spendable observability", () => {
       pointCount: 3,
     });
 
-    const classification = reportS08UnexpectedError(error, operation, 27, {
+    const classification = reportSpendableUnexpectedError(error, operation, 27, {
       technicalErrorCode: "SPENDABLE_ENGINE_FAILED",
     });
 
@@ -264,7 +264,7 @@ describe("S08 spendable observability", () => {
     expect(captureServerException).toHaveBeenCalledWith(
       error,
       expect.objectContaining({
-        event: "s08_spendable_engine_calculate_unexpected_error",
+        event: "spendable_engine_calculate_unexpected_error",
         useCase: "spendable.engine.calculate",
         operation: "spendable.engine.calculate",
         entityType: "spendable",
@@ -292,14 +292,14 @@ describe("S08 spendable observability", () => {
       ok: false as const,
       error: { code: "SPENDABLE_CONFIG_ABSENT", message: "private" },
     };
-    const operation = createS08SpendableOperation("read", {
+    const operation = createSpendableOperation("read", {
       requestId: "request-opaque",
       scenario: "CONSERVATIVE",
       horizonDays: 90,
     });
 
     await expect(
-      withS08SpendableObservability(operation, () => result, {
+      withSpendableObservability(operation, () => result, {
         now: vi
           .fn<() => number>()
           .mockReturnValueOnce(100)
@@ -318,12 +318,12 @@ describe("S08 spendable observability", () => {
   it("captures thrown technical failures, preserves the throw and generates correlation", async () => {
     const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const error = new Error("serialize amount=999999 description=private");
-    const operation = createS08SpendableOperation("serialization", {
+    const operation = createSpendableOperation("serialization", {
       householdId: "household-opaque",
     });
 
     await expect(
-      withS08SpendableObservability(
+      withSpendableObservability(
         operation,
         () => {
           throw error;
@@ -357,7 +357,7 @@ describe("S08 spendable observability", () => {
     const onSlowQuery = vi.fn();
 
     for (const stage of ["read", "forecast", "engine", "serialization"] as const) {
-      const operation = createS08SpendableOperation(stage, {
+      const operation = createSpendableOperation(stage, {
         requestId: `request-${stage}`,
         scenario: "EXPECTED",
         horizonDays: 90,
@@ -368,7 +368,7 @@ describe("S08 spendable observability", () => {
         .mockReturnValueOnce(2_100);
 
       await expect(
-        measureS08Query(
+        measureSpendableQuery(
           operation,
           () => ({ amountCents: "999999", rawSpendableCents: "999999" }),
           {
@@ -402,12 +402,12 @@ describe("S08 spendable observability", () => {
   it("does not emit below threshold and bounds settings", async () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const onSlowQuery = vi.fn();
-    const operation = createS08SpendableOperation("read", {
+    const operation = createSpendableOperation("read", {
       requestId: "request-opaque",
     });
 
     await expect(
-      measureS08Query(operation, () => "fast-result", {
+      measureSpendableQuery(operation, () => "fast-result", {
         thresholdMs: 250,
         queryBudgetMs: 2_000,
         onSlowQuery,
@@ -419,18 +419,18 @@ describe("S08 spendable observability", () => {
     ).resolves.toBe("fast-result");
     expect(warn).not.toHaveBeenCalled();
     expect(onSlowQuery).not.toHaveBeenCalled();
-    expect(getS08SlowQueryThresholdMs("900")).toBe(900);
-    expect(getS08SlowQueryThresholdMs(-10)).toBe(0);
-    expect(getS08SlowQueryThresholdMs("999999")).toBe(60_000);
-    expect(getS08SlowQueryThresholdMs("not-a-number")).toBe(250);
-    expect(getS08QueryBudgetMs("900")).toBe(900);
-    expect(getS08QueryBudgetMs("999999")).toBe(60_000);
-    expect(getS08QueryBudgetMs("not-a-number")).toBe(2_000);
+    expect(getSpendableSlowQueryThresholdMs("900")).toBe(900);
+    expect(getSpendableSlowQueryThresholdMs(-10)).toBe(0);
+    expect(getSpendableSlowQueryThresholdMs("999999")).toBe(60_000);
+    expect(getSpendableSlowQueryThresholdMs("not-a-number")).toBe(250);
+    expect(getSpendableQueryBudgetMs("900")).toBe(900);
+    expect(getSpendableQueryBudgetMs("999999")).toBe(60_000);
+    expect(getSpendableQueryBudgetMs("not-a-number")).toBe(2_000);
   });
 
   it("uses the same allow-list for breadcrumbs, Sentry context and tags", () => {
     const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
-    const operation = createS08SpendableOperation("read", {
+    const operation = createSpendableOperation("read", {
       requestId: "request-opaque",
       householdId: "household-opaque",
       scenario: "EXPECTED",
@@ -440,14 +440,14 @@ describe("S08 spendable observability", () => {
       sourceKind: "PLANNED_EVENT",
       sourceCount: 10,
     });
-    const record = logS08SpendableOperation(operation, "success", {
+    const record = logSpendableOperation(operation, "success", {
       durationMs: 12,
       description: "private description",
       amountCents: "999999",
     } as never);
 
     expect(record).toMatchObject({
-      event: "s08_spendable_read_success",
+      event: "spendable_read_success",
       stage: "read",
       queryCode: "spendable_read",
       contractVersion: "s08.v1",
@@ -466,7 +466,7 @@ describe("S08 spendable observability", () => {
     expect(JSON.stringify(breadcrumb)).not.toContain("private");
     expect(JSON.stringify(breadcrumb)).not.toContain("999999");
 
-    const context = toS08ObservabilityContext(operation, "success", {
+    const context = toSpendableObservabilityContext(operation, "success", {
       durationMs: 12,
       queryBudgetMs: 2_000,
       budgetExceeded: false,
@@ -539,7 +539,7 @@ describe("S08 spendable observability", () => {
   });
 
   it("publishes the four closed operations", () => {
-    expect(S08_SPENDABLE_OPERATIONS).toEqual([
+    expect(SPENDABLE_OPERATIONS).toEqual([
       "spendable.read",
       "spendable.forecast.build",
       "spendable.engine.calculate",

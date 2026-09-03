@@ -37,11 +37,11 @@ import {
   insertFinancialEventForContext,
 } from "@/modules/transactions/references";
 import {
-  createS06CreditCardOperation,
-  withS06CreditCardObservability,
-  type S06CreditCardOperation,
-  type S06CreditCardOperationContext,
-} from "@/modules/observability/s06";
+  createCreditCardOperation,
+  withCreditCardObservability,
+  type CreditCardOperation,
+  type CreditCardOperationContext,
+} from "@/modules/observability/credit-cards";
 
 import {
   ARCHIVE_CREDIT_CARD_OPERATION,
@@ -1156,15 +1156,15 @@ async function executeGet(
 }
 
 function operationContext(
-  operation: S06CreditCardOperation,
+  operation: CreditCardOperation,
   context: FinancialContext,
   input: unknown,
-): S06CreditCardOperationContext {
+): CreditCardOperationContext {
   const cardId =
     typeof input === "object" && input !== null && typeof (input as { cardId?: unknown }).cardId === "string"
       ? (input as { cardId: string }).cardId
       : undefined;
-  return createS06CreditCardOperation(operation, {
+  return createCreditCardOperation(operation, {
     householdId: context.householdId,
     userId: context.userId,
     ...(cardId ? { cardId } : {}),
@@ -1187,8 +1187,8 @@ export function createCreditCardUseCases(
 export function createCreditCardUseCases(databaseOrOptions?: Database | CreditCardUseCaseOptions): CreditCardUseCasePort {
   const selectedOptions = optionsFor(databaseOrOptions);
   const database = selectedOptions.database;
-  const run = (context: FinancialContext, operation: S06CreditCardOperation, input: unknown, work: () => Promise<unknown>) =>
-    withS06CreditCardObservability(operationContext(operation, context, input), work);
+  const run = (context: FinancialContext, operation: CreditCardOperation, input: unknown, work: () => Promise<unknown>) =>
+    withCreditCardObservability(operationContext(operation, context, input), work);
 
   return {
     create: async (context, command) => {
