@@ -55,7 +55,8 @@ agregado até os lançamentos que o compõem, com dados determinísticos.
   não apenas visualmente.
   - Spec: `spendable-card-primary-value` na home vs `/spendable/breakdown`;
     despesa `R$ 450,00` na home e o lançamento correspondente em
-    `/transactions?kind=EXPENSE&status=POSTED`.
+    `/transactions?kind=EXPENSE&status=POSTED` (locator `.first()` porque a
+    lista tem descrição e botão “Ver lançamento” com o mesmo `aria-label`).
 - [x] O cenário vazio passa sem depender de dado residual.
   - Identidade E2E única por execução; asserts de empty sem `R$ 0,00`.
 - [x] O cenário de erro parcial prova degradação por bloco.
@@ -86,7 +87,9 @@ agregado até os lançamentos que o compõem, com dados determinísticos.
 
 Heading autenticado permanece **"Seu espaço financeiro"** (compatível com
 `spendable.spec.ts`). `data-testid="home-spendable"` é mantido junto de
-`overview-spendable`.
+`overview-spendable`. Household novo com spendable `0` pode mostrar o alerta
+determinístico `SPENDABLE_NOT_POSITIVE`; o spec não exige ausência da seção
+de alertas, só ausência de `overview-alerts-error` e de `R$ 0,00` no empty.
 
 ### Execução Playwright neste ambiente
 

@@ -135,10 +135,16 @@ test.describe("S10 visão geral", () => {
 
     await expect(page.getByTestId("overview-period-summary-error")).toHaveCount(0);
     await expect(page.getByTestId("overview-categories-error")).toHaveCount(0);
-    await expect(page.getByTestId("overview-alerts")).toHaveCount(0);
+    await expect(page.getByTestId("overview-alerts-error")).toHaveCount(0);
     await expect(page.getByTestId("overview-period-summary-empty")).not.toContainText(
       "R$ 0,00",
     );
+    // A new household with displaySpendable 0 may show SPENDABLE_NOT_POSITIVE;
+    // that is a real derived alert, not an invented error zero.
+    const spendableAlert = page.getByTestId("overview-alert-SPENDABLE_NOT_POSITIVE");
+    if ((await page.getByTestId("overview-alerts").count()) > 0) {
+      await expect(spendableAlert).toBeVisible();
+    }
   });
 
   test("resumo do mês reconcilia com o drill-down de despesas", async ({
@@ -192,10 +198,12 @@ test.describe("S10 visão geral", () => {
     await expect(page).toHaveURL(/status=POSTED/);
     await expect(page.getByTestId("transactions-route")).toBeVisible();
     await expect(
-      page.getByRole("link", {
-        name: `Abrir lançamento Despesa visão ${suffix}`,
-        exact: true,
-      }),
+      page
+        .getByRole("link", {
+          name: `Abrir lançamento Despesa visão ${suffix}`,
+          exact: true,
+        })
+        .first(),
     ).toBeVisible();
 
     await page.goto("/app");
