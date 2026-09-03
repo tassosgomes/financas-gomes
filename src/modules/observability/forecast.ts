@@ -402,7 +402,7 @@ function eventName(
   operation: ForecastOperation,
   outcome: ForecastOutcome,
 ): string {
-  return `forecast_${operation.replaceAll(".", "_")}_${outcome}`;
+  return `${operation.replaceAll(".", "_")}_${outcome}`;
 }
 
 function safeErrorCode(value: unknown): ForecastErrorCode | undefined {

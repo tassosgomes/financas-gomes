@@ -546,7 +546,7 @@ function eventName(
   operation: SpendableOperation,
   outcome: SpendableOutcome,
 ): string {
-  return `spendable_${operation.replaceAll(".", "_")}_${outcome}`;
+  return `${operation.replaceAll(".", "_")}_${outcome}`;
 }
 
 function safeErrorCode(value: unknown): SpendableErrorCode | undefined {

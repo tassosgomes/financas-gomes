@@ -359,7 +359,7 @@ function eventName(
   operation: CreditCardOperation,
   outcome: CreditCardOutcome,
 ): string {
-  return `credit_card_${operationSlug(operation)}_${outcome}`;
+  return `${operationSlug(operation)}_${outcome}`;
 }
 
 function normalizedErrorCode(value: unknown): CreditCardErrorCode | undefined {
