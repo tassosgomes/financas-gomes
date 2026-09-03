@@ -1,6 +1,6 @@
 # T05 — Contratos de UI e componentes compartilhados da Visão Geral
 
-- Status: Não iniciada
+- Status: Concluída
 - Onda: 1 (transversal)
 - Dependências: T01
 - Paralelização: Com T02, T03 e T04
@@ -31,27 +31,48 @@ rótulo ou estado.
 
 ## Subtarefas
 
-- [ ] Escrever os view models e os mapeadores do read model `s10.v1` para eles.
-- [ ] Implementar os componentes compartilhados com variantes de estado.
-- [ ] Definir e documentar os `data-testid` que T14 usará.
-- [ ] Testar mapeadores e componentes com dado vazio, parcial e volumoso.
-- [ ] Validar contraste e semântica de cabeçalhos/regiões da página.
+- [x] Escrever os view models e os mapeadores do read model `s10.v1` para eles.
+- [x] Implementar os componentes compartilhados com variantes de estado.
+- [x] Definir e documentar os `data-testid` que T14 usará.
+- [x] Testar mapeadores e componentes com dado vazio, parcial e volumoso.
+- [x] Validar contraste e semântica de cabeçalhos/regiões da página.
 
 ## Critérios de aceite
 
-- [ ] Nenhum componente recebe `number` para dinheiro nem faz cálculo próprio.
-- [ ] Cada componente renderiza corretamente nos três estados sem prop extra
+- [x] Nenhum componente recebe `number` para dinheiro nem faz cálculo próprio.
+- [x] Cada componente renderiza corretamente nos três estados sem prop extra
   improvisada pela tela.
-- [ ] Os rótulos e o vocabulário são únicos e consistentes com S08/S09.
-- [ ] Os `data-testid` estão documentados e estáveis.
-- [ ] Os componentes são responsivos a partir de 360px sem overflow horizontal.
+- [x] Os rótulos e o vocabulário são únicos e consistentes com S08/S09.
+- [x] Os `data-testid` estão documentados e estáveis.
+- [x] Os componentes são responsivos a partir de 360px sem overflow horizontal.
 
 ## Entregáveis e evidência esperada
 
-- [ ] `src/modules/overview/ui-contracts.ts`.
-- [ ] `src/components/overview/*` com componentes e testes.
-- [ ] Documento curto dos `data-testid` dentro da própria task ou do ADR.
-- [ ] `vitest`, `eslint` e `tsc` aprovados no write set.
+- [x] `src/modules/overview/ui-contracts.ts`.
+- [x] `src/components/overview/*` com componentes e testes.
+- [x] Documento curto dos `data-testid` dentro da própria task ou do ADR.
+- [x] `vitest`, `eslint` e `tsc` aprovados no write set.
+
+## `data-testid` estáveis (T14)
+
+| ID | Uso |
+| --- | --- |
+| `overview-page` | Container da home autenticada |
+| `overview-spendable` | Bloco spendable |
+| `overview-period-summary` | Bloco resumo do período |
+| `overview-period-income` | Receitas do período |
+| `overview-period-expense` | Despesas do período |
+| `overview-categories` | Bloco despesas por categoria |
+| `overview-category-{key}` | Linha/barra de categoria |
+| `overview-commitments` | Próximos compromissos |
+| `overview-income-upcoming` | Próximas receitas |
+| `overview-caixinhas` | Resumo de Caixinhas |
+| `overview-invoices` | Faturas de cartão |
+| `overview-alerts` | Alertas determinísticos |
+| `overview-alert-{ruleId}` | Item de alerta |
+| `overview-block-loading` | Estado loading de bloco |
+| `overview-block-empty` | Estado empty de bloco |
+| `overview-block-error` | Estado error de bloco |
 
 ## Sequenciamento
 
